@@ -217,8 +217,9 @@ function(run)
     file(INSTALL cmake
         DESTINATION ${OUTPUT_DIR}
         FILES_MATCHING
-        # dksdk/ are system scripts that are automatically downloaded by
-        # other projects from DkHelloWorld
+        # dkml/ and dksdk/ are system scripts that are automatically
+        # downloaded by [dktool]
+        REGEX "scripts/dkml" EXCLUDE
         REGEX "scripts/dksdk" EXCLUDE
         PATTERN "*.cmake")
 
