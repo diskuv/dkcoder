@@ -1,2 +1,5 @@
 # dktool
 /.ci/
+
+# OCaml Platform Visual Studio Code Extension
+/_build/
