@@ -1,5 +1,5 @@
 # dktool
 /.ci/
 
-# OCaml Platform Visual Studio Code Extension
-/_build/
+# ./dk dksdk.cmd.exec
+/_build/dksdk-cmd-exe.log
