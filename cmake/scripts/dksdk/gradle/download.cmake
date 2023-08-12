@@ -1,3 +1,16 @@
+##########################################################################
+# File: dktool/cmake/scripts/dksdk/gradle/download.cmake                 #
+#                                                                        #
+# Copyright 2023 Diskuv, Inc.                                            #
+#                                                                        #
+# Licensed under the Open Software License version 3.0                   #
+# (the "License"); you may not use this file except in compliance        #
+# with the License. You may obtain a copy of the License at              #
+#                                                                        #
+#     https://opensource.org/license/osl-3-0-php/                        #
+#                                                                        #
+##########################################################################
+
 function(help)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "MODE" "")
 

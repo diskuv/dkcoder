@@ -1,3 +1,16 @@
+##########################################################################
+# File: dktool/cmake/scripts/dksdk/android/ndk/download.cmake            #
+#                                                                        #
+# Copyright 2023 Diskuv, Inc.                                            #
+#                                                                        #
+# Licensed under the Open Software License version 3.0                   #
+# (the "License"); you may not use this file except in compliance        #
+# with the License. You may obtain a copy of the License at              #
+#                                                                        #
+#     https://opensource.org/license/osl-3-0-php/                        #
+#                                                                        #
+##########################################################################
+
 set(NDK_LTS 23.1.7779620)
 
 function(help)

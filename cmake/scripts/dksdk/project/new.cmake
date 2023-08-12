@@ -1,3 +1,16 @@
+##########################################################################
+# File: dktool/cmake/scripts/dksdk/project/new.cmake                     #
+#                                                                        #
+# Copyright 2023 Diskuv, Inc.                                            #
+#                                                                        #
+# Licensed under the Open Software License version 3.0                   #
+# (the "License"); you may not use this file except in compliance        #
+# with the License. You may obtain a copy of the License at              #
+#                                                                        #
+#     https://opensource.org/license/osl-3-0-php/                        #
+#                                                                        #
+##########################################################################
+
 include_guard()
 
 # Only follow symlinks during file(GLOB_RECURSE) when
