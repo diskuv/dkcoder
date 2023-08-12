@@ -44,6 +44,12 @@ function(run)
     set(jsonFile ${CMAKE_SOURCE_DIR}/.vscode/settings.json)
     cmake_path(NORMAL_PATH CMAKE_SOURCE_DIR OUTPUT_VARIABLE CMAKE_SOURCE_DIR_NORMALIZED)
 
+    set(admonition [[
+
+    You must exit Visual Studio Code and then re-launch Visual Studio
+Code so that the settings take effect.
+]])
+
     # ocaml.sandbox value
     set(template "${CMAKE_SOURCE_DIR_NORMALIZED}/dk dksdk.cmd.exec QUIET CMD $prog $args")
     set(ocamlSandbox "{
@@ -56,7 +62,7 @@ function(run)
     "ocaml.sandbox": @ocamlSandbox@
 }
 ]] @ONLY)
-        message(STATUS "Created ${jsonFile}")
+        message(STATUS "Created ${jsonFile}.${admonition}")
         return()
     endif()
 
@@ -77,5 +83,5 @@ function(run)
     message(STATUS "Backup is at ${jsonFile}.${now}.bak")
     file(COPY_FILE ${jsonFile} ${jsonFile}.${now}.bak)
     file(WRITE ${jsonFile} "${newJsonContent}")
-    message(STATUS "Edited ${jsonFile}")
+    message(STATUS "Edited ${jsonFile}.${admonition}")
 endfunction()
