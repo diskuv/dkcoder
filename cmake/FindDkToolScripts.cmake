@@ -141,7 +141,7 @@ endfunction()
             string(JOIN "___" command_function_name ${command_stems})
             string(JOIN "." dot_function_name ${command_stems})
             list(APPEND dot_function_names ${dot_function_name})
-    
+
             # In a new scope (to avoid a global, leaky namespace) register the function.
             message(VERBOSE "Shimming ${command_function_name}")
             cmake_language(EVAL CODE "
