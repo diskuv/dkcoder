@@ -51,7 +51,11 @@ Code so that the settings take effect.
 ]])
 
     # ocaml.sandbox value
-    set(template "${CMAKE_SOURCE_DIR_NORMALIZED}/dk dksdk.cmd.exec QUIET CMD $prog $args")
+    set(dkscript dk)
+    if(CMAKE_HOST_WIN32)
+        set(dkscript dk.cmd)
+    endif()
+    set(template "${CMAKE_SOURCE_DIR_NORMALIZED}/${dkscript} dksdk.cmd.exec QUIET CMD $prog $args")
     set(ocamlSandbox "{
         \"kind\": \"custom\",
         \"template\": \"${template}\"
