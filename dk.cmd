@@ -140,6 +140,22 @@ if %ERRORLEVEL% neq 0 (
 	exit /b 1
 )
 
+REM -------------- DkML PATH ---------
+REM We get "git-sh-setup: file not found" in Git for Windows because
+REM Command Prompt has the "Path" environment variable, while PowerShell
+REM and `with-dkml` use the PATH environment variable. Sadly both
+REM can be present in Command Prompt at the same time. Git for Windows
+REM (called by FetchContent in CMake) does not comport with what Command
+REM Prompt is using. So we let Command Prompt be the source of truth by
+REM removing any duplicated PATH twice and resetting to what Command Prompt
+REM thinks the PATH is.
+
+SET _DK_PATH=%PATH%
+SET PATH=
+SET PATH=
+SET PATH=%_DK_PATH%
+SET _DK_PATH=
+
 REM -------------- Run finder --------------
 
 cd %DK_PROJ_DIR%
