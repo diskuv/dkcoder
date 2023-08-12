@@ -158,5 +158,5 @@ SET _DK_PATH=
 
 REM -------------- Run finder --------------
 
-cd %DK_PROJ_DIR%
+cd /d %DK_PROJ_DIR%
 "%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKTOOL_WORKDIR:FILEPATH=%DK_SHARE%\work" -D "DKTOOL_CMDLINE:STRING=%*" -P cmake/FindDkToolScripts.cmake
