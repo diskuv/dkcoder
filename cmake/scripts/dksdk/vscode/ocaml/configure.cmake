@@ -45,8 +45,7 @@ function(run)
     cmake_path(NORMAL_PATH CMAKE_SOURCE_DIR OUTPUT_VARIABLE CMAKE_SOURCE_DIR_NORMALIZED)
 
     set(admonition [[
-
-    You must exit Visual Studio Code and then re-launch Visual Studio
+You must exit Visual Studio Code and then re-launch Visual Studio
 Code so that the settings take effect.
 ]])
 
@@ -66,7 +65,8 @@ Code so that the settings take effect.
     "ocaml.sandbox": @ocamlSandbox@
 }
 ]] @ONLY)
-        message(STATUS "Created ${jsonFile}.${admonition}")
+        message(STATUS "Created ${jsonFile}")
+        message(NOTICE "${admonition}")
         return()
     endif()
 
@@ -87,5 +87,6 @@ Code so that the settings take effect.
     message(STATUS "Backup is at ${jsonFile}.${now}.bak")
     file(COPY_FILE ${jsonFile} ${jsonFile}.${now}.bak)
     file(WRITE ${jsonFile} "${newJsonContent}")
-    message(STATUS "Edited ${jsonFile}.${admonition}")
+    message(STATUS "Edited ${jsonFile}")
+    message(NOTICE "${admonition}")
 endfunction()
