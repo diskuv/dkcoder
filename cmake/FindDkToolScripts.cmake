@@ -18,6 +18,10 @@ function(parse_dktool_command_line)
     if(POLICY CMP0011)
         cmake_policy(SET CMP0011 NEW)
     endif()
+    #   Allow GIT_SUBMODULES empty to mean no submodules
+    if(POLICY CMP0097)
+        cmake_policy(SET CMP0097 NEW)
+    endif()
 
     # Parse the remainder of the arguments [args]
     # * Use technique from [Professional CMake: A Practical Guide - Forwarding Command Arguments]
@@ -109,6 +113,14 @@ endfunction()
             QUIET
             GIT_REPOSITORY https://gitlab.com/diskuv/dktool.git
             GIT_TAG 1.0
+            # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
+            # has still not been fixed. That means empty strings get removed.
+            # ExternalProject_Add(GIT_SUBMODULES) in dktool-subbuild/CMakeLists.txt
+            # means fetch all submodules.
+            # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
+            # has a workaround.
+            GIT_SUBMODULES cmake # Non-git-submodule dir that already exists
+            GIT_SUBMODULES_RECURSE OFF
         )
         file(GLOB_RECURSE system_command_files
             LIST_DIRECTORIES FALSE
@@ -129,7 +141,7 @@ endfunction()
             string(JOIN "___" command_function_name ${command_stems})
             string(JOIN "." dot_function_name ${command_stems})
             list(APPEND dot_function_names ${dot_function_name})
-
+    
             # In a new scope (to avoid a global, leaky namespace) register the function.
             message(VERBOSE "Shimming ${command_function_name}")
             cmake_language(EVAL CODE "
