@@ -575,7 +575,7 @@ install -d "$tools_dir/dl"
 download_cmake() {
   case $BUILDHOST_ARCH in
     darwin_*)
-      install_macos_prog cmake cmake 
+      install_macos_prog cmake cmake
       cmake_bindir=$(dirname "$DK_PROG_INSTALLED_LOCATION")
       ;;
     linux_x86_64)
