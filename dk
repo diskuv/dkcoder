@@ -22,6 +22,8 @@
 
 set -euf
 
+dk_pwd=$PWD
+
 # --- Imports of dkml-runtime-common's crossplatform-functions.sh ---
 
 # Get standard locations of Unix system binaries like `/usr/bin/mv` (or `/bin/mv`).
@@ -710,5 +712,6 @@ fi
 cd "$PROJ_DIR"
 "$cmake_bindir/cmake" \
   -D CMAKE_GENERATOR=Ninja -D CMAKE_MAKE_PROGRAM="$NINJA_EXE" \
+  -D "DKTOOL_PWD:FILEPATH=$dk_pwd" \
   -D "DKTOOL_WORKDIR:FILEPATH=$tools_dir/work" -D "DKTOOL_CMDLINE:STRING=$*" \
   -P cmake/FindDkToolScripts.cmake
