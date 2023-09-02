@@ -19,12 +19,29 @@ include(FetchContent)
 function(parse_dktool_command_line)
     # The first argument is <command>. All dots will be replaced with a
     # triple underscore as a convenience and to be pretty for the user.
-    if(ARGC EQUAL 0)
-        message(FATAL_ERROR "Missing <command>. Usage: ./dk <command> [args]")
+    # However, we do not error if no <command> is given ... we'll do
+    # that later.
+    set(command)
+    set(expected_function_name)
+    set(quotedArgs "")
+    if(ARGC EQUAL 0 OR (ARGC EQUAL 1 AND ARGV0 STREQUAL HELP))
+        message(NOTICE [[Usage:
+  ./dk <command> HELP
+  ./dk <command> [args]
+]])
+    else()
+        set(command ${ARGV0})
+        string(REPLACE "." "___" expected_function_name ${command})
+        message(VERBOSE "Searching for ${expected_function_name}")
+
+        # Parse the remainder of the arguments [args]
+        # * Use technique from [Professional CMake: A Practical Guide - Forwarding Command Arguments]
+        #   to be able to forward arguments correctly to an inner function (the <command> function).
+        cmake_parse_arguments(PARSE_ARGV 1 FWD "" "" "")
+        foreach(arg IN LISTS FWD_UNPARSED_ARGUMENTS)
+            string(APPEND quotedArgs " [===[${arg}]===]")
+        endforeach()
     endif()
-    set(command ${ARGV0})
-    string(REPLACE "." "___" expected_function_name ${command})
-    message(VERBOSE "Searching for ${expected_function_name}")
 
     # Set policies (we are in a new EVAL CODE context)
     #   Included scripts do automatic cmake_policy PUSH and POP
@@ -35,15 +52,6 @@ function(parse_dktool_command_line)
     if(POLICY CMP0097)
         cmake_policy(SET CMP0097 NEW)
     endif()
-
-    # Parse the remainder of the arguments [args]
-    # * Use technique from [Professional CMake: A Practical Guide - Forwarding Command Arguments]
-    #   to be able to forward arguments correctly to an inner function (the <command> function).
-    cmake_parse_arguments(PARSE_ARGV 1 FWD "" "" "")
-    set(quotedArgs "")
-    foreach(arg IN LISTS FWD_UNPARSED_ARGUMENTS)
-        string(APPEND quotedArgs " [===[${arg}]===]")
-    endforeach()
 
     # Setup the binary directory
     if(NOT DKTOOL_WORKDIR)
@@ -175,12 +183,21 @@ endfunction()
         endforeach()
     endif()
 
+    # Pretty function names that are available
+    set(pretty_function_names ${dot_function_names})
+    list(TRANSFORM pretty_function_names PREPEND "  ")
+    list(TRANSFORM pretty_function_names APPEND "\n")
+    string(JOIN "" str_pretty_function_names ${pretty_function_names})
+
+    # Exit if no <command>
+    if(NOT command)
+        message(NOTICE "The following commands are available:
+${str_pretty_function_names}")
+        return()
+    endif()
+
     # Validate the <command> exists
     if(NOT COMMAND ${expected_function_name})
-        set(pretty_function_names ${dot_function_names})
-        list(TRANSFORM pretty_function_names PREPEND "  ")
-        list(TRANSFORM pretty_function_names APPEND "\n")
-        string(JOIN "" str_pretty_function_names ${pretty_function_names})
         message(FATAL_ERROR "No command '${command}' exists. The following commands are available:
 ${str_pretty_function_names}")
         message(FATAL_ERROR "No command '${command}' exists")
