@@ -82,8 +82,8 @@ function(run)
 
     set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION})
 
-    set(noValues PRERELEASE)
-    set(singleValues HELP)
+    set(noValues PRERELEASE HELP)
+    set(singleValues)
     set(multiValues OS CI)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
