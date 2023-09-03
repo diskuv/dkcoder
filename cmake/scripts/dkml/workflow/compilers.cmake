@@ -57,6 +57,10 @@ Directory Structure
     ├── setup-dkml-windows_x86_64.ps1
     └── setup-dkml-windows_x86.ps1
 
+.github
+└── workflows
+    └── dkml.yml (Not overwritten if exists)
+
 Arguments
 =========
 
@@ -76,6 +80,49 @@ PRERELEASE
 ]])
 endfunction()
 
+set(github_matrix_windows [[
+          - gh_os: windows-2019
+            abi_pattern: win32-windows_x86
+            dkml_host_abi: windows_x86
+          - gh_os: windows-2019
+            abi_pattern: win32-windows_x86_64
+            dkml_host_abi: windows_x86_64
+]])
+set(github_matrix_linux [[
+          - gh_os: ubuntu-latest
+            abi_pattern: manylinux2014-linux_x86
+            dkml_host_abi: linux_x86
+          - gh_os: ubuntu-latest
+            abi_pattern: manylinux2014-linux_x86_64
+            dkml_host_abi: linux_x86_64
+]])
+set(github_matrix_darwin [[
+          - gh_os: macos-latest
+            abi_pattern: macos-darwin_all
+            dkml_host_abi: darwin_x86_64
+]])
+set(github_setup_windows [[
+      - name: Setup DkML compilers on a Windows host
+        if: startsWith(matrix.dkml_host_abi, 'windows_')
+        uses: ./.ci/dkml-compilers/gh-windows/pre
+        with:
+          DKML_COMPILER: ${{ env.DKML_COMPILER }}
+]])
+set(github_setup_linux [[
+      - name: Setup DkML compilers on a Linux host
+        if: startsWith(matrix.dkml_host_abi, 'linux_')
+        uses: ./.ci/dkml-compilers/gh-linux/pre
+        with:
+          DKML_COMPILER: ${{ env.DKML_COMPILER }}
+]])
+set(github_setup_darwin [[
+      - name: Setup DkML compilers on a Darwin host
+        if: startsWith(matrix.dkml_host_abi, 'darwin_')
+        uses: ./.ci/dkml-compilers/gh-darwin/pre
+        with:
+          DKML_COMPILER: ${{ env.DKML_COMPILER }}
+]])
+        
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
@@ -122,17 +169,27 @@ function(run)
     endif()
 
     # Which operating systems?
+    set(github_matrix "\n")
+    set(github_setup "\n")
+    set(has_Windows OFF)
     if(ARG_OS)
       foreach(os IN LISTS ARG_OS)
         if(os STREQUAL Windows)
           list(APPEND ${gh_source_dirs_VARNAME} gh-windows)
           list(APPEND file_FILTERS PATTERN "*-windows*")
+          string(APPEND github_matrix "${github_matrix_windows}")
+          string(APPEND github_setup "${github_setup_windows}")
+          set(has_Windows ON)
         elseif(os STREQUAL Linux)
           list(APPEND ${gh_source_dirs_VARNAME} gh-linux)
           list(APPEND file_FILTERS PATTERN "*-linux*")
+          string(APPEND github_matrix "${github_matrix_linux}")
+          string(APPEND github_setup "${github_setup_linux}")
         elseif(os STREQUAL Darwin)
           list(APPEND ${gh_source_dirs_VARNAME} gh-darwin)
           list(APPEND file_FILTERS PATTERN "*-darwin*")
+          string(APPEND github_matrix "${github_matrix_darwin}")
+          string(APPEND github_setup "${github_setup_darwin}")
         else()
           help(MODE NOTICE)
           message(FATAL_ERROR "The OS arguments must be one or more of: Windows, Linux and Darwin")
@@ -144,6 +201,9 @@ function(run)
         PATTERN "*.sh"
         PATTERN "*.yml")
       list(APPEND ${gh_source_dirs_VARNAME} gh-windows gh-linux gh-darwin)
+      string(APPEND github_matrix "${github_matrix_windows}${github_matrix_linux}${github_matrix_darwin}")
+      string(APPEND github_setup "${github_setup_windows}${github_setup_linux}${github_setup_darwin}")
+      set(has_Windows ON)
     endif()
 
     # Download the full project
@@ -162,4 +222,27 @@ function(run)
       PATTERN setup-dkml.gitlab-ci.yml
       ${file_FILTERS}
     )
+
+    # CI provider scripts
+    set(ARGV_PRETTY)
+    list(JOIN ARGV " " ARGV_SPACE_SEPARATED)
+
+    if(NOT EXISTS ${CMAKE_SOURCE_DIR}/ci/build-test.sh)
+      configure_file(
+        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/compilers-build-test.in.sh
+        ${CMAKE_CURRENT_BINARY_DIR}/build-test.sh
+        @ONLY)
+      file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/build-test.sh
+        DESTINATION ${CMAKE_SOURCE_DIR}/ci
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    endif()
+
+    if(has_Windows AND NOT EXISTS ${CMAKE_SOURCE_DIR}/.github/workflows/dkml.yml)
+      configure_file(
+        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/compilers-github-workflows-dkml.in.yml
+        ${CMAKE_CURRENT_BINARY_DIR}/dkml.yml
+        @ONLY)
+      file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/dkml.yml
+        DESTINATION ${CMAKE_SOURCE_DIR}/.github/workflows)
+    endif()
 endfunction()
