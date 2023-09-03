@@ -88,7 +88,11 @@ function(run)
         file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/dktool")
       endif()
       message(NOTICE [[
+
+Commit the ./dk, ./dk.cmd, and cmake/FindDkToolScripts.cmake scripts.
+
 Congratulations. Let's get building!
+
   Announcements | https://twitter.com/diskuv
   DkML          | https://diskuv.com/dkmlbook/
   DkSDK         | https://diskuv.com/pricing/
