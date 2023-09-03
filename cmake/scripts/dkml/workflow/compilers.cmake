@@ -107,6 +107,7 @@ set(github_setup_windows [[
         uses: ./.ci/dkml-compilers/gh-windows/pre
         with:
           DKML_COMPILER: ${{ env.DKML_COMPILER }}
+          CACHE_PREFIX: ${{ env.CACHE_PREFIX }}
 ]])
 set(github_setup_linux [[
       - name: Setup DkML compilers on a Linux host
@@ -114,6 +115,7 @@ set(github_setup_linux [[
         uses: ./.ci/dkml-compilers/gh-linux/pre
         with:
           DKML_COMPILER: ${{ env.DKML_COMPILER }}
+          CACHE_PREFIX: ${{ env.CACHE_PREFIX }}
 ]])
 set(github_setup_darwin [[
       - name: Setup DkML compilers on a Darwin host
@@ -121,6 +123,7 @@ set(github_setup_darwin [[
         uses: ./.ci/dkml-compilers/gh-darwin/pre
         with:
           DKML_COMPILER: ${{ env.DKML_COMPILER }}
+          CACHE_PREFIX: ${{ env.CACHE_PREFIX }}
 ]])
         
 function(run)
