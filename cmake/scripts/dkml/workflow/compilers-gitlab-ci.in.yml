@@ -1,0 +1,40 @@
+##########################################################################
+# File: dktool/cmake/scripts/dkml/workflow/compilers-gitlab-ci.in.yml    #
+#                                                                        #
+# Copyright 2023 Diskuv, Inc.                                            #
+#                                                                        #
+# Licensed under the Open Software License version 3.0                   #
+# (the "License"); you may not use this file except in compliance        #
+# with the License. You may obtain a copy of the License at              #
+#                                                                        #
+#     https://opensource.org/license/osl-3-0-php/                        #
+#                                                                        #
+##########################################################################
+
+# Updating
+# --------
+#
+# 1. Delete this file.
+# 2. Run dk with your original arguments:
+#        ./dk dkml.workflow.compilers @ARGV_SPACE_SEPARATED@
+#    or get help to come up with new arguments:
+#        ./dk dkml.workflow.compilers HELP
+
+include:
+  - local: '.ci/dkml-compilers/gl/setup-dkml.gitlab-ci.yml'
+
+win32:build:
+  extends: .win32:setup-dkml
+  script:
+    - msys64\usr\bin\bash -lc "ci/build-test.sh"
+
+linux:build:
+  extends: .linux:setup-dkml
+  script:
+    - ci/build-test.sh
+
+# Exclude macOS until you have a https://gitlab.com/gitlab-com/runner-saas-macos-access-requests/-/issues approved!
+# macos:build:
+#   extends: .macos:setup-dkml
+#   script:
+#     - ci/build-test.sh

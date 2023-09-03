@@ -61,6 +61,8 @@ Directory Structure
 └── workflows
     └── dkml.yml (Not overwritten if exists)
 
+.gitlab-ci.yml (Not overwritten if exists)
+
 Arguments
 =========
 
@@ -125,7 +127,7 @@ set(github_setup_darwin [[
           DKML_COMPILER: ${{ env.DKML_COMPILER }}
           CACHE_PREFIX: ${{ env.CACHE_PREFIX }}
 ]])
-        
+
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
@@ -152,13 +154,17 @@ function(run)
     set(source_dirs)
     set(source_dirs_ignored)
     set(file_FILTERS)
+    set(has_GitLab OFF)
+    set(has_GitHub OFF)
     if(ARG_CI)
       set(gh_source_dirs_VARNAME source_dirs_ignored)
       foreach(ci IN LISTS ARG_CI)
         if(ci STREQUAL GitHub)
           set(gh_source_dirs_VARNAME source_dirs)
+          set(has_GitHub ON)
         elseif(ci STREQUAL GitLab)
           list(APPEND source_dirs gl)
+          set(has_GitLab ON)
         elseif(ci STREQUAL Desktop)
           list(APPEND source_dirs pc)
         else()
@@ -169,6 +175,8 @@ function(run)
     else()
       list(APPEND source_dirs pc gl)
       set(gh_source_dirs_VARNAME source_dirs)
+      set(has_GitLab ON)
+      set(has_GitHub ON)
     endif()
 
     # Which operating systems?
@@ -240,12 +248,21 @@ function(run)
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     endif()
 
-    if(has_Windows AND NOT EXISTS ${CMAKE_SOURCE_DIR}/.github/workflows/dkml.yml)
+    if(has_Windows AND has_GitHub AND NOT EXISTS ${CMAKE_SOURCE_DIR}/.github/workflows/dkml.yml)
       configure_file(
         ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/compilers-github-workflows-dkml.in.yml
         ${CMAKE_CURRENT_BINARY_DIR}/dkml.yml
         @ONLY)
       file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/dkml.yml
         DESTINATION ${CMAKE_SOURCE_DIR}/.github/workflows)
+    endif()
+
+    if(has_GitLab AND NOT EXISTS ${CMAKE_SOURCE_DIR}/.gitlab-ci.yml)
+      configure_file(
+        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/compilers-gitlab-ci.in.yml
+        ${CMAKE_CURRENT_BINARY_DIR}/.gitlab-ci.yml
+        @ONLY)
+      file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/.gitlab-ci.yml
+        DESTINATION ${CMAKE_SOURCE_DIR})
     endif()
 endfunction()
