@@ -37,6 +37,27 @@ if [ -x /usr/bin/cygpath ]; then
     PROJECT_DIR=$(/usr/bin/cygpath -au "$PROJECT_DIR")
 fi
 
+# shellcheck disable=SC2154
+echo "
+=============
+build-test.sh
+=============
+.
+---------
+Arguments
+---------
+$*
+.
+------
+Matrix
+------
+dkml_host_abi=$dkml_host_abi
+abi_pattern=$abi_pattern
+opam_root=$opam_root
+exe_ext=${exe_ext:-}
+.
+"
+
 # PATH. Add opamrun
 export PATH="$PROJECT_DIR/.ci/sd4/opamrun:$PATH"
 
