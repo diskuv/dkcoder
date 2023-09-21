@@ -28,9 +28,7 @@ Directory Structure
 ===================
 
 .ci/ninja/bin
-├── ninja
-├── cpack
-└── ctest
+└── ninja
 
 On Windows the files will be named ninja.exe, cpack.exe,
 and ctest.exe in the ./ci/ninja/bin/ directory.
