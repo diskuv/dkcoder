@@ -62,7 +62,7 @@ function(run)
     # which we don't yet support)
     cmake_path(GET d FILENAME f)
     if(NOT f MATCHES "^ninja-" AND NOT f STREQUAL ninja)
-      message(FATAL_ERROR "This script does not support Ninja installations that are not embedded in a standalone directory named `ninja-{VERSION}` or `ninja`")
+      message(FATAL_ERROR "This script does not support Ninja installations that are not embedded in a standalone directory named `ninja-{VERSION}` or `ninja`. Details: CMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
     endif()
 
     # copy
