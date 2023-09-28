@@ -61,7 +61,7 @@ endfunction()
 # This is used by other scripts to find the JAVA_HOME.
 #
 # If the JAVA_HOME environment variable is already defined
-# and non-empty, it is used.
+# and non-empty and present on the file system, it is used.
 #
 # JDK_VERSION: A optional minimum version like "17". Defaults to 8.
 #   Currently only works on macOS which has a robust JDK Version
@@ -84,7 +84,7 @@ function(get_jdk_home)
     endif()
 
     # JAVA_HOME in the environment
-    if(DEFINED ENV{JAVA_HOME})
+    if(DEFINED ENV{JAVA_HOME} AND IS_DIRECTORY "$ENV{JAVA_HOME}")
         set(JAVA_HOME $ENV{JAVA_HOME} PARENT_SCOPE)
         return()
     endif()
