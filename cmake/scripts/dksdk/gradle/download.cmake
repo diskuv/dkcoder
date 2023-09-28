@@ -52,17 +52,33 @@ HELP
 
 QUIET
   Do not print CMake STATUS messages.
+
+NO_SYSTEM_PATH
+  Do not check for Gradle in well-known locations and in the PATH.
+  Instead, if no Gradle exists at `.ci/local/share/gradle`, then
+  1. Install Gradle at `.ci/local/share/gradle`
+  2. If the JDK hadn't been installed at `.ci/local/share/jdk`
+     then install the JDK at `.ci/local/share/jdk`
 ")
 endfunction()
 
 function(install_java_gradle)
+    set(noValues NO_SYSTEM_PATH)
+    set(singleValues)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
     set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/gradle/bin)
+    set(find_program_INITIAL)
+    if(ARG_NO_SYSTEM_PATH)
+        list(APPEND find_program_INITIAL NO_DEFAULT_PATH)
+    endif()
     if(CMAKE_HOST_WIN32)
         set(GRADLE_FILENAME gradle.bat)
     else()
         set(GRADLE_FILENAME gradle)
     endif()
-    find_program(GRADLE NAMES ${GRADLE_FILENAME} HINTS ${hints})
+    find_program(GRADLE NAMES ${GRADLE_FILENAME} HINTS ${hints} ${find_program_INITIAL})
 
     if(NOT GRADLE)
         # Download into .ci/local/share/gradle/bin (which is one of the HINTS)
@@ -94,7 +110,7 @@ function(run)
 
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
 
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET" "" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH" "" "")
 
     if(ARG_HELP)
         help(MODE NOTICE)
@@ -108,12 +124,18 @@ function(run)
         set(loglevel STATUS)
     endif()
 
+    # NO_SYSTEM_PATH
+    set(expand_NO_SYSTEM_PATH)
+    if(ARG_NO_SYSTEM_PATH)
+        list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
+    endif()
+
     # Get helper functions from other commands
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../java/jdk/download.cmake)
 
     # Do prereqs
-    install_java_jdk()
+    install_java_jdk(${expand_NO_SYSTEM_PATH})
 
-    install_java_gradle() # Set GRADLE
+    install_java_gradle(${expand_NO_SYSTEM_PATH}) # Set GRADLE
     message(STATUS "Gradle is at: ${GRADLE}")
 endfunction()
