@@ -20,7 +20,7 @@ function(help)
 
     message(${ARG_MODE} "usage: ./dk dksdk.gradle.download
 
-Downloads Gradle.
+Downloads Gradle and if needed Java JDK as well.
 
 Directory Structure
 ===================
