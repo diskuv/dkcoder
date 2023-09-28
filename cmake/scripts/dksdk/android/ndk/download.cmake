@@ -22,8 +22,10 @@ function(help)
 
     message(${ARG_MODE} "usage: ./dk dksdk.android.ndk.download
 
-Downloads Android NDK ${NDK_LTS}. Only meant for CI use, after you have
-already accepted the terms for Android NDK elsewhere.
+Downloads Android NDK ${NDK_LTS} and if needed Java JDK as well.
+
+Only meant for CI use, after you have already accepted the terms
+for Android NDK elsewhere.
 
 Directory Structure
 ===================
@@ -73,6 +75,10 @@ HELP
 
 QUIET
   Do not print CMake STATUS messages.
+
+NO_SYSTEM_PATH
+  Do not check for a JDK in well-known locations and in the PATH.
+  Instead, install a JDK if no JDK exists at `.ci/local/share/jdk`.
 ")
 endfunction()
 
@@ -171,7 +177,7 @@ function(run)
 
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
 
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET" "" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH" "" "")
 
     if(ARG_HELP)
         help(MODE NOTICE)
@@ -185,10 +191,16 @@ function(run)
         set(loglevel STATUS)
     endif()
 
+    # NO_SYSTEM_PATH
+    set(expand_NO_SYSTEM_PATH)
+    if(ARG_NO_SYSTEM_PATH)
+        list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
+    endif()
+
     # Get helper functions from JDK downlader
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../java/jdk/download.cmake)
 
-    install_java_jdk()
+    install_java_jdk(${expand_NO_SYSTEM_PATH})
     get_jdk_home() # Set JAVA_HOME if available
     install_sdkmanager()
     install_ndk()
