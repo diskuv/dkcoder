@@ -67,17 +67,17 @@ function(install_java_gradle)
     if(NOT GRADLE)
         # Download into .ci/local/share/gradle/bin (which is one of the HINTS)
         if(CMAKE_HOST_UNIX OR CMAKE_HOST_WIN32)
-            set(url https://services.gradle.org/distributions/gradle-8.2.1-bin.zip)
+            set(url https://services.gradle.org/distributions/gradle-8.3-bin.zip)
             message(${loglevel} "Downloading Gradle from ${url}")
             file(DOWNLOAD ${url}
                 ${CMAKE_CURRENT_BINARY_DIR}/gradle.zip
-                EXPECTED_HASH SHA256=03ec176d388f2aa99defcadc3ac6adf8dd2bce5145a129659537c0874dea5ad1)
+                EXPECTED_HASH SHA256=591855b517fc635b9e04de1d05d5e76ada3f89f5fc76f87978d1b245b4f69225)
             message(${loglevel} "Extracting Gradle")
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/gradle.zip
                 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
             file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/gradle)
-            file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/gradle-8.2.1 ${CMAKE_CURRENT_BINARY_DIR}/gradle)
+            file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/gradle-8.3 ${CMAKE_CURRENT_BINARY_DIR}/gradle)
             file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/.ci/local/share/gradle)
             file(COPY ${CMAKE_CURRENT_BINARY_DIR}/gradle DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share)
         else()
