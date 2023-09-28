@@ -178,6 +178,31 @@ function(install_java_jdk)
             message(${loglevel} "Extracting JDK")
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
             set(downloaded ON)
+        elseif(CMAKE_HOST_APPLE)
+            execute_process(COMMAND uname -m
+                    OUTPUT_VARIABLE host_machine_type
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    COMMAND_ERROR_IS_FATAL ANY)
+            if(host_machine_type STREQUAL x86_64)
+                set(url https://aka.ms/download-jdk/microsoft-jdk-17.0.8.1-macOS-x64.tar.gz)
+                set(out_base jdk-17.0.8.1+1)
+                message(${loglevel} "Downloading Temurin JDK from ${url}")
+                file(DOWNLOAD ${url}
+                    ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz
+                    EXPECTED_HASH SHA256=e67ed748b9ef6d4557da24beefe9d9ec193e9d9f843be5ff6559a275e0d230b6)
+            elseif(host_machine_type STREQUAL arm64)
+                set(url https://aka.ms/download-jdk/microsoft-jdk-17.0.8.1-macOS-aarch64.tar.gz)
+                set(out_base jdk-17.0.8.1+1)
+                message(${loglevel} "Downloading Temurin JDK from ${url}")
+                file(DOWNLOAD ${url}
+                    ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz
+                    EXPECTED_HASH SHA256=8acda4fa59946902180a9283ee191b3db19b8c1146fb8dfa209d316ec78f9a5f)
+            else()
+                message(FATAL_ERROR "Your APPLE ${host_machine_type} platform is currently not supported by this download script")
+            endif()
+            message(${loglevel} "Extracting JDK")
+            file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+            set(downloaded ON)
         elseif(CMAKE_HOST_UNIX)
             execute_process(COMMAND uname -m
                     OUTPUT_VARIABLE host_machine_type
@@ -198,7 +223,7 @@ function(install_java_jdk)
                     ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz
                     EXPECTED_HASH SHA256=53a66b711d828deae801870143b00be2cf4563ce283d393b08b7b96a846dabd8)
             else()
-                message(FATAL_ERROR "Your ${host_machine_type} platform is currently not supported by this download script")
+                message(FATAL_ERROR "Your UNIX ${host_machine_type} platform is currently not supported by this download script")
             endif()
             message(${loglevel} "Extracting JDK")
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
