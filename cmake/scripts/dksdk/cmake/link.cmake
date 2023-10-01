@@ -42,7 +42,7 @@ HELP
   Print this help message.
 
 QUIET
-  Do not print what files have been installed.
+  Do not print what files are being installed.
 ]])
 endfunction()
 

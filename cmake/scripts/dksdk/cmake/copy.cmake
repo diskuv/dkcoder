@@ -27,10 +27,24 @@ the local project directory was mounted).
 Directory Structure
 ===================
 
-.ci/cmake/bin
-├── cmake
-├── cpack
-└── ctest
+.ci/cmake
+├── bin
+│   ├── cmake
+│   ├── cmake-gui
+│   ├── cmcldeps
+│   ├── cpack
+│   └── ctest
+├── doc
+│   └── cmake/
+├── man
+│   ├── man1/
+│   └── man7/
+└── share
+    ├── aclocal/
+    ├── bash-completion/
+    ├── cmake-3.25/
+    ├── emacs/
+    └── vim/
 
 On Windows the files will be named cmake.exe, cpack.exe,
 and ctest.exe in the ./ci/cmake/bin/ directory.
@@ -40,6 +54,9 @@ Arguments
 
 HELP
   Print this help message.
+
+QUIET
+  Do not print what files are being installed.
 ]])
 endfunction()
 
@@ -49,11 +66,18 @@ function(run)
 
     set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION})
 
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP" "" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET" "" "")
 
     if(ARG_HELP)
       help(MODE NOTICE)
       return()
+    endif()
+
+    # QUIET
+    if(ARG_QUIET)
+        set(file_COMMAND COPY)
+    else()
+        set(file_COMMAND INSTALL)
     endif()
 
     # cmake-3.25.2/bin/cmake -> cmake-3.25.2/
@@ -73,7 +97,7 @@ function(run)
       RELATIVE ${d}
       ${d}/*)
     foreach(entry IN LISTS entries)
-        file(INSTALL ${d}/${entry}
+        file(${file_COMMAND} ${d}/${entry}
             DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake
             USE_SOURCE_PERMISSIONS)
     endforeach()
