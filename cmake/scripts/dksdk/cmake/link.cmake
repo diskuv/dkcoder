@@ -40,6 +40,9 @@ Arguments
 
 HELP
   Print this help message.
+
+QUIET
+  Do not print what files have been installed.
 ]])
 endfunction()
 
@@ -49,15 +52,22 @@ function(run)
 
     set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION})
 
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP" "" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET" "" "")
 
     if(ARG_HELP)
       help(MODE NOTICE)
       return()
     endif()
 
+    # QUIET
+    if(ARG_QUIET)
+        set(file_COMMAND COPY)
+    else()
+        set(file_COMMAND INSTALL)
+    endif()
+
     set(ENV{CMAKE_INSTALL_MODE} ABS_SYMLINK_OR_COPY)
-    file(INSTALL ${CMAKE_COMMAND} ${CMAKE_CTEST_COMMAND} ${CMAKE_CPACK_COMMAND}
+    file(${file_COMMAND} ${CMAKE_COMMAND} ${CMAKE_CTEST_COMMAND} ${CMAKE_CPACK_COMMAND}
         DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake/bin
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endfunction()
