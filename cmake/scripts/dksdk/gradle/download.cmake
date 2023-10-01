@@ -81,8 +81,13 @@ function(install_java_gradle)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
+    set(version ${ARG_VERSION})
+    if(NOT version)
+        set(version 8.3)
+    endif()
+
     # VERSION map
-    if(ARG_VERSION STREQUAL 7.6)
+    if(version STREQUAL 7.6)
         if(ARG_ALL)
             set(url https://services.gradle.org/distributions/gradle-7.6-all.zip)
             set(urlhash SHA256=312eb12875e1747e05c2f81a4789902d7e4ec5defbd1eefeaccc08acf096505d)
@@ -90,7 +95,7 @@ function(install_java_gradle)
             set(url https://services.gradle.org/distributions/gradle-7.6-bin.zip)
             set(urlhash SHA256=7ba68c54029790ab444b39d7e293d3236b2632631fb5f2e012bb28b4ff669e4b)
         endif()
-    elseif(ARG_VERSION STREQUAL 8.3 OR NOT ARG_VERSION)
+    elseif(version STREQUAL 8.3)
         if(ARG_ALL)
             set(url https://services.gradle.org/distributions/gradle-8.3-all.zip)
             set(urlhash SHA256=bb09982fdf52718e4c7b25023d10df6d35a5fff969860bdf5a5bd27a3ab27a9e)
@@ -99,7 +104,7 @@ function(install_java_gradle)
             set(urlhash SHA256=591855b517fc635b9e04de1d05d5e76ada3f89f5fc76f87978d1b245b4f69225)
         endif()
     else()
-        message(FATAL_ERROR "The only supported versions of Gradle are 7.6 and 8.3, not ${ARG_VERSION}")
+        message(FATAL_ERROR "The only supported versions of Gradle are 7.6 and 8.3, not ${version}")
     endif()
 
     set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/gradle/bin)
@@ -126,7 +131,7 @@ function(install_java_gradle)
                 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
             file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/gradle)
-            file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/gradle-${ARG_VERSION} ${CMAKE_CURRENT_BINARY_DIR}/gradle)
+            file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/gradle-${version} ${CMAKE_CURRENT_BINARY_DIR}/gradle)
             file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/.ci/local/share/gradle)
             file(COPY ${CMAKE_CURRENT_BINARY_DIR}/gradle DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share)
         else()
@@ -170,9 +175,9 @@ function(run)
     endif()
 
     # VERSION
-    set(version 8.3)
+    set(expand_VERSION)
     if(ARG_VERSION)
-        set(version ${ARG_VERSION})
+        list(APPEND expand_VERSION VERSION ${ARG_VERSION})
     endif()
 
     # Get helper functions from other commands
@@ -181,6 +186,6 @@ function(run)
     # Do prereqs
     install_java_jdk(${expand_NO_SYSTEM_PATH})
 
-    install_java_gradle(${expand_NO_SYSTEM_PATH} ${expand_ALL} VERSION ${version}) # Sets GRADLE
+    install_java_gradle(${expand_NO_SYSTEM_PATH} ${expand_ALL} ${expand_VERSION}) # Sets GRADLE
     message(STATUS "Gradle is at: ${GRADLE}")
 endfunction()
