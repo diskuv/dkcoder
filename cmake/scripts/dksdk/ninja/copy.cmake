@@ -65,6 +65,13 @@ function(run)
       message(FATAL_ERROR "This script does not support Ninja installations that are not embedded in a standalone directory named `ninja-{VERSION}` or `ninja`. Details: CMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
     endif()
 
+    # gitignore
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/ninja")
+    file(COPY_FILE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../_templates/all.gitignore"
+        "${CMAKE_SOURCE_DIR}/.ci/ninja/.gitignore"
+        ONLY_IF_DIFFERENT)
+
     # copy
     file(GLOB entries
       LIST_DIRECTORIES true

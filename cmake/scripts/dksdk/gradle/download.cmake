@@ -187,5 +187,13 @@ function(run)
     install_java_jdk(${expand_NO_SYSTEM_PATH})
 
     install_java_gradle(${expand_NO_SYSTEM_PATH} ${expand_ALL} ${expand_VERSION}) # Sets GRADLE
+
+    # gitignore (done after install_java_gradle() since that removes the gradle dir)
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/gradle")
+    file(COPY_FILE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../_templates/all.gitignore"
+        "${CMAKE_SOURCE_DIR}/.ci/local/share/gradle/.gitignore"
+        ONLY_IF_DIFFERENT)
+
     message(STATUS "Gradle is at: ${GRADLE}")
 endfunction()

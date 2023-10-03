@@ -286,6 +286,13 @@ function(run)
         list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
     endif()
 
+    # gitignore
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk")
+    file(COPY_FILE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../_templates/all.gitignore"
+        "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/.gitignore"
+        ONLY_IF_DIFFERENT)
+
     install_java_jdk(${expand_NO_SYSTEM_PATH})
     message(STATUS "javac compiler is at: ${JAVAC}")
 endfunction()

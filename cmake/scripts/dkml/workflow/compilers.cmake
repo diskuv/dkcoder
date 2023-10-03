@@ -217,6 +217,18 @@ function(run)
       set(has_Windows ON)
     endif()
 
+    # gitignore
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/dkml-compilers")
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/msys64")
+    file(COPY_FILE # .ci/dkml-compilers gitignore is non-simple; it needs to be checked in
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../_templates/dkml-compilers.gitignore"
+        "${CMAKE_SOURCE_DIR}/.ci/dkml-compilers/.gitignore"
+        ONLY_IF_DIFFERENT)
+    file(COPY_FILE # msys64/ used on Windows. We want the .gitignore checked in
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../_templates/all-except-gitignore.gitignore"
+        "${CMAKE_SOURCE_DIR}/msys64/.gitignore"
+        ONLY_IF_DIFFERENT)
+
     # Download the full project
     FetchContent_Populate(dkml-workflows
         QUIET

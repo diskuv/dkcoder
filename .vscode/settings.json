@@ -9,8 +9,9 @@
         "autoHeader": "autoSave",
         "enforceHeader": true,
         "exclude": [
+            "ignore",
             "jsonc",
-            "json"
+            "json",
         ],
         "excludeGlob": [
             "**/settings.json",
@@ -23,6 +24,7 @@
         {
             "language": "*",
             "rootDirFileName": "dk.cmd",
+            "prefix": " * ",
             "suffix": "*",
             "begin": "/*************************************************************************",
             "end": " *************************************************************************/",

@@ -1,0 +1,11 @@
+#   GitHub, unlike GitLab, does not need its CI files to exist
+#   before referencing them. That means the GitHub scripts do not need
+#   to be checked in.
+/gh-*/
+
+#   The desktop CI files (typically) shouldn't be checked in.
+#   And the Windows .ps1 files are difficult to check into source
+#   control with the correct PowerShell 5 encoding (UTF-16 with BOM);
+#   even .gitattributes is somewhat sensitive to the version of git
+#   that you or your peers (aka. the user of dkml-compilers) have.
+/pc/

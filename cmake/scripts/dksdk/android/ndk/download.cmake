@@ -200,6 +200,13 @@ function(run)
     # Get helper functions from JDK downlader
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../java/jdk/download.cmake)
 
+    # gitignore
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk")
+    file(COPY_FILE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../_templates/all.gitignore"
+        "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/.gitignore"
+        ONLY_IF_DIFFERENT)
+
     install_java_jdk(${expand_NO_SYSTEM_PATH})
     get_jdk_home() # Set JAVA_HOME if available
     install_sdkmanager()

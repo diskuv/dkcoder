@@ -66,6 +66,13 @@ function(run)
         set(file_COMMAND INSTALL)
     endif()
 
+    # gitignore
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/cmake")
+    file(COPY_FILE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../_templates/all.gitignore"
+        "${CMAKE_SOURCE_DIR}/.ci/cmake/.gitignore"
+        ONLY_IF_DIFFERENT)
+
     set(ENV{CMAKE_INSTALL_MODE} ABS_SYMLINK_OR_COPY)
     file(${file_COMMAND} ${CMAKE_COMMAND} ${CMAKE_CTEST_COMMAND} ${CMAKE_CPACK_COMMAND}
         DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake/bin
