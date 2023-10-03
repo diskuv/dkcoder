@@ -230,8 +230,15 @@ function(install_java_jdk)
             set(downloaded ON)
         endif()
         if(downloaded)
-            file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/.ci/local/share/jdk)
-            file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/.ci/local/share/jdk)
+            file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk")
+            file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk")
+
+            # gitignore
+            file(COPY_FILE
+                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../_templates/all.gitignore"
+                "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/.gitignore"
+                ONLY_IF_DIFFERENT)
+
             # Do file(RENAME) but work across mount volumes (ex. inside containers)
             file(GLOB entries
                 LIST_DIRECTORIES true
@@ -285,13 +292,6 @@ function(run)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
     endif()
-
-    # gitignore
-    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk")
-    file(COPY_FILE
-        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../_templates/all.gitignore"
-        "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/.gitignore"
-        ONLY_IF_DIFFERENT)
 
     install_java_jdk(${expand_NO_SYSTEM_PATH})
     message(STATUS "javac compiler is at: ${JAVAC}")
