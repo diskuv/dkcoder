@@ -720,4 +720,4 @@ cd "$PROJ_DIR"
   -D CMAKE_GENERATOR=Ninja -D CMAKE_MAKE_PROGRAM="$NINJA_EXE" \
   -D "DKTOOL_PWD:FILEPATH=$dk_pwd" \
   -D "DKTOOL_WORKDIR:FILEPATH=$tools_dir/work" -D "DKTOOL_CMDLINE:STRING=$*" \
-  -P cmake/FindDkToolScripts.cmake
+  -P cmake/scripts/__dk-find-scripts.cmake

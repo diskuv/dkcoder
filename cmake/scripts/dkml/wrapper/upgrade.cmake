@@ -18,7 +18,7 @@ function(help)
     endif()
     message(${ARG_MODE} [[usage: ./dk dkml.wrapper.upgrade
 
-Upgrade ./dk, ./dk.cmd and cmake/FindDkToolScripts.cmake.
+Upgrade ./dk, ./dk.cmd and cmake/scripts/__dk-find-scripts.cmake.
 
 Arguments
 =========
@@ -68,7 +68,7 @@ function(run)
     cmake_path(GET d PARENT_PATH d)
     cmake_path(APPEND d "dk" OUTPUT_VARIABLE file_dk)
     cmake_path(APPEND d "dk.cmd" OUTPUT_VARIABLE file_dkcmd)
-    cmake_path(APPEND d "cmake" "FindDkToolScripts.cmake" OUTPUT_VARIABLE file_cmake_finddktoolsscriptscmake)
+    cmake_path(APPEND d "cmake" "scripts" "__dk-find-scripts.cmake" OUTPUT_VARIABLE file_dkfindscriptscmake)
 
     # validate
     if(NOT EXISTS ${file_dk})
@@ -77,8 +77,8 @@ function(run)
     if(NOT EXISTS ${file_dkcmd})
       message(FATAL_ERROR "Missing 'dk.cmd' at expected ${file_dkcmd}")
     endif()
-    if(NOT EXISTS ${file_cmake_finddktoolsscriptscmake})
-      message(FATAL_ERROR "Missing 'FindDkToolScripts.cmake' at expected ${file_cmake_finddktoolsscriptscmake}")
+    if(NOT EXISTS ${file_dkfindscriptscmake})
+      message(FATAL_ERROR "Missing '__dk-find-scripts.cmake' at expected ${file_dkfindscriptscmake}")
     endif()
 
     # DONE?
@@ -89,7 +89,7 @@ function(run)
       endif()
       message(NOTICE [[
 
-Commit the ./dk, ./dk.cmd, and cmake/FindDkToolScripts.cmake scripts.
+Commit the ./dk, ./dk.cmd, and cmake/scripts/__dk-find-scripts.cmake scripts.
 
 Congratulations. Let's get building!
 
@@ -111,7 +111,7 @@ Congratulations. Let's get building!
     file(INSTALL "${file_dkcmd}"
         DESTINATION "${dest}"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-    file(INSTALL "${file_cmake_finddktoolsscriptscmake}"
+    file(INSTALL "${file_dkfindscriptscmake}"
         DESTINATION "${dest}/cmake"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     file(INSTALL "${file_dk}"

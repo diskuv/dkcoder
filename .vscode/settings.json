@@ -12,6 +12,7 @@
             "ignore",
             "jsonc",
             "json",
+            "markdown"
         ],
         "excludeGlob": [
             "**/settings.json",
