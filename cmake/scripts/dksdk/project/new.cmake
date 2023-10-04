@@ -186,6 +186,7 @@ function(run)
     cmake_path(ABSOLUTE_PATH OUTPUT_DIR)
 
     set(toplevel_files
+        _all_cmake.dune
         .clang-format
         .gitattributes
         .gitignore
@@ -193,6 +194,7 @@ function(run)
         .ocamlformat
         CMakePresets.json
         CMakeUserPresets-SUGGESTED.json
+        CTestConfig.cmake
         dk.cmd
         dune
         dune-project
