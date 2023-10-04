@@ -197,7 +197,6 @@ function(run)
         CTestConfig.cmake
         dk.cmd
         dune
-        dune-project
     )
     set(toplevel_executables
         dk
@@ -215,9 +214,13 @@ function(run)
         DESTINATION ${OUTPUT_DIR}
         FILENAME CMakeLists.txt)
     do_install_file(
-            PROJECT_NAME ${ARG_NAME}
-            DESTINATION ${OUTPUT_DIR}
-            FILENAME DkSDK.md)
+        PROJECT_NAME ${ARG_NAME}
+        DESTINATION ${OUTPUT_DIR}
+        FILENAME dune-project)
+    do_install_file(
+        PROJECT_NAME ${ARG_NAME}
+        DESTINATION ${OUTPUT_DIR}
+        FILENAME DkSDK.md)
 
     file(INSTALL ci
         DESTINATION ${OUTPUT_DIR}
