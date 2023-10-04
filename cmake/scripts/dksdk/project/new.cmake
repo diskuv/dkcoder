@@ -255,7 +255,7 @@ function(run)
         PROJECT_NAME ${ARG_NAME}
         SUBDIRS ${subdirs}
         DESTINATION ${OUTPUT_DIR}
-        GLOBS "CMakeLists.txt" "*.dune" "*.c" "*.h" "*.ml" "*.mli")
+        GLOBS "CMakeLists.txt" "dune" "*.dune" "*.c" "*.h" "*.ml" "*.mli")
 
     # IntelliJ, CLion and other JetBrains. See .gitignore
     # for what can be included, or see
