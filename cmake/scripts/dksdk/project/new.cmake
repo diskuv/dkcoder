@@ -195,6 +195,7 @@ function(run)
         CMakeUserPresets-SUGGESTED.json
         dk.cmd
         dune
+        dune-project
     )
     set(toplevel_executables
         dk
