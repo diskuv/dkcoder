@@ -112,7 +112,7 @@ Congratulations. Let's get building!
         DESTINATION "${dest}"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     file(INSTALL "${file_dkfindscriptscmake}"
-        DESTINATION "${dest}/cmake"
+        DESTINATION "${dest}/cmake/scripts"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
     file(INSTALL "${file_dk}"
         DESTINATION "${dest}"
