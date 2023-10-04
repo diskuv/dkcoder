@@ -58,10 +58,6 @@ function(run)
       return()
     endif()
 
-    if(NOT ARG_ARGS)
-        help()
-    endif()
-
     # QUIET
     if(ARG_QUIET)
         set(loglevel DEBUG)
