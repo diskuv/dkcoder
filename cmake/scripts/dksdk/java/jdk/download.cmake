@@ -235,7 +235,7 @@ function(install_java_jdk)
 
             # gitignore
             file(COPY_FILE
-                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../_templates/all.gitignore"
+                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../__dk-tmpl/all.gitignore"
                 "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/.gitignore"
                 ONLY_IF_DIFFERENT)
 

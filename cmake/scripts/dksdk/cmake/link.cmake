@@ -69,7 +69,7 @@ function(run)
     # gitignore
     file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/cmake")
     file(COPY_FILE
-        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../_templates/all.gitignore"
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../__dk-tmpl/all.gitignore"
         "${CMAKE_SOURCE_DIR}/.ci/cmake/.gitignore"
         ONLY_IF_DIFFERENT)
 

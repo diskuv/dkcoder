@@ -203,7 +203,7 @@ function(run)
     # gitignore
     file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk")
     file(COPY_FILE
-        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../_templates/all.gitignore"
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../__dk-tmpl/all.gitignore"
         "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/.gitignore"
         ONLY_IF_DIFFERENT)
 
