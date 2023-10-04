@@ -159,7 +159,9 @@ function(run)
     message(${loglevel} "Using dune: ${BUILD_CMAKE_DUNE} (${CMAKE_CURRENT_SOURCE_DIR})")
     execute_process(
         COMMAND
-        ${CMAKE_COMMAND} -E env CLICOLOR=${clicolor}
+        ${CMAKE_COMMAND} -E env
+            CLICOLOR=${clicolor}
+            DUNE_WORKSPACE=${binaryDir}/DkSDKFiles/165/dune-workspace
         "${BUILD_CMAKE_DUNE}" ${ARG_ARGS}
         ENCODING UTF-8
         ${execute_process_args}
