@@ -65,14 +65,14 @@ ARGS <ARGS>
 
 JAVA_HOME <JAVA_HOME>
   The location of the Java home. On Windows, spaces and backslashes cannot
-  be encoded simply on the command line. Instead use the JAVA_HOME environment
-  variable.
+  be encoded simply on the command line; for this situation use the
+  JAVA_HOME environment variable.
 
 OUTPUT_FILE <file>
   <file> is attached to the standard output pipe of the Gradle process.
 
 QUIET
-  Do not print CMake STATUS messages. This flag has no effect on Gradle.    
+  Do not print CMake STATUS messages. This flag has no effect on Gradle.
 ]])
 endfunction()
 
