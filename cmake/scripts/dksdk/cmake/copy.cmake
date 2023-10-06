@@ -60,6 +60,23 @@ QUIET
 ]])
 endfunction()
 
+# Check the running [cmake] is in a standalone cmake directory
+# rather than /usr/bin/cmake
+function(check_standalone_cmake OUT_SUCCESS_VARIABLE OUT_DIR_VARIABLE)
+    # cmake-3.25.2/bin/cmake -> cmake-3.25.2/
+    cmake_path(GET CMAKE_COMMAND PARENT_PATH d)
+    cmake_path(GET d PARENT_PATH d)
+
+    cmake_path(GET d FILENAME f)
+    if(NOT f MATCHES "^cmake-" AND NOT f STREQUAL cmake)
+      set(${OUT_SUCCESS_VARIABLE} OFF PARENT_SCOPE)
+      message(FATAL_ERROR "This script does not support CMake installations that are not embedded in a standalone directory named `cmake-{VERSION}` or `cmake`")
+    else()
+      set(${OUT_SUCCESS_VARIABLE} ON PARENT_SCOPE)
+      set(${OUT_DIR_VARIABLE} "${d}" PARENT_SCOPE)
+    endif()
+endfunction()
+
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
@@ -84,10 +101,9 @@ function(run)
     cmake_path(GET CMAKE_COMMAND PARENT_PATH d)
     cmake_path(GET d PARENT_PATH d)
 
-    # validate it is a standalone cmake directory (rather than /usr/bin/cmake
-    # which we don't yet support)
-    cmake_path(GET d FILENAME f)
-    if(NOT f MATCHES "^cmake-" AND NOT f STREQUAL cmake)
+    # validate it is a standalone cmake directory
+    check_standalone_cmake(IS_STANDALONE STANDALONE_DIR)
+    if(NOT IS_STANDALONE)
       message(FATAL_ERROR "This script does not support CMake installations that are not embedded in a standalone directory named `cmake-{VERSION}` or `cmake`")
     endif()
 
@@ -101,10 +117,10 @@ function(run)
     # copy
     file(GLOB entries
       LIST_DIRECTORIES true
-      RELATIVE ${d}
-      ${d}/*)
+      RELATIVE ${STANDALONE_DIR}
+      ${STANDALONE_DIR}/*)
     foreach(entry IN LISTS entries)
-        file(${file_COMMAND} ${d}/${entry}
+        file(${file_COMMAND} ${STANDALONE_DIR}/${entry}
             DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake
             USE_SOURCE_PERMISSIONS)
     endforeach()

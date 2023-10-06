@@ -83,9 +83,25 @@ NO_SYSTEM_PATH
 endfunction()
 
 set(sdkmanager_NAMES sdkmanager sdkmanager.bat)
-function(install_sdkmanager)
+
+# Sets SDKMANAGER
+function(find_sdkmanager)
+    set(noValues REQUIRED)
+    set(singleValues)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    set(find_ARGS)
+    if(ARG_REQUIRED)
+        list(APPEND find_ARGS REQUIRED)
+    endif()
+
     set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest/bin)
-    find_program(SDKMANAGER NAMES ${sdkmanager_NAMES} HINTS ${hints})
+    find_program(SDKMANAGER NAMES ${sdkmanager_NAMES} HINTS ${hints} ${find_ARGS})
+endfunction()
+
+function(install_sdkmanager)
+    find_sdkmanager()
 
     if(NOT SDKMANAGER)
         # Download into .ci/local/share/android-sdk/cmdline-tools/latest/bin (which is one of the HINTS)
@@ -123,7 +139,7 @@ function(install_sdkmanager)
         file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools")
     endif()
 
-    find_program(SDKMANAGER NAMES ${sdkmanager_NAMES} REQUIRED HINTS ${hints})
+    find_sdkmanager(REQUIRED)
 endfunction()
 
 function(are_licenses_accepted LICENSEDIR)
@@ -141,7 +157,6 @@ function(are_licenses_accepted LICENSEDIR)
 endfunction()
 
 function(install_ndk)
-    set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest/bin)
     set(ANDROID_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/ndk/${NDK_LTS}/build/cmake/android.toolchain.cmake)
 
     if(NOT EXISTS ${ANDROID_TOOLCHAIN_FILE})
@@ -211,5 +226,5 @@ function(run)
     get_jdk_home() # Set JAVA_HOME if available
     install_sdkmanager()
     install_ndk()
-    message(STATUS "Android toolchain file is at: ${ANDROID_TOOLCHAIN_FILE}")
+    message(${loglevel} "Android toolchain file is at: ${ANDROID_TOOLCHAIN_FILE}")
 endfunction()
