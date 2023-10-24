@@ -247,6 +247,7 @@ function(install_java_jdk)
             foreach(entry IN LISTS entries)
                 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/${out_base}/${entry}
                     DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share/jdk
+                    FOLLOW_SYMLINK_CHAIN
                     USE_SOURCE_PERMISSIONS)
             endforeach()
             file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/${out_base}")
@@ -263,6 +264,7 @@ function(copy_if_exists SRCDIR DESTINATION)
     if(EXISTS ${SRCDIR})
         file(COPY ${SRCDIR}
             DESTINATION ${DESTINATION}
+            FOLLOW_SYMLINK_CHAIN
             USE_SOURCE_PERMISSIONS)
     endif()
 endfunction()

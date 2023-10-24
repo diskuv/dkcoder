@@ -134,6 +134,7 @@ function(install_sdkmanager)
         foreach(entry IN LISTS entries)
             file(COPY ${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools/${entry}
                 DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest
+                FOLLOW_SYMLINK_CHAIN
                 USE_SOURCE_PERMISSIONS)
         endforeach()
         file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools")

@@ -122,6 +122,7 @@ function(run)
     foreach(entry IN LISTS entries)
         file(${file_COMMAND} ${STANDALONE_DIR}/${entry}
             DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake
+            FOLLOW_SYMLINK_CHAIN
             USE_SOURCE_PERMISSIONS)
     endforeach()
 endfunction()
