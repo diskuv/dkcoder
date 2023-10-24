@@ -27,13 +27,23 @@ needed inside .ci/cmake/.
 Directory Structure
 ===================
 
-.ci/cmake/bin
-├── cmake
-├── cpack
-└── ctest
+.ci/cmake/
+├── bin
+│   ├── cmake -> .../cmake-MAJOR.MINOR.PATCH/bin/cmake
+│   ├── cpack -> .../cmake-MAJOR.MINOR.PATCH/bin/cpack
+│   └── ctest -> .../cmake-MAJOR.MINOR.PATCH/bin/ctest
+└── share
+    └── cmake-MAJOR.MINOR -> .../cmake-MAJOR.MINOR.PATCH/share/cmake-MAJOR.MINOR/
+        ├── include
+        ├── Modules
+        └── Templates
 
 On Windows the files will be named cmake.exe, cpack.exe,
 and ctest.exe in the ./ci/cmake/bin/ directory.
+
+The share/cmake-MAJOR.MINOR directory (the CMAKE_ROOT) may
+have contents different from what you see above. The entire
+CMAKE_ROOT is linked (or copied if symlinks are not available).
 
 Arguments
 =========
@@ -73,8 +83,12 @@ function(run)
         "${CMAKE_SOURCE_DIR}/.ci/cmake/.gitignore"
         ONLY_IF_DIFFERENT)
 
+    # bin/
     set(ENV{CMAKE_INSTALL_MODE} ABS_SYMLINK_OR_COPY)
     file(${file_COMMAND} ${CMAKE_COMMAND} ${CMAKE_CTEST_COMMAND} ${CMAKE_CPACK_COMMAND}
         DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake/bin
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+    # <CMAKE_ROOT>/
+    file(${file_COMMAND} ${CMAKE_ROOT} DESTINATION ${CMAKE_SOURCE_DIR}/.ci/cmake/share)
 endfunction()
