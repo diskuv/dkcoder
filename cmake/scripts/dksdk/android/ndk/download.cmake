@@ -27,6 +27,16 @@ Downloads Android NDK ${NDK_LTS} and if needed Java JDK as well.
 Only meant for CI use, after you have already accepted the terms
 for Android NDK elsewhere.
 
+When using the Android NDK you will need to have Ninja in your
+PATH to complete builds; alternatively Android CMake installations
+contain Ninja and Android NDK does search within Android CMake,
+even if you have explicitly chosen a different CMake with cmake.dir
+in your local.properties.
+
+We recommend that you use:
+    ./dk dksdk.android.cmake.download
+to download an Android CMake version containing Ninja.
+
 Directory Structure
 ===================
 
