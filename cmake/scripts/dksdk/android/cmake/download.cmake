@@ -160,7 +160,7 @@ function(run)
 
     install_java_jdk(${expand_NO_SYSTEM_PATH})
     get_jdk_home() # Set JAVA_HOME if available
-    install_sdkmanager()
+    install_sdkmanager(${expand_NO_SYSTEM_PATH})
     install_android_cmake()
     message(${loglevel} "Android CMake is at: ${ANDROID_CMAKE}")
 endfunction()

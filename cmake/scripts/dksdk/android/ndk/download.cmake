@@ -96,12 +96,15 @@ set(sdkmanager_NAMES sdkmanager sdkmanager.bat)
 
 # Sets SDKMANAGER
 function(find_sdkmanager)
-    set(noValues REQUIRED)
+    set(noValues REQUIRED NO_SYSTEM_PATH)
     set(singleValues)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
     set(find_ARGS)
+    if(ARG_NO_SYSTEM_PATH)
+        list(APPEND find_ARGS NO_DEFAULT_PATH)
+    endif()
     if(ARG_REQUIRED)
         list(APPEND find_ARGS REQUIRED)
     endif()
@@ -111,7 +114,18 @@ function(find_sdkmanager)
 endfunction()
 
 function(install_sdkmanager)
-    find_sdkmanager()
+    set(noValues NO_SYSTEM_PATH)
+    set(singleValues)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # NO_SYSTEM_PATH
+    set(expand_NO_SYSTEM_PATH)
+    if(ARG_NO_SYSTEM_PATH)
+        list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
+    endif()
+
+    find_sdkmanager(${expand_NO_SYSTEM_PATH})
 
     if(NOT SDKMANAGER)
         # Download into .ci/local/share/android-sdk/cmdline-tools/latest/bin (which is one of the HINTS)
@@ -150,7 +164,7 @@ function(install_sdkmanager)
         file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools")
     endif()
 
-    find_sdkmanager(REQUIRED)
+    find_sdkmanager(${expand_NO_SYSTEM_PATH} REQUIRED)
 endfunction()
 
 function(are_licenses_accepted LICENSEDIR)
@@ -188,7 +202,7 @@ function(install_ndk)
         endif()
 
         # SECOND install the NDK
-        message(${loglevel} "Installing Android NDK")
+        message(${loglevel} "Installing Android NDK - ${run_sdkmanager}")
         execute_process(
             COMMAND ${run_sdkmanager} --install "ndk;${NDK_LTS}"
             COMMAND_ERROR_IS_FATAL ANY)
@@ -235,7 +249,7 @@ function(run)
 
     install_java_jdk(${expand_NO_SYSTEM_PATH})
     get_jdk_home() # Set JAVA_HOME if available
-    install_sdkmanager()
+    install_sdkmanager(${expand_NO_SYSTEM_PATH})
     install_ndk()
     message(${loglevel} "Android toolchain file is at: ${ANDROID_TOOLCHAIN_FILE}")
 endfunction()
