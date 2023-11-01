@@ -105,7 +105,7 @@ function(install_android_cmake)
             string(REPEAT "Y\n" 20 many_yes)
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses" "${many_yes}")
             execute_process(
-                COMMAND ${run_sdkmanager} --licenses
+                COMMAND ${run_sdkmanager} --licenses ${SDKMANAGER_COMMON_ARGS}
                 INPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/yes-licenses
                 COMMAND_ERROR_IS_FATAL ANY)
         endif()
@@ -113,7 +113,7 @@ function(install_android_cmake)
         # SECOND install the NDK
         message(${loglevel} "Installing Android CMake")
         execute_process(
-            COMMAND ${run_sdkmanager} --install "cmake;${CMAKE_LATEST}"
+            COMMAND ${run_sdkmanager} --install ${SDKMANAGER_COMMON_ARGS} "cmake;${CMAKE_LATEST}"
             COMMAND_ERROR_IS_FATAL ANY)
     endif()
 

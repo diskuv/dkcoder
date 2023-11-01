@@ -77,6 +77,18 @@ Places the NDK in .ci/local/share/android-sdk:
     │       └── wrap.sh
     └── patcher
 
+Proxies
+=======
+
+The Android SDK Manager, which is used to download the Android NDK,
+supports HTTP proxies. If your environment must use an HTTP proxy to
+download from the Internet, you can set the environment variable 'http_proxy'
+to the URL of your HTTP proxy.
+Examples: http://proxy_host:3182 or http://proxy_host:8080.
+Authenticated proxies with a username and password are not supported.
+Set the environment variable 'https_proxy' if you have a
+https://proxy_host:proxy_port proxy.
+
 Arguments
 =========
 
@@ -94,7 +106,8 @@ endfunction()
 
 set(sdkmanager_NAMES sdkmanager sdkmanager.bat)
 
-# Sets SDKMANAGER
+# Sets SDKMANAGER and SDKMANAGER_COMMON_ARGS.
+# SDKMANAGER_COMMON_ARGS is used for no-authentication proxy settings.
 function(find_sdkmanager)
     set(noValues REQUIRED NO_SYSTEM_PATH)
     set(singleValues)
@@ -111,6 +124,27 @@ function(find_sdkmanager)
 
     set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest/bin)
     find_program(SDKMANAGER NAMES ${sdkmanager_NAMES} HINTS ${hints} ${find_ARGS})
+
+    # Any HTTP proxy? We follow the curl standards at https://everything.curl.dev/usingcurl/proxies/env
+    # which do not allow HTTP_PROXY.
+    set(proxy_ARGS)
+    if(DEFINED ENV{http_proxy})
+        set(url $ENV{http_proxy})
+        if(url MATCHES [[^http://([^:]+):([0-9]+).*]])
+            list(APPEND proxy_ARGS --no_https --proxy=http "--proxy_host=${CMAKE_MATCH_1}" --proxy_port=${CMAKE_MATCH_2})
+        endif()
+    elseif(DEFINED ENV{https_proxy} OR DEFINED ENV{HTTPS_PROXY})
+        if(DEFINED ENV{https_proxy})
+            set(url $ENV{https_proxy})
+        else()
+            set(url $ENV{HTTPS_PROXY})
+        endif()
+        if(url MATCHES [[^https://([^:]+):([0-9]+).*]])
+            list(APPEND proxy_ARGS --proxy=http "--proxy_host=${CMAKE_MATCH_1}" --proxy_port=${CMAKE_MATCH_2})
+        endif()
+    endif()
+
+    set(SDKMANAGER_COMMON_ARGS "${proxy_ARGS}" PARENT_SCOPE)
 endfunction()
 
 function(install_sdkmanager)
@@ -196,7 +230,7 @@ function(install_ndk)
             string(REPEAT "Y\n" 20 many_yes)
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses" "${many_yes}")
             execute_process(
-                COMMAND ${run_sdkmanager} --licenses
+                COMMAND ${run_sdkmanager} --licenses ${SDKMANAGER_COMMON_ARGS}
                 INPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/yes-licenses
                 COMMAND_ERROR_IS_FATAL ANY)
         endif()
@@ -204,7 +238,7 @@ function(install_ndk)
         # SECOND install the NDK
         message(${loglevel} "Installing Android NDK - ${run_sdkmanager}")
         execute_process(
-            COMMAND ${run_sdkmanager} --install "ndk;${NDK_LTS}"
+            COMMAND ${run_sdkmanager} --install ${SDKMANAGER_COMMON_ARGS} "ndk;${NDK_LTS}"
             COMMAND_ERROR_IS_FATAL ANY)
     endif()
 
