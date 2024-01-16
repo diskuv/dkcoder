@@ -212,15 +212,6 @@ ${str_pretty_function_names}")
     cmake_language(EVAL CODE "${expected_function_name}()")
 endfunction()
 
-# DkML data home
-if(WIN32)
-    set(DKML_DATA_HOME "$ENV{LOCALAPPDATA}/Programs/DiskuvOCaml")
-elseif(DEFINED ENV{XDG_DATA_HOME})
-    set(DKML_DATA_HOME "$ENV{XDG_DATA_HOME}/diskuv-ocaml")
-else()
-    set(DKML_DATA_HOME "$ENV{HOME}/.local/share/diskuv-ocaml")
-endif()
-
 # DkSDK data home
 if(WIN32)
     set(DKSDK_DATA_HOME "$ENV{LOCALAPPDATA}/Programs/DkSDK")
