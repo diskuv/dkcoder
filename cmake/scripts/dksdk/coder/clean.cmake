@@ -51,6 +51,11 @@ function(dkcoder_uninstall)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
+    # Default LOGLEVEL
+    if(NOT ARG_LOGLEVEL)
+        set(ARG_LOGLEVEL "STATUS")
+    endif()
+
     # Set the DkSDK Coder home and compile directory
     cmake_path(APPEND DKSDK_DATA_HOME coder h OUTPUT_VARIABLE DKCODER_HOME)
     cmake_path(APPEND DKSDK_DATA_HOME coder c OUTPUT_VARIABLE DKCODER_COMPILEDIR)
@@ -63,6 +68,7 @@ function(dkcoder_uninstall)
         message(${ARG_LOGLEVEL} "Removing ${DKCODER_COMPILEDIR}")
         file(REMOVE_RECURSE "${DKCODER_COMPILEDIR}")
     endif()
+    message(${ARG_LOGLEVEL} "DkSDK Coder uninstalled.")
 endfunction()
 
 function(run)

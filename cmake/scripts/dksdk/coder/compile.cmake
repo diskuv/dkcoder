@@ -165,7 +165,7 @@ endfunction()
 
 function(dkcoder_compile)
     set(noValues WATCH)
-    set(singleValues EXPRESSION_PATH OUTPUT_PATH POLL)
+    set(singleValues LOGLEVEL EXPRESSION_PATH OUTPUT_PATH POLL)
     set(multiValues EXTRA_MODULE_PATHS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -251,6 +251,7 @@ function(dkcoder_compile)
     elseif(ARG_POLL)
         set(should_poll ON)
         set(execute_args RESULT_VARIABLE gen_cdi_error)
+        message(${ARG_LOGLEVEL} "Polling for changes every ${ARG_POLL} seconds ...")
     endif()
     while(1)
         # Should we execute? Not if the output .cdi is newer than the input files.
@@ -342,9 +343,14 @@ endfunction()
 # - DKCODER_DUNE - location of dune compatible with dkcoder
 function(dkcoder_install)
     set(noValues NO_SYSTEM_PATH ENFORCE_SHA256)
-    set(singleValues VERSION)
+    set(singleValues VERSION LOGLEVEL)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # Default LOGLEVEL
+    if(NOT ARG_LOGLEVEL)
+        set(ARG_LOGLEVEL "STATUS")
+    endif()
 
     # Set the DkSDK Coder home
     cmake_path(APPEND DKSDK_DATA_HOME coder h ${ARG_VERSION} OUTPUT_VARIABLE DKCODER_HOME)
@@ -406,14 +412,14 @@ function(dkcoder_install)
             set(expand_EXPECTED_HASH EXPECTED_HASH SHA256=DKCODER_SHA256_${dkml_host_abi})
         endif()
         set(url "${url_base}/stdexport-${dkml_host_abi}${out_exp}")
-        message(${loglevel} "Downloading DkSDK Coder from ${url}")
+        message(${ARG_LOGLEVEL} "Downloading DkSDK Coder from ${url}")
         file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp} ${expand_EXPECTED_HASH})
-        message(${loglevel} "Extracting DkSDK Coder")
+        message(${ARG_LOGLEVEL} "Extracting DkSDK Coder")
         file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/_e)
-        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
 
         # Install
         #   Do file(RENAME) but work across mount volumes (ex. inside containers)
+        message(${loglevel} "Installing DkSDK Coder")
         file(REMOVE_RECURSE "${DKCODER_HOME}")
         file(MAKE_DIRECTORY "${DKCODER_HOME}")
         file(GLOB entries
@@ -426,9 +432,14 @@ function(dkcoder_install)
                 FOLLOW_SYMLINK_CHAIN
                 USE_SOURCE_PERMISSIONS)
         endforeach()
+
+        # Cleanup
+        message(${loglevel} "Cleaning DkSDK Coder intermediate files")
+        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
         file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/_e")
 
         find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints})
+        message(${ARG_LOGLEVEL} "DkSDK Coder installed.")
     endif()
 
     cmake_path(GET DKCODER PARENT_PATH dkcoder_bindir)
@@ -541,7 +552,7 @@ function(run)
         cmake_path(REPLACE_EXTENSION ARG_EXPRESSION LAST_ONLY .cdi OUTPUT_VARIABLE OUTPUT)
     endif()
 
-    dkcoder_install(VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
-    dkcoder_compile(EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT_PATH ${OUTPUT}
+    dkcoder_install(LOGLEVEL ${loglevel} VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
+    dkcoder_compile(LOGLEVEL ${loglevel} EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT_PATH ${OUTPUT}
         ${expand_WATCH} ${expand_POLL})
 endfunction()
