@@ -17,7 +17,9 @@
         "excludeGlob": [
             "**/settings.json",
             "**/COPYRIGHT",
-            "**/LICENSE"
+            "**/LICENSE",
+            "**/.ocamlformat",
+            "**/coder-findlib.conf"
         ]
     },
     "psi-header.lang-config": [
@@ -61,6 +63,19 @@
             ]
         },
         {
+            "language": "ocaml",
+            "rootDirFileName": "dk.cmd",
+            "prefix": " * ",
+            "suffix": "*",
+            "begin": "(*************************************************************************",
+            "end": " *************************************************************************)",
+            "lineLength": 74
+        },
+        {
+            "language": "ocaml.interface",
+            "mapTo": "ocaml"
+        },      
+        {
             "language": "yaml",
             "mapTo": "cmake"
         },
@@ -91,5 +106,9 @@
                 ""
             ]
         }
-    ]
+    ],
+    "ocaml.sandbox": {
+        "kind": "opam",
+        "switch": "Y:\\source\\dksdk-type"
+    }
 }

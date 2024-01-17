@@ -29,7 +29,7 @@ function(help)
         set(ARG_MODE FATAL_ERROR)
     endif()
 
-    cmake_path(APPEND DKSDK_DATA_HOME coder OUTPUT_VARIABLE DKCODER_HOME)
+    cmake_path(APPEND DKSDK_DATA_HOME coder h OUTPUT_VARIABLE DKCODER_HOME)
     cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
 
     message(${ARG_MODE} "usage: ./dk dksdk.coder.compile
@@ -43,11 +43,26 @@ downloaded and installed automatically.
 Examples
 ========
 
-  ./dk dksdk.coder.compile SOURCE expression.ml
-    Creates `expression.cdi` in the same directory as `expression.ml`
+  ./dk dksdk.coder.compile EXPRESSION Expression.ml
+    Creates `Expression.cdi` in the same directory as `Expression.ml`.
 
-  ./dk dksdk.coder.compile SOURCE expression.ml OUTPUT ../compiled.cdi
-    Creates `../compiled.cdi`
+  ./dk dksdk.coder.compile EXPRESSION Expression.ml OUTPUT ../compiled.cdi
+    Creates `../compiled.cdi`.
+
+  ./dk dksdk.coder.compile EXPRESSION Expression.ml MODULES Extra.ml
+    Creates `Expression.cdi` where `Expression.ml` may use the module
+    named `Extra` defined by the contents of the file `Extra.ml`.
+
+File Naming
+===========
+
+Any `.ml` files must be specified with their first letter capitalized.
+On case-sensitive filesystems (Linux, modern NTFS drives on Windows, but
+not macOS and older FAT/FAT32 Windows drives) that means the `.ml`
+files must be capitalized.
+
+So name and refer to your files as `Expression.ml` (etc.) not
+`expression.ml` (etc.).
 
 Arguments
 =========
@@ -58,8 +73,35 @@ HELP
 QUIET
   Do not print CMake STATUS messages.
 
-SOURCE filename
-  The name of the file containing Coder expressions.
+EXPRESSION filename
+  The path of the file containing Coder expressions. The path may
+  start with a tilde (~) which will be treated as the home
+  directory on Unix or the USERPROFILE directory on Windows.
+
+  The file MUST contain the `module E` and the `blocks` field at
+  minimum:
+
+    open DkSDKCoder_Std
+    module E (I : Cdinst.Lang.SYM) = struct
+        let blocks = []
+    end
+
+  That absolute minimum will not generate any source code. A more
+  realistic minimum is the following:
+
+    open DkSDKCoder_Std
+    module E (I : Cdinst.Lang.SYM) = struct
+      open I
+      let blocks = [
+        block
+          (label ~project:\"p\" ~deployment:\"d\" \"somename\" [])
+          [declare (typeregister \"Hi\") unit]
+          noop
+      ]
+    end
+
+MODULES module_filenames
+  Optional list of module filenames that can be used by the EXPRESSION.
 
 OUTPUT filename
   The name of the output CDI file.
@@ -71,23 +113,157 @@ NO_SYSTEM_PATH
 
 VERSION version
   Use the version specified rather than the built-in ${DKCODER_COMPILE_VERSION}
-  dkcoder version. CAUTION: Using this option causes the SHA-256 integrity checks
-  to be skipped.
+  dkcoder version.
+
+  CAUTION: Using this option causes the SHA-256 integrity checks to be skipped.
+
+  CAUTION: If the version is a branch rather than a specific version number,
+  there is no way for `dksdk.coder.compile` to know about branch updates. The
+  branch version will never be updated once downloaded initially. You will need
+  to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome this
+  limitation.
+
+Optimizations
+=============
+
+1. The first time you run `dksdk.coder.compile` will download and install DkSDK
+   Coder cached on the [VERSION]. Subsequent times will not redownload nor
+   reinstall DkSDK Coder unless the [VERSION] is different.
+2. A compilation directory will be created and cached based on the absolute
+   path to the [EXPRESSION filename] and any [MODULES filenames]. That means first time
+   compilations for a EXPRESSION and MODULES may take a few seconds, but subsequent
+   compiles should be quick (assuming the EXPRESSION and MODULES are not terribly
+   complicated).
 ")
+endfunction()
+
+function(dkcoder_compile)
+    set(noValues)
+    set(singleValues EXPRESSION_PATH OUTPUT)
+    set(multiValues EXTRA_MODULE_PATHS)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # Make absolute path to EXPRESSION, including expanding tilde (~)
+    file(REAL_PATH "${ARG_EXPRESSION_PATH}" expression_abspath EXPAND_TILDE)
+    dkcoder_get_validated_module_name(${expression_abspath})
+
+    # EXPRESSION and EXECUTABLE_NAME is for dune.tmpl and to name a generated file below
+    set(EXPRESSION "${MODULE_NAME}")
+    set(main_module "${EXPRESSION}Main")
+    set(EXECUTABLE_NAME "${main_module}")
+
+    # Convert EXTRA_MODULE_PATHS to absolute paths
+    set(all_modules "${EXPRESSION}" "${main_module}")
+    set(extra_module_paths)
+    foreach(extra_module_path IN LISTS ARG_EXTRA_MODULE_PATHS)
+        file(REAL_PATH "${extra_module_path}" m_abspath EXPAND_TILDE)
+        dkcoder_get_validated_module_name(${m_abspath})
+        list(APPEND all_modules "${MODULE_NAME}")
+        list(APPEND extra_module_paths "${m_abspath}")
+    endforeach()
+
+    # MODULES is for dune.tmpl
+    list(JOIN all_modules " " MODULES)
+
+    # Read the footer
+    file(READ "${DKCODER_ETC}/Main.ml.tmpl" FOOTER_CONTENTS)
+
+    # Hash (which normalizes first) to make a compilation identifier
+    cmake_path(HASH expression_abspath pathhash)
+    set(compile_id_inputs ${pathhash})
+    foreach(extra_module_path IN LISTS extra_module_paths)
+        cmake_path(HASH extra_module_path pathhash)
+        list(APPEND compile_id_inputs ${pathhash})
+    endforeach()
+    string(SHA256 COMPILE_ID "${compile_id_inputs}")
+    string(SUBSTRING "${COMPILE_ID}" 0 8 COMPILE_ID)
+
+    # Compile directory
+    cmake_path(APPEND DKSDK_DATA_HOME coder c ${COMPILE_ID} OUTPUT_VARIABLE compile_dir)
+    file(MAKE_DIRECTORY "${compile_dir}")
+
+    # Place template files into compile directory
+    file(COPY_FILE "${DKCODER_ETC}/dune-project.tmpl" "${compile_dir}/dune-project" ONLY_IF_DIFFERENT)
+    #   Uses @EXECUTABLE_NAME@ and @MODULES@
+    configure_file("${DKCODER_ETC}/dune.tmpl" "${compile_dir}/dune" @ONLY)
+    #   Uses @EXPRESSION@
+    configure_file("${DKCODER_ETC}/Main.ml.tmpl" "${compile_dir}/${main_module}.ml" @ONLY)
+    #   The expression file itself.
+    file(CREATE_LINK "${expression_abspath}" "${compile_dir}/${EXPRESSION}.ml" COPY_ON_ERROR SYMBOLIC)
+    #   And extra modules
+    foreach(extra_module_path IN LISTS extra_module_paths)
+        cmake_path(GET extra_module_path FILENAME m_filename)
+        file(CREATE_LINK "${extra_module_path}" "${compile_dir}/${m_filename}" COPY_ON_ERROR SYMBOLIC)
+    endforeach()
+
+    # Make a findlib.conf
+    set(FINDLIB_PATH "${DKCODER_LIB}")
+    set(FINDLIB_DESTDIR "${DKCODER_LIB}")
+    if(CMAKE_HOST_WIN32)
+        cmake_path(NATIVE_PATH FINDLIB_PATH FINDLIB_PATH)
+        cmake_path(NATIVE_PATH FINDLIB_DESTDIR FINDLIB_DESTDIR)
+        # Escape backslashes
+        string(REPLACE "\\" "\\\\" FINDLIB_PATH "${FINDLIB_PATH}")
+        string(REPLACE "\\" "\\\\" FINDLIB_DESTDIR "${FINDLIB_DESTDIR}")
+    endif()
+    configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../__dk-tmpl/coder-findlib.conf" "${compile_dir}/findlib.conf" @ONLY)
+
+    # Build the bytecode executable
+    execute_process(
+        COMMAND
+        
+        # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh
+        "${CMAKE_COMMAND}" -E env 
+        "OCAMLLIB=${DKCODER_LIB}/ocaml"
+        "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
+        "CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs"
+        --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+        --modify "PATH=path_list_prepend:${DKCODER_BIN}"
+        --
+
+        "${DKCODER_DUNE}" build
+        --root "${compile_dir}"
+        --display=short
+        --no-buffer
+        --no-print-directory
+        --no-config
+        "${EXECUTABLE_NAME}.bc"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+
+    # Execute bytecode executable
+    execute_process(
+        COMMAND
+        
+        # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh
+        "${CMAKE_COMMAND}" -E env 
+        "CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs:${DKCODER_LIB}/stublibs"
+        --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
+        --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+        --
+
+        "${DKCODER_OCAMLRUN}" "${compile_dir}/_build/default/${EXECUTABLE_NAME}.bc" "${ARG_OUTPUT}"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
 endfunction()
 
 # Outputs:
 # - DKCODER - location of dkcoder executable
+# - DKCODER_BIN - location of bin directory
+# - DKCODER_ETC - location of etc/dkcoder directory
+# - DKCODER_LIB - location of lib/ directory containing lib/ocaml/ and other libraries compatible with dkcoder
 # - DKCODER_OCAMLC - location of ocamlc compatible with dkcoder
 # - DKCODER_OCAMLRUN - location of ocamlrun compatible with dkcoder
 # - DKCODER_DUNE - location of dune compatible with dkcoder
-function(install_dkcoder)
+function(dkcoder_install)
     set(noValues NO_SYSTEM_PATH ENFORCE_SHA256)
     set(singleValues VERSION)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
-    cmake_path(APPEND DKSDK_DATA_HOME coder OUTPUT_VARIABLE DKCODER_HOME)
+    # Make a DkSDK Coder home
+    cmake_path(APPEND DKSDK_DATA_HOME coder h ${ARG_VERSION} OUTPUT_VARIABLE DKCODER_HOME)
+
     set(hints ${DKCODER_HOME}/bin)
     set(find_program_INITIAL)
     if(ARG_NO_SYSTEM_PATH)
@@ -170,11 +346,50 @@ function(install_dkcoder)
         find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints})
     endif()
 
-    # ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
     cmake_path(GET DKCODER PARENT_PATH dkcoder_bindir)
+    cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_rootdir)
+
+    # ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
     find_program(DKCODER_OCAMLC NAMES ocamlc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
+
+    # bin
+    cmake_path(APPEND dkcoder_rootdir bin OUTPUT_VARIABLE dkcoder_bin)
+    if(NOT IS_DIRECTORY "${dkcoder_bin}")
+        message(FATAL_ERROR "Expected ${dkcoder_bin} to be present")
+    endif()
+    set(DKCODER_BIN "${dkcoder_bin}" PARENT_SCOPE)
+
+    # etc/dkcoder
+    cmake_path(APPEND dkcoder_rootdir etc dkcoder OUTPUT_VARIABLE dkcoder_etc)
+    if(NOT IS_DIRECTORY "${dkcoder_etc}")
+        message(FATAL_ERROR "Expected ${dkcoder_etc} to be present")
+    endif()
+    set(DKCODER_ETC "${dkcoder_etc}" PARENT_SCOPE)
+
+    # lib
+    cmake_path(APPEND dkcoder_rootdir lib OUTPUT_VARIABLE dkcoder_lib)
+    if(NOT IS_DIRECTORY "${dkcoder_lib}")
+        message(FATAL_ERROR "Expected ${dkcoder_lib} to be present")
+    endif()
+    set(DKCODER_LIB "${dkcoder_lib}" PARENT_SCOPE)
+endfunction()
+
+# Output - MODULE_NAME
+function(dkcoder_get_validated_module_name path)
+    if(path STREQUAL "")
+        message(FATAL_ERROR "The path to the module is required.")
+    endif()
+    cmake_path(GET path FILENAME name)
+    string(TOUPPER "${name}" name_upper)
+    string(SUBSTRING "${name}" 0 1 first_char)
+    string(SUBSTRING "${name_upper}" 0 1 first_char_upper)
+    if(NOT first_char STREQUAL first_char_upper)
+        message(FATAL_ERROR "The name of a module must start with a capital letter. Instead '${name}' was used.")
+    endif()
+    cmake_path(REMOVE_EXTENSION name OUTPUT_VARIABLE module_name)
+    set(MODULE_NAME "${module_name}" PARENT_SCOPE)
 endfunction()
 
 function(run)
@@ -184,8 +399,8 @@ function(run)
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
 
     set(noValues HELP QUIET NO_SYSTEM_PATH)
-    set(singleValues VERSION)
-    set(multiValues)
+    set(singleValues VERSION EXPRESSION OUTPUT)
+    set(multiValues MODULES)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
     if(ARG_HELP)
@@ -209,12 +424,27 @@ function(run)
     # VERSION
     if(ARG_VERSION)
         set(VERSION ${ARG_VERSION})
-        set(expand_ENFORCE_SHA256)        
+        set(expand_ENFORCE_SHA256)
     else()
         set(VERSION ${DKCODER_COMPILE_VERSION})
         set(expand_ENFORCE_SHA256 ENFORCE_SHA256)
     endif()
 
-    install_dkcoder(VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
+    # EXPRESSION
+    if(NOT ARG_EXPRESSION)
+        help(MODE NOTICE)
+        message(NOTICE "Missing EXPRESSION argument")
+        return()
+    endif()
+
+    # OUTPUT
+    if(ARG_OUTPUT)
+        set(OUTPUT ${ARG_OUTPUT})
+    else()
+        cmake_path(REPLACE_EXTENSION ARG_EXPRESSION LAST_ONLY .cdi OUTPUT_VARIABLE OUTPUT)
+    endif()
+
+    dkcoder_install(VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
     message(STATUS "dkcoder is at: ${DKCODER}")
+    dkcoder_compile(EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT ${OUTPUT})
 endfunction()
