@@ -220,6 +220,7 @@ elseif(DEFINED ENV{XDG_DATA_HOME})
 else()
     set(DKSDK_DATA_HOME "$ENV{HOME}/.local/share/dksdk")
 endif()
+cmake_path(NORMAL_PATH DKSDK_DATA_HOME)
 
 # Splat DKTOOL_CMDLINE
 cmake_language(EVAL CODE "parse_dktool_command_line(${DKTOOL_CMDLINE})")

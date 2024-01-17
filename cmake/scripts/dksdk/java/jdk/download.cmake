@@ -260,15 +260,6 @@ function(install_java_jdk)
     find_program(JAVA NAMES java REQUIRED HINTS ${hints})
 endfunction()
 
-function(copy_if_exists SRCDIR DESTINATION)
-    if(EXISTS ${SRCDIR})
-        file(COPY ${SRCDIR}
-            DESTINATION ${DESTINATION}
-            FOLLOW_SYMLINK_CHAIN
-            USE_SOURCE_PERMISSIONS)
-    endif()
-endfunction()
-
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
