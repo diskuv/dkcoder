@@ -125,8 +125,13 @@ VERSION version
   to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome this
   limitation.
 
+POLL seconds
+  Watch the file system for changes to the EXPRESSION file and the MODULES files
+  (if any) by waking up every `seconds` seconds. `seconds` may be a floating
+  point number like `0.5`.
+
 WATCH
-  EXPERIMENTAL:
+  (EXPERIMENTAL)
   Watch the file system for changes to the EXPRESSION file and the MODULES files
   (if any). Whenever there is a change recreate the OUTPUT file. You will need
   to press Ctrl-C to exit the watch mode.
@@ -135,7 +140,11 @@ WATCH
   will have no problems, but early Windows 10 machines or Windows FAT/FAT32
   drives will not detect the file changes in watch mode.
 
-  CAUTION: Ctrl-C should abort the watch mode but due to a bug with CMake (at
+  ERRATA: This command may never work since Dune (the underlying build tool) only
+  watches within the project directory and does not travel through symlinks (at
+  least on Windows).
+
+  ERRATA: Ctrl-C should abort the watch mode but due to a bug with CMake (at
   least on Windows 3.25.3) it may not work. Instead use `taskkill /F /IM dune.exe`
   on Windows or `pkill -f dune.exe` on Unix. Confer with
   https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
@@ -156,7 +165,7 @@ endfunction()
 
 function(dkcoder_compile)
     set(noValues WATCH)
-    set(singleValues EXPRESSION_PATH OUTPUT_PATH)
+    set(singleValues EXPRESSION_PATH OUTPUT_PATH POLL)
     set(multiValues EXTRA_MODULE_PATHS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -209,7 +218,7 @@ function(dkcoder_compile)
     #   Uses @EXPRESSION@
     configure_file("${DKCODER_ETC}/Main.ml.tmpl" "${compile_dir}/${main_module}.ml" @ONLY)
     #   The expression file itself.
-    file(CREATE_LINK "${expression_abspath}" "${compile_dir}/${EXPRESSION}.ml" COPY_ON_ERROR)
+    file(CREATE_LINK "${expression_abspath}" "${compile_dir}/${EXPRESSION}.ml" COPY_ON_ERROR SYMBOLIC)
     #   And extra modules
     foreach(extra_module_path IN LISTS extra_module_paths)
         cmake_path(GET extra_module_path FILENAME m_filename)
@@ -230,40 +239,75 @@ function(dkcoder_compile)
 
     # Execute the `@gen-cdi` rule
     set(build_args)
+    set(should_poll OFF)
     if(ARG_WATCH)
         set(build_args "--watch")
+    elseif(ARG_POLL)
+        set(should_poll ON)
     endif()
-    execute_process(
-        COMMAND
-        
-        # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
-        # Since we have a rule that does [ocamlrun], which depends on
-        # compiling a bytecode executable, we have to do union of environments for
-        # both ocamlc + ocamlrun.
-        "${CMAKE_COMMAND}" -E env 
-        "OCAMLLIB=${DKCODER_LIB}/ocaml"
-        "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
-        #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
-        "CDI_OUTPUT=${output_abspath}" # This environment variable is communication to `@gen-cdi` rule
-        #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
-        #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
-        --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-        --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-        --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-        --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-        --modify "PATH=path_list_prepend:${DKCODER_BIN}"
-        --
+    while(1)
+        # Should we execute? Not if the output .cdi is newer than the input files.
+        # We'll always run though if we are not polling.
+        if(should_poll)
+            set(should_execute OFF)
+            if (NOT EXISTS ${output_abspath})
+                set(should_execute ON)
+            elseif(${expression_abspath} IS_NEWER_THAN ${output_abspath})
+                set(should_execute ON)
+            else()
+                foreach(extra_module_path IN LISTS extra_module_paths)
+                    if(${extra_module_path} IS_NEWER_THAN ${output_abspath})
+                        set(should_execute ON)
+                        break()
+                    endif()                    
+                endforeach()
+            endif()
+        else()
+            set(should_execute ON)
+        endif()
 
-        "${DKCODER_DUNE}" build
-        --root "${compile_dir}"
-        --display=short
-        --no-buffer
-        --no-print-directory
-        --no-config
-        ${build_args}
-        "@gen-cdi"
-        COMMAND_ERROR_IS_FATAL ANY
-    )
+        if(should_execute)
+            execute_process(
+                COMMAND
+
+                # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
+                # Since we have a rule that does [ocamlrun], which depends on
+                # compiling a bytecode executable, we have to do union of environments for
+                # both ocamlc + ocamlrun.
+                "${CMAKE_COMMAND}" -E env
+                "OCAMLLIB=${DKCODER_LIB}/ocaml"
+                "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
+                #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
+                "CDI_OUTPUT=${output_abspath}" # This environment variable is communication to `@gen-cdi` rule
+                #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
+                #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
+                --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
+                --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+                --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
+                --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+                --modify "PATH=path_list_prepend:${DKCODER_BIN}"
+                --
+
+                "${DKCODER_DUNE}" build
+                --root "${compile_dir}"
+                --display=short
+                --no-buffer
+                --no-print-directory
+                --no-config
+                ${build_args}
+                "@gen-cdi"
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+        endif()
+
+        # Any polling?
+        if(NOT should_poll)
+            break()
+        endif()
+
+        # Yes, so wait before trying again.
+        execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${ARG_POLL})
+    endwhile()
 endfunction()
 
 # Outputs:
@@ -418,7 +462,7 @@ function(run)
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
 
     set(noValues HELP QUIET NO_SYSTEM_PATH WATCH)
-    set(singleValues VERSION EXPRESSION OUTPUT)
+    set(singleValues VERSION EXPRESSION OUTPUT POLL)
     set(multiValues MODULES)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -446,6 +490,12 @@ function(run)
         list(APPEND expand_WATCH WATCH)
     endif()
 
+    # POLL
+    set(expand_POLL)
+    if(ARG_POLL)
+        list(APPEND expand_POLL POLL ${ARG_POLL})
+    endif()
+
     # VERSION
     if(ARG_VERSION)
         set(VERSION ${ARG_VERSION})
@@ -470,5 +520,6 @@ function(run)
     endif()
 
     dkcoder_install(VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
-    dkcoder_compile(EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT_PATH ${OUTPUT} ${expand_WATCH})
+    dkcoder_compile(EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT_PATH ${OUTPUT}
+        ${expand_WATCH} ${expand_POLL})
 endfunction()
