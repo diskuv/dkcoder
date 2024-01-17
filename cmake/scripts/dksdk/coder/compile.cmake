@@ -346,7 +346,7 @@ function(dkcoder_install)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
-    # Make a DkSDK Coder home
+    # Set the DkSDK Coder home
     cmake_path(APPEND DKSDK_DATA_HOME coder h ${ARG_VERSION} OUTPUT_VARIABLE DKCODER_HOME)
 
     set(hints ${DKCODER_HOME}/bin)
