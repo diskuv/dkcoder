@@ -222,5 +222,8 @@ else()
 endif()
 cmake_path(NORMAL_PATH DKSDK_DATA_HOME)
 
+# Escape any escape characters before EVAL CODE
+string(REPLACE "\\" "\\\\" DKTOOL_CMDLINE "${DKTOOL_CMDLINE}")
+
 # Splat DKTOOL_CMDLINE
 cmake_language(EVAL CODE "parse_dktool_command_line(${DKTOOL_CMDLINE})")
