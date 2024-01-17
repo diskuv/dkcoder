@@ -104,7 +104,9 @@ MODULES module_filenames
   Optional list of module filenames that can be used by the EXPRESSION.
 
 OUTPUT filename
-  The name of the output CDI file.
+  The name of the output CDI file. The path may
+  start with a tilde (~) which will be treated as the home
+  directory on Unix or the USERPROFILE directory on Windows.
 
 NO_SYSTEM_PATH
   Do not check for an OCaml runtime environment with `dkcoder` in well-known
@@ -123,6 +125,21 @@ VERSION version
   to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome this
   limitation.
 
+WATCH
+  EXPERIMENTAL:
+  Watch the file system for changes to the EXPRESSION file and the MODULES files
+  (if any). Whenever there is a change recreate the OUTPUT file. You will need
+  to press Ctrl-C to exit the watch mode.
+
+  This mode only works on filesystems with support for symlinks. Linux and macOS
+  will have no problems, but early Windows 10 machines or Windows FAT/FAT32
+  drives will not detect the file changes in watch mode.
+
+  CAUTION: Ctrl-C should abort the watch mode but due to a bug with CMake (at
+  least on Windows 3.25.3) it may not work. Instead use `taskkill /F /IM dune.exe`
+  on Windows or `pkill -f dune.exe` on Unix. Confer with
+  https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
+
 Optimizations
 =============
 
@@ -138,14 +155,17 @@ Optimizations
 endfunction()
 
 function(dkcoder_compile)
-    set(noValues)
-    set(singleValues EXPRESSION_PATH OUTPUT)
+    set(noValues WATCH)
+    set(singleValues EXPRESSION_PATH OUTPUT_PATH)
     set(multiValues EXTRA_MODULE_PATHS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
-    # Make absolute path to EXPRESSION, including expanding tilde (~)
+    # Make absolute path to EXPRESSION_PATH, including expanding tilde (~)
     file(REAL_PATH "${ARG_EXPRESSION_PATH}" expression_abspath EXPAND_TILDE)
     dkcoder_get_validated_module_name(${expression_abspath})
+
+    # Make absolute path to OUTPUT_PATH, including expanding tilde (~)
+    file(REAL_PATH "${ARG_OUTPUT_PATH}" output_abspath EXPAND_TILDE)
 
     # EXPRESSION and EXECUTABLE_NAME is for dune.tmpl and to name a generated file below
     set(EXPRESSION "${MODULE_NAME}")
@@ -189,7 +209,7 @@ function(dkcoder_compile)
     #   Uses @EXPRESSION@
     configure_file("${DKCODER_ETC}/Main.ml.tmpl" "${compile_dir}/${main_module}.ml" @ONLY)
     #   The expression file itself.
-    file(CREATE_LINK "${expression_abspath}" "${compile_dir}/${EXPRESSION}.ml" COPY_ON_ERROR SYMBOLIC)
+    file(CREATE_LINK "${expression_abspath}" "${compile_dir}/${EXPRESSION}.ml" COPY_ON_ERROR)
     #   And extra modules
     foreach(extra_module_path IN LISTS extra_module_paths)
         cmake_path(GET extra_module_path FILENAME m_filename)
@@ -208,15 +228,28 @@ function(dkcoder_compile)
     endif()
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../__dk-tmpl/coder-findlib.conf" "${compile_dir}/findlib.conf" @ONLY)
 
-    # Build the bytecode executable
+    # Execute the `@gen-cdi` rule
+    set(build_args)
+    if(ARG_WATCH)
+        set(build_args "--watch")
+    endif()
     execute_process(
         COMMAND
         
-        # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh
+        # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
+        # Since we have a rule that does [ocamlrun], which depends on
+        # compiling a bytecode executable, we have to do union of environments for
+        # both ocamlc + ocamlrun.
         "${CMAKE_COMMAND}" -E env 
         "OCAMLLIB=${DKCODER_LIB}/ocaml"
         "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
-        "CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs"
+        #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
+        "CDI_OUTPUT=${output_abspath}" # This environment variable is communication to `@gen-cdi` rule
+        #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
+        #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
+        --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
+        --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+        --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
         --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
         --modify "PATH=path_list_prepend:${DKCODER_BIN}"
         --
@@ -227,22 +260,8 @@ function(dkcoder_compile)
         --no-buffer
         --no-print-directory
         --no-config
-        "${EXECUTABLE_NAME}.bc"
-        COMMAND_ERROR_IS_FATAL ANY
-    )
-
-    # Execute bytecode executable
-    execute_process(
-        COMMAND
-        
-        # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh
-        "${CMAKE_COMMAND}" -E env 
-        "CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs:${DKCODER_LIB}/stublibs"
-        --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-        --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-        --
-
-        "${DKCODER_OCAMLRUN}" "${compile_dir}/_build/default/${EXECUTABLE_NAME}.bc" "${ARG_OUTPUT}"
+        ${build_args}
+        "@gen-cdi"
         COMMAND_ERROR_IS_FATAL ANY
     )
 endfunction()
@@ -398,7 +417,7 @@ function(run)
 
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
 
-    set(noValues HELP QUIET NO_SYSTEM_PATH)
+    set(noValues HELP QUIET NO_SYSTEM_PATH WATCH)
     set(singleValues VERSION EXPRESSION OUTPUT)
     set(multiValues MODULES)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
@@ -419,6 +438,12 @@ function(run)
     set(expand_NO_SYSTEM_PATH)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
+    endif()
+
+    # WATCH
+    set(expand_WATCH)
+    if(ARG_WATCH)
+        list(APPEND expand_WATCH WATCH)
     endif()
 
     # VERSION
@@ -445,6 +470,5 @@ function(run)
     endif()
 
     dkcoder_install(VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
-    message(STATUS "dkcoder is at: ${DKCODER}")
-    dkcoder_compile(EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT ${OUTPUT})
+    dkcoder_compile(EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT_PATH ${OUTPUT} ${expand_WATCH})
 endfunction()
