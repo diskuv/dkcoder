@@ -238,7 +238,8 @@ function(dkcoder_compile)
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../__dk-tmpl/coder-findlib.conf" "${compile_dir}/findlib.conf" @ONLY)
 
     # Now we are ready to make the output directory
-    file(MAKE_DIRECTORY "${output_abspath}")
+    cmake_path(GET output_abspath PARENT_PATH output_dir)
+    file(MAKE_DIRECTORY "${output_dir}")
 
     # Execute the `@gen-cdi` rule
     set(build_args)
