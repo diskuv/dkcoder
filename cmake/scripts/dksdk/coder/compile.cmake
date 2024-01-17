@@ -237,6 +237,9 @@ function(dkcoder_compile)
     endif()
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../__dk-tmpl/coder-findlib.conf" "${compile_dir}/findlib.conf" @ONLY)
 
+    # Now we are ready to make the output directory
+    file(MAKE_DIRECTORY "${output_abspath}")
+
     # Execute the `@gen-cdi` rule
     set(build_args)
     set(should_poll OFF)
