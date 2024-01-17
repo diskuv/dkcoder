@@ -243,24 +243,34 @@ function(dkcoder_compile)
 
     # Execute the `@gen-cdi` rule
     set(build_args)
+    set(execute_args COMMAND_ERROR_IS_FATAL ANY)
     set(should_poll OFF)
+    set(sticky_error OFF)
     if(ARG_WATCH)
         set(build_args "--watch")
     elseif(ARG_POLL)
         set(should_poll ON)
+        set(execute_args RESULT_VARIABLE gen_cdi_error)
     endif()
     while(1)
         # Should we execute? Not if the output .cdi is newer than the input files.
         # We'll always run though if we are not polling.
-        if(should_poll)
+        # However, if we are in sticky error mode we don't want any execution
+        # unless there is a change to the input files.
+        if(should_poll OR sticky_error)
             set(should_execute OFF)
-            if (NOT EXISTS ${output_abspath})
+            if(sticky_error)
+                set(wait_until_change_after "${compile_dir}/error.tstamp")
+            else()
+                set(wait_until_change_after "${output_abspath}")
+            endif()
+            if (NOT EXISTS ${wait_until_change_after})
                 set(should_execute ON)
-            elseif(${expression_abspath} IS_NEWER_THAN ${output_abspath})
+            elseif(${expression_abspath} IS_NEWER_THAN ${wait_until_change_after})
                 set(should_execute ON)
             else()
                 foreach(extra_module_path IN LISTS extra_module_paths)
-                    if(${extra_module_path} IS_NEWER_THAN ${output_abspath})
+                    if(${extra_module_path} IS_NEWER_THAN ${wait_until_change_after})
                         set(should_execute ON)
                         break()
                     endif()                    
@@ -299,9 +309,17 @@ function(dkcoder_compile)
                 --no-print-directory
                 --no-config
                 ${build_args}
-                "@gen-cdi"
-                COMMAND_ERROR_IS_FATAL ANY
+                "@gen-cdi"                
+
+                ${execute_args}
             )
+            if(gen_cdi_error)
+                set(sticky_error ON)
+                file(TOUCH "${compile_dir}/error.tstamp")
+            else()
+                set(sticky_error OFF)
+                file(REMOVE "${compile_dir}/error.tstamp")
+            endif()
         endif()
 
         # Any polling?
@@ -310,7 +328,7 @@ function(dkcoder_compile)
         endif()
 
         # Yes, so wait before trying again.
-        execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${ARG_POLL})
+        execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${ARG_POLL} COMMAND_ERROR_IS_FATAL ANY)
     endwhile()
 endfunction()
 
