@@ -274,7 +274,7 @@ function(dkcoder_compile)
                     if(${extra_module_path} IS_NEWER_THAN ${wait_until_change_after})
                         set(should_execute ON)
                         break()
-                    endif()                    
+                    endif()
                 endforeach()
             endif()
         else()
@@ -282,6 +282,8 @@ function(dkcoder_compile)
         endif()
 
         if(should_execute)
+            # "Exit code 0xc0000135"
+            #   This means Visual C++ Redistributables have not been installed.
             execute_process(
                 COMMAND
 
@@ -310,7 +312,7 @@ function(dkcoder_compile)
                 --no-print-directory
                 --no-config
                 ${build_args}
-                "@gen-cdi"                
+                "@gen-cdi"
 
                 ${execute_args}
             )
@@ -331,6 +333,54 @@ function(dkcoder_compile)
         # Yes, so wait before trying again.
         execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${ARG_POLL} COMMAND_ERROR_IS_FATAL ANY)
     endwhile()
+endfunction()
+
+# ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
+# Visual Studio on Windows. That means they need the redistributable installed.
+# https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+function(dkcoder_install_vc_redist)
+    set(noValues)
+    set(singleValues LOGLEVEL)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # Default LOGLEVEL
+    if(NOT ARG_LOGLEVEL)
+        set(ARG_LOGLEVEL "STATUS")
+    endif()
+
+    # On Windows CMAKE_HOST_SYSTEM_PROCESSOR = ENV:PROCESSOR_ARCHITECTURE
+    # Values: AMD64, IA64, ARM64, x86
+    # https://docs.microsoft.com/en-us/windows/win32/winprog64/wow64-implementation-details?redirectedfrom=MSDN#environment-variables
+    if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL X86)
+        set(vcarch x86)
+    elseif(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL arm64 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL ARM64)
+        set(vcarch arm64)
+    else()
+        set(vcarch x64)
+    endif()
+
+    set(url "https://aka.ms/vs/17/release/vc_redist.${vcarch}.exe")
+
+    message(${ARG_LOGLEVEL} "Downloading Visual C++ Redistributable from ${url}")
+    file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe)
+    execute_process(
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe /install /passive
+        RESULT_VARIABLE vc_redist_errcode
+    )
+    # Allow exit code 1638 which is the code that a newer vcredist is already
+    # installed. https://github.com/diskuv/dkml-installer-ocaml/issues/60
+    # The "correct" way is to check through
+    # reg query HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64 /V Version
+    # (etc.) if there is a newer version. Confer
+    # https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-the-redistributable-packages
+    if(vc_redist_errcode EQUAL 0)
+        message(${ARG_LOGLEVEL} "Installed Visual C++ Redistributable.")
+    elseif(vc_redist_errcode EQUAL 1638)
+        message(${ARG_LOGLEVEL} "A newer Visual C++ Redistributable was already installed.")
+    else()
+        message(FATAL_ERROR "Visual C++ Redistributable failed to install. Exit code ${vc_redist_errcode}")
+    endif()
 endfunction()
 
 # Outputs:
@@ -417,9 +467,14 @@ function(dkcoder_install)
         message(${ARG_LOGLEVEL} "Extracting DkSDK Coder")
         file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/_e)
 
+        # Install prereq: Visual C++ Redistributable
+        if(CMAKE_HOST_WIN32)
+            dkcoder_install_vc_redist(LOGLEVEL ${ARG_LOGLEVEL})
+        endif()
+
         # Install
         #   Do file(RENAME) but work across mount volumes (ex. inside containers)
-        message(${loglevel} "Installing DkSDK Coder")
+        message(${ARG_LOGLEVEL} "Installing DkSDK Coder")
         file(REMOVE_RECURSE "${DKCODER_HOME}")
         file(MAKE_DIRECTORY "${DKCODER_HOME}")
         file(GLOB entries
@@ -434,7 +489,7 @@ function(dkcoder_install)
         endforeach()
 
         # Cleanup
-        message(${loglevel} "Cleaning DkSDK Coder intermediate files")
+        message(${ARG_LOGLEVEL} "Cleaning DkSDK Coder intermediate files")
         file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
         file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/_e")
 
