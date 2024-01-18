@@ -20,6 +20,23 @@ function(help)
 
 Upgrade ./dk, ./dk.cmd and cmake/scripts/__dk-find-scripts.cmake.
 
+Usage
+=====
+
+TLDR: Run the upgrade twice.
+
+On Windows you may see an error when an upgrade includes an
+update to ./dk.cmd. That is because Windows will:
+
+1. Run a portion of the old ./dk.cmd
+2. Save its position in ./dk.cmd
+3. Do the upgrade of ./dk.cmd
+4. "Continue" running the updated ./dk.cmd with the old (incorrect)
+   position.
+
+To avoid the problem, you should always upgrade once, then ignore any
+error, and then run the upgrade again.
+
 Arguments
 =========
 
