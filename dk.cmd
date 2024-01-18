@@ -32,12 +32,21 @@ REM 1. Microsoft way of getting around PowerShell permissions:
 REM    https://github.com/microsoft/vcpkg/blob/71422c627264daedcbcd46f01f1ed0dcd8460f1b/bootstrap-vcpkg.bat
 REM 2. Write goto downward please so code flow is top to bottom.
 
+SET DK_7Z_MAJVER=23
+SET DK_7Z_MINVER=01
+SET DK_7Z_DOTVER=%DK_7Z_MAJVER%.%DK_7Z_MINVER%
+SET DK_7Z_VER=%DK_7Z_MAJVER%%DK_7Z_MINVER%
 SET DK_CMAKE_VER=3.25.3
 SET DK_NINJA_VER=1.11.1
 SET DK_BUILD_TYPE=Release
 SET DK_SHARE=%LOCALAPPDATA%\Programs\DkSDK\dktool
 SET DK_PROJ_DIR=%~dp0
 SET DK_PWD=%CD%
+
+SET DK_CKSUM_7ZR=72c98287b2e8f85ea7bb87834b6ce1ce7ce7f41a8c97a81b307d4d4bf900922b
+SET DK_CKSUM_7ZEXTRA=db3a1cbe57a26fac81b65c6a2d23feaecdeede3e4c1fe8fb93a7b91d72d1094c
+SET DK_CKSUM_CMAKE=d129425d569140b729210f3383c246dec19c4183f7d0afae1837044942da3b4b
+SET DK_CKSUM_NINJA=524b344a1a9a55005eaf868d991e090ab8ce07fa109f1820d40e74642e289abc
 
 REM -------------- CMAKE --------------
 
@@ -58,13 +67,15 @@ IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
 )
 
 REM Download CMAKE.EXE
+REM     Why not CMAKE.MSI? Because we don't want to mess up the user's existing
+REM     installation. `./dk` is meant to be isolated.
 bitsadmin /transfer dktool-cmake /download /priority FOREGROUND ^
     "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
     "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip"
 IF %ERRORLEVEL% equ 0 (
-    GOTO UnzipCMakeZip
+    GOTO VerifyCMakeIntegrity
 )
-REM Try PowerShell 3+ instead
+REM     Try PowerShell 3+ instead
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "Invoke-WebRequest https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip -OutFile '%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip'"
 IF %ERRORLEVEL% neq 0 (
@@ -74,15 +85,130 @@ IF %ERRORLEVEL% neq 0 (
     echo.
     EXIT /b 1
 )
+REM     Integrity check
+:VerifyCMakeIntegrity
+FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip" sha256 ^| findstr /v hash`) DO (
+    SET "DK_CKSUM_ACTUAL=%%F"
+)
+IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_CMAKE%" (
+    GOTO Download7zr
+)
+echo.
+echo.Could not verify the integrity of CMake %DK_CMAKE_VER%.
+echo.Expected SHA-256 %DK_CKSUM_CMAKE%
+echo.but received %DK_CKSUM_ACTUAL%.
+echo.Make sure that you can access the Internet, and there is nothing
+echo.intercepting network traffic.
+echo.
+EXIT /b 1
+
+REM Download 7zr.exe (and then 7z*-extra.7z) to do unzipping.
+REM     Q: Why don't we use PowerShell `Expand-Archive`?
+REM     Ans1: It is **insanely** slow. In Windows Sandbox it takes seven (7) MINUTES for
+REM           CMake 3.28.1 (45,161,877 bytes). However in Windows Sandbox it
+REM           takes seven (7) SECONDS to unzip using 7-Zip.
+REM     Ans2: May be corporate policy to not allow PowerShell.
+REM     Q: Can't we just download 7za.exe to do unzipping?
+REM     Ans: That needs a dll so we would need two downloads regardless.
+REM          7zr.exe can do un7z of 7z*-extra.7z which is 2 downloads as well.
+REM          I guess we could repackage cmake.zip as cmake.7z and publish to GitLab CI.
+REM          But it is easier to audit this using 7zr.exe and 7z*-extra.7z software
+REM          from public download sites.
+REM     Q: Why redirect stdout to NUL?
+REM     Ans: It reduces the verbosity and errors will still be printed.
+REM          Confer: https://sourceforge.net/p/sevenzip/feature-requests/1623/#0554
+:Download7zr
+bitsadmin /transfer dktool-7zr /download /priority FOREGROUND ^
+    "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
+    "%TEMP%\7zr-%DK_7Z_DOTVER%.exe"
+IF %ERRORLEVEL% equ 0 (
+    GOTO Verify7zrIntegrity
+)
+REM     Try PowerShell 3+ instead
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe -OutFile '%TEMP%\7zr-%DK_7Z_DOTVER%.exe'"
+IF %ERRORLEVEL% neq 0 (
+    echo.
+    echo.Could not download 7zr %DK_7Z_DOTVER%. Make sure that PowerShell is installed
+    echo.and has not been disabled by a corporate policy.
+    echo.
+    EXIT /b 1
+)
+REM     Integrity check
+:Verify7zrIntegrity
+FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" sha256 ^| findstr /v hash`) DO (
+    SET "DK_CKSUM_ACTUAL=%%F"
+)
+IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_7ZR%" (
+    GOTO Download7zextra
+)
+echo.
+echo.Could not verify the integrity of 7zr %DK_7Z_DOTVER%.
+echo.Expected SHA-256 %DK_CKSUM_7ZR%
+echo.but received %DK_CKSUM_ACTUAL%.
+echo.Make sure that you can access the Internet, and there is nothing
+echo.intercepting network traffic.
+echo.
+EXIT /b 1
+
+REM Download 7z*-extra.7z to do unzipping.
+:Download7zextra
+bitsadmin /transfer dktool-7zextra /download /priority FOREGROUND ^
+    "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
+    "%TEMP%\7z%DK_7Z_VER%-extra.7z"
+IF %ERRORLEVEL% equ 0 (
+    GOTO Verify7zextraIntegrity
+)
+REM     Try PowerShell 3+ instead
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z -OutFile '%TEMP%\7z%DK_7Z_VER%-extra.7z'"
+IF %ERRORLEVEL% neq 0 (
+    echo.
+    echo.Could not download 7z%DK_7Z_VER%-extra.7z. Make sure that PowerShell is installed
+    echo.and has not been disabled by a corporate policy.
+    echo.
+    EXIT /b 1
+)
+REM     Integrity check
+:Verify7zextraIntegrity
+FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\7z%DK_7Z_VER%-extra.7z" sha256 ^| findstr /v hash`) DO (
+    SET "DK_CKSUM_ACTUAL=%%F"
+)
+IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_7ZEXTRA%" (
+    GOTO Extract7zextra
+)
+echo.
+echo.Could not verify the integrity of 7z%DK_7Z_VER%-extra.7z.
+echo.Expected SHA-256 %DK_CKSUM_7ZEXTRA%
+echo.but received %DK_CKSUM_ACTUAL%.
+echo.Make sure that you can access the Internet, and there is nothing
+echo.intercepting network traffic.
+echo.
+EXIT /b 1
+
+REM Extract 7z*-extra.7z
+:Extract7zextra
+IF EXIST "%DK_SHARE%\7z%DK_7Z_VER%-extra" (
+    RMDIR /S /Q "%DK_SHARE%\7z%DK_7Z_VER%-extra"
+)
+"%TEMP%\7zr-%DK_7Z_DOTVER%.exe" x -o"%DK_SHARE%\7z%DK_7Z_VER%-extra" "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
+IF %ERRORLEVEL% neq 0 (
+    echo.
+    echo.Could not extract 7z%DK_7Z_VER%-extra.7z.
+    echo.
+    EXIT /b 1
+)
+GOTO UnzipCMakeZip
 
 REM Unzip CMAKE.EXE (use PowerShell; could download unzip.exe and sha256sum.exe as well in case corporate policy)
 :UnzipCMakeZip
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Expand-Archive '%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip' -DestinationPath '%DK_SHARE%'"
+IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64 (
+    RMDIR /S /Q %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64
+)
+"%DK_SHARE%\7z%DK_7Z_VER%-extra\7za" x -o"%DK_SHARE%" "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip" >NUL
 IF %ERRORLEVEL% neq 0 (
     echo.
-    echo.Could not unzip CMake %DK_CMAKE_VER%. Make sure that PowerShell is installed
-    echo.and has not been disabled by a corporate policy.
+    echo.Could not unzip CMake %DK_CMAKE_VER%.
     echo.
     EXIT /b 1
 )
@@ -123,9 +249,9 @@ bitsadmin /transfer dktool-ninja /download /priority FOREGROUND ^
     "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
     "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip"
 IF %ERRORLEVEL% equ 0 (
-    GOTO UnzipNinjaZip
+    GOTO VerifyNinjaIntegrity
 )
-REM Try PowerShell 3+ instead
+REM     Try PowerShell 3+ instead
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip -OutFile '%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip'"
 IF %ERRORLEVEL% neq 0 (
@@ -135,15 +261,32 @@ IF %ERRORLEVEL% neq 0 (
     echo.
     EXIT /b 1
 )
+REM     Integrity check
+:VerifyNinjaIntegrity
+FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip" sha256 ^| findstr /v hash`) DO (
+    SET "DK_CKSUM_ACTUAL=%%F"
+)
+IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_NINJA%" (
+    GOTO UnzipNinjaZip
+)
+echo.
+echo.Could not verify the integrity of Ninja %DK_NINJA_VER%.
+echo.Expected SHA-256 %DK_CKSUM_NINJA%
+echo.but received %DK_CKSUM_ACTUAL%.
+echo.Make sure that you can access the Internet, and there is nothing
+echo.intercepting network traffic.
+echo.
+EXIT /b 1
 
 REM Unzip NINJA.EXE (use PowerShell; could download unzip.exe and sha256sum.exe as well in case corporate policy)
 :UnzipNinjaZip
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Expand-Archive '%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip' -DestinationPath '%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin'"
+IF EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64 (
+    RMDIR /S /Q %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64
+)
+"%DK_SHARE%\7z%DK_7Z_VER%-extra\7za" x -o"%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin" "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip" >NUL
 IF %ERRORLEVEL% neq 0 (
     echo.
-    echo.Could not unzip Ninja %DK_NINJA_VER%. Make sure that PowerShell is installed
-    echo.and has not been disabled by a corporate policy.
+    echo.Could not unzip Ninja %DK_NINJA_VER%.
     echo.
     EXIT /b 1
 )
