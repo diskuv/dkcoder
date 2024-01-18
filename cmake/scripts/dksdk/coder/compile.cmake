@@ -22,6 +22,10 @@ set(DKCODER_SHA256_linux_x86      8b2f690e6de4a1f26c654df41d62be4d33d0363281c5fb
 set(DKCODER_SHA256_darwin_x86_64  todo_darwin_x86_64)
 set(DKCODER_SHA256_darwin_arm64   todo_darwin_arm64)
 
+# This can be removed after dksdk-coder is regenerated in GitLab CI for the main
+# branch (ONLY_LINUX/ONLY_WINDOWS/ONLY_MACOS).
+set(DKCODER_MITIGATE_MISSING_GENCDI ON)
+
 function(help)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "MODE" "")
 
@@ -194,8 +198,19 @@ function(dkcoder_compile)
     # MODULES is for dune.tmpl
     list(JOIN all_modules " " MODULES)
 
-    # Read the footer
-    file(READ "${DKCODER_ETC}/Main.ml.tmpl" FOOTER_CONTENTS)
+    # Read the dune template
+    if(DKCODER_MITIGATE_MISSING_GENCDI)
+        file(READ "${DKCODER_ETC}/dune.tmpl" DUNE_CONTENTS)
+        if(NOT DUNE_CONTENTS MATCHES "gen-cdi")
+            string(APPEND DUNE_CONTENTS [[
+
+(rule
+ (alias gen-cdi)
+ (deps (env_var CDI_OUTPUT))
+ (action (run ocamlrun %{exe:@EXECUTABLE_NAME@.bc} %{env:CDI_OUTPUT=unset.cdi})))
+]])
+        endif()
+    endif()
 
     # Hash (which normalizes first) to make a compilation identifier
     cmake_path(HASH expression_abspath pathhash)
@@ -214,7 +229,11 @@ function(dkcoder_compile)
     # Place template files into compile directory
     file(COPY_FILE "${DKCODER_ETC}/dune-project.tmpl" "${compile_dir}/dune-project" ONLY_IF_DIFFERENT)
     #   Uses @EXECUTABLE_NAME@ and @MODULES@
-    configure_file("${DKCODER_ETC}/dune.tmpl" "${compile_dir}/dune" @ONLY)
+    if(DKCODER_MITIGATE_MISSING_GENCDI)
+        file(CONFIGURE OUTPUT "${compile_dir}/dune" CONTENT "${DUNE_CONTENTS}" @ONLY)
+    else()
+        configure_file("${DKCODER_ETC}/dune.tmpl" "${compile_dir}/dune" @ONLY)
+    endif()
     #   Uses @EXPRESSION@
     configure_file("${DKCODER_ETC}/Main.ml.tmpl" "${compile_dir}/${main_module}.ml" @ONLY)
     #   The expression file itself.
