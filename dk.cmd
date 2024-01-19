@@ -320,7 +320,39 @@ SET PATH=
 SET PATH=%_DK_PATH%
 SET _DK_PATH=
 
+REM --- Create an 8-byte nonce ---
+REM We should rely on Command Prompt not being compromised. Obviously
+REM there is nothing we can do if it is compromised. But if it is
+REM obviously compromised (ex. someone sets RANDOM) then fail fast.
+
+SET DK_NONCE=%RANDOM%%RANDOM%%RANDOM%%RANDOM%
+SET DK_NONCE2=%RANDOM%%RANDOM%%RANDOM%%RANDOM%
+IF "%DK_NONCE%" == "%DK_NONCE2%" (
+	echo.The RANDOM variable was preset rather than random.
+	echo.This typically means your terminal session has been
+	echo.compromised by malware. Consult with:
+    echo.  https://consumer.ftc.gov/articles/how-recognize-remove-avoid-malware
+	exit /b 1
+)
+SET DK_NONCE2=
+
 REM -------------- Run finder --------------
 
+SET DK_WORKDIR=%DK_SHARE%\work
+
 cd /d %DK_PROJ_DIR%
-"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKTOOL_PWD:FILEPATH=%DK_PWD%" -D "DKTOOL_WORKDIR:FILEPATH=%DK_SHARE%\work" -D "DKTOOL_CMDLINE:STRING=%*" -P cmake/scripts/__dk-find-scripts.cmake
+"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKTOOL_PWD:FILEPATH=%DK_PWD%" -D "DKTOOL_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKTOOL_NONCE:STRING=%DK_NONCE%" -D "DKTOOL_CMDLINE:STRING=%*" -P cmake/scripts/__dk-find-scripts.cmake
+IF %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+
+REM --------------- Execute post-command outside of CMake --------------
+REM Sometimes a command wants to own the terminal or the command line arguments.
+REM CMake, for example, intercepts the Ctrl-C signal in buggy ways:
+REM https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
+
+REM     We don't use nested parentheses or else we'd have to be concerned about delayed
+REM     variable expansion. https://stackoverflow.com/questions/24866477/if-call-exit-and-errorlevel-in-a-bat
+IF EXIST "%DK_WORKDIR%\%DK_NONCE%.cmd" CALL "%DK_WORKDIR%\%DK_NONCE%.cmd" %*
+@ECHO OFF
+SET CALLERROR=%ERRORLEVEL%
+IF EXIST "%DK_WORKDIR%\%DK_NONCE%.cmd" DEL /Q /F "%DK_WORKDIR%\%DK_NONCE%.cmd"
+IF %CALLERROR% NEQ 0 exit /b %CALLERROR%

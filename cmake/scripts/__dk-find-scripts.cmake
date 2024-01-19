@@ -222,6 +222,15 @@ else()
 endif()
 cmake_path(NORMAL_PATH DKSDK_DATA_HOME)
 
+# Nonce script
+if(CMAKE_HOST_WIN32)
+    set(post_script_suffix .cmd)
+else()
+    set(post_script_suffix .sh)
+endif()
+cmake_path(APPEND DKTOOL_WORKDIR "${DKTOOL_NONCE}${post_script_suffix}" OUTPUT_VARIABLE DKTOOL_POST_SCRIPT)
+cmake_path(NORMAL_PATH DKTOOL_POST_SCRIPT)
+
 # Escape any escape characters before EVAL CODE
 string(REPLACE "\\" "\\\\" DKTOOL_CMDLINE "${DKTOOL_CMDLINE}")
 

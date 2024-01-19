@@ -713,11 +713,45 @@ fi
 # Validate
 "$cmake_bindir/cmake" --version > /dev/null
 
+# --- Create an 8-byte nonce ---
+
+# Always prefer (in order):
+#   /usr/bin/openssl rand
+#   /usr/bin/dd status=none if=/dev/urandom count=8 bs=1 | /usr/bin/od -An -t x8 | /usr/bin/tr -cd 0-9A-Fa-f
+
+if [ -x /usr/bin/openssl ]; then
+  dk_nonce=$(/usr/bin/openssl rand -hex 8)
+elif [ -b /dev/urandom ] && [ -x /usr/bin/dd ] && [ -x /usr/bin/od ] && [ -x /usr/bin/tr ]; then
+  dk_nonce=$(/usr/bin/dd status=none if=/dev/urandom count=8 bs=1 | /usr/bin/od -An -t x8 | /usr/bin/tr -cd 0-9A-Fa-f)
+else
+  # Default to the PID which should not be predictable on safe operating systems
+  dk_nonce=$$
+fi
+
 # --- Run finder script ---
+
+dk_work=$tools_dir/work
 
 cd "$PROJ_DIR"
 "$cmake_bindir/cmake" \
   -D CMAKE_GENERATOR=Ninja -D CMAKE_MAKE_PROGRAM="$NINJA_EXE" \
   -D "DKTOOL_PWD:FILEPATH=$dk_pwd" \
-  -D "DKTOOL_WORKDIR:FILEPATH=$tools_dir/work" -D "DKTOOL_CMDLINE:STRING=$*" \
+  -D "DKTOOL_WORKDIR:FILEPATH=$dk_work" \
+  -D "DKTOOL_NONCE:STRING=$dk_nonce" \
+  -D "DKTOOL_CMDLINE:STRING=$*" \
   -P cmake/scripts/__dk-find-scripts.cmake
+
+# --------------- Execute post-command outside of CMake --------------
+# Sometimes a command wants to own the terminal or the command line arguments.
+# CMake, for example, intercepts the Ctrl-C signal in buggy ways:
+# https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
+
+cleanup() {
+  PATH=/usr/bin:/bin rm -f "$dk_work/$dk_nonce.sh"
+}
+
+if [ -e "$dk_work/$dk_nonce.sh" ]; then
+  trap cleanup EXIT
+  /bin/sh "$dk_work/$dk_nonce.sh" "$@"
+  cleanup
+fi

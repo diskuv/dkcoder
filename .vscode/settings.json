@@ -19,7 +19,8 @@
             "**/COPYRIGHT",
             "**/LICENSE",
             "**/.ocamlformat",
-            "**/coder-findlib.conf"
+            "**/coder-findlib.conf",
+            "**/.gitattributes"
         ]
     },
     "psi-header.lang-config": [
