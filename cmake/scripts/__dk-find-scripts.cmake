@@ -57,8 +57,8 @@ function(parse_dktool_command_line)
     if(NOT DKTOOL_WORKDIR)
         message(FATAL_ERROR "Illegal state. Expecting DKTOOL_WORKDIR")
     endif()
-    set(CMAKE_BINARY_DIR ${DKTOOL_WORKDIR})
-    set(CMAKE_CURRENT_BINARY_DIR  ${CMAKE_BINARY_DIR})
+    set(CMAKE_BINARY_DIR "${DKTOOL_WORKDIR}")
+    set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_BINARY_DIR}")
 
     # Search in all the user scripts
     set(dot_function_names)
@@ -207,6 +207,10 @@ ${str_pretty_function_names}")
 ${str_pretty_function_names}")
         message(FATAL_ERROR "No command '${command}' exists")
     endif()
+
+    # Make space for <command>
+    set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${expected_function_name}")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
     # Call the <command> function
     cmake_language(EVAL CODE "${expected_function_name}()")

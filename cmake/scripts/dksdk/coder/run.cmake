@@ -83,8 +83,6 @@ function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
-
     # NOTE: All of these arguments except HELP must be passed-through in
     # [dksdk-coder/src/Gen/exe/gen_main.ml:argv_without_dk ()]
     set(noValues HELP QUIET)

@@ -566,8 +566,6 @@ function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CURRENT_FUNCTION}")
-
     set(noValues HELP QUIET NO_SYSTEM_PATH WATCH)
     set(singleValues VERSION EXPRESSION OUTPUT POLL)
     set(multiValues MODULES)
