@@ -24,7 +24,7 @@ set(DKCODER_SHA256_darwin_arm64   todo_darwin_arm64)
 
 # This can be removed after dksdk-coder is regenerated in GitLab CI for the main
 # branch (ONLY_LINUX/ONLY_WINDOWS/ONLY_MACOS).
-set(DKCODER_MITIGATE_MISSING_GENCDI ON)
+set(DKCODER_MITIGATE_MISSING_GENCDI_AND_SUBDIRS ON)
 
 function(help)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "MODE" "")
@@ -129,11 +129,19 @@ VERSION version
   to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome this
   limitation.
 
-DUNE_BUILD_DIR dir
-  Set the build directory for Dune (the build tool for OCaml).
-  Defaults to a directory that is internal to the dkcoder environment.
-  If specified as a relative directory, it will be relative to your project's
-  root directory (where your ./dk and ./dk.cmd scripts are located).
+PROJECT_DIR dir
+  Optional. Sets the project directory and tells the build tool for OCaml (\"Dune\")
+  to generate its build files in the project directory.
+  If specified as a relative directory, the project directory will be relative to
+  where your ./dk and ./dk.cmd scripts are located. So `PROJECT_DIR .` is valid and
+  most often the correct choice.
+  When the project directory is specified, the expressions and the modules are built
+  with the relative path that reflects the project tree. For example, if you had
+  `EXPRESSION /some/project/cde/a.ml` and `PROJECT_DIR /some/project` then Dune
+  will be given the relative path `cde/a.ml` to compile.
+  Although not strictly required, using this setting benefits \"Merlin\"-based IDEs
+  like Visual Studio Code so they can map the build artifacts with the source code
+  in your project.
 
 POLL seconds
   Watch the file system for changes to the EXPRESSION file and the MODULES files
@@ -175,7 +183,7 @@ endfunction()
 
 function(dkcoder_compile)
     set(noValues WATCH DUMP_MERLIN)
-    set(singleValues LOGLEVEL EXPRESSION_PATH OUTPUT_PATH DUNE_BUILD_DIR POLL)
+    set(singleValues LOGLEVEL EXPRESSION_PATH OUTPUT_PATH PROJECT_DIR POLL)
     set(multiValues EXTRA_MODULE_PATHS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -185,6 +193,18 @@ function(dkcoder_compile)
 
     # Make absolute path to OUTPUT_PATH, including expanding tilde (~)
     file(REAL_PATH "${ARG_OUTPUT_PATH}" output_abspath EXPAND_TILDE)
+
+    # Get relative path from PROJECT_DIR to EXPRESSION_PATH, if any
+    set(rel_path)
+    if(ARG_PROJECT_DIR)
+        cmake_path(GET expression_abspath PARENT_PATH expression_absdir)
+        #   Check if a prefix so we always write the source code into a subdirectory
+        #   of the ${compile_dir} calculated later.
+        cmake_path(IS_PREFIX ARG_PROJECT_DIR "${expression_absdir}" NORMALIZE is_subdir)
+        if(is_subdir)
+            cmake_path(RELATIVE_PATH expression_absdir BASE_DIRECTORY "${ARG_PROJECT_DIR}" OUTPUT_VARIABLE rel_path)            
+        endif()
+    endif()
 
     # EXPRESSION and EXECUTABLE_NAME is for dune.tmpl and to name a generated file below
     set(EXPRESSION "${MODULE_NAME}")
@@ -205,9 +225,15 @@ function(dkcoder_compile)
     list(JOIN all_modules " " MODULES)
 
     # Read the dune template
-    if(DKCODER_MITIGATE_MISSING_GENCDI)
+    if(DKCODER_MITIGATE_MISSING_GENCDI_AND_SUBDIRS)
         file(READ "${DKCODER_ETC}/dune.tmpl" DUNE_CONTENTS)
-        if(NOT DUNE_CONTENTS MATCHES "gen-cdi")
+        if(NOT DUNE_CONTENTS MATCHES "(include_subdirs unqualified)")
+            string(PREPEND DUNE_CONTENTS [[
+(include_subdirs unqualified)
+]])
+            string(REPLACE "(dirs) ; don't scan any subdirectories" "" DUNE_CONTENTS "${DUNE_CONTENTS}")
+        endif()
+        if(NOT DUNE_CONTENTS MATCHES "gen-cdi")        
             string(APPEND DUNE_CONTENTS [[
 
 (rule
@@ -220,7 +246,7 @@ function(dkcoder_compile)
 
     # Hash (which normalizes first) to make a compilation identifier
     cmake_path(HASH expression_abspath pathhash)
-    set(compile_id_inputs ${pathhash})
+    set(compile_id_inputs "${rel_path}" ${pathhash})
     foreach(extra_module_path IN LISTS extra_module_paths)
         cmake_path(HASH extra_module_path pathhash)
         list(APPEND compile_id_inputs ${pathhash})
@@ -230,12 +256,14 @@ function(dkcoder_compile)
 
     # Compile directory
     cmake_path(APPEND DKSDK_DATA_HOME coder c ${COMPILE_ID} OUTPUT_VARIABLE compile_dir)
+    cmake_path(APPEND compile_dir ${rel_path} OUTPUT_VARIABLE compile_subdir)
     file(MAKE_DIRECTORY "${compile_dir}")
+    file(MAKE_DIRECTORY "${compile_subdir}")
 
     # Place template files into compile directory
     file(COPY_FILE "${DKCODER_ETC}/dune-project.tmpl" "${compile_dir}/dune-project" ONLY_IF_DIFFERENT)
     #   Uses @EXECUTABLE_NAME@ and @MODULES@
-    if(DKCODER_MITIGATE_MISSING_GENCDI)
+    if(DKCODER_MITIGATE_MISSING_GENCDI_AND_SUBDIRS)
         file(CONFIGURE OUTPUT "${compile_dir}/dune" CONTENT "${DUNE_CONTENTS}" @ONLY)
     else()
         configure_file("${DKCODER_ETC}/dune.tmpl" "${compile_dir}/dune" @ONLY)
@@ -243,11 +271,11 @@ function(dkcoder_compile)
     #   Uses @EXPRESSION@
     configure_file("${DKCODER_ETC}/Main.ml.tmpl" "${compile_dir}/${main_module}.ml" @ONLY)
     #   The expression file itself.
-    file(CREATE_LINK "${expression_abspath}" "${compile_dir}/${EXPRESSION}.ml" COPY_ON_ERROR SYMBOLIC)
+    file(CREATE_LINK "${expression_abspath}" "${compile_subdir}/${EXPRESSION}.ml" COPY_ON_ERROR SYMBOLIC)
     #   And extra modules
     foreach(extra_module_path IN LISTS extra_module_paths)
         cmake_path(GET extra_module_path FILENAME m_filename)
-        file(CREATE_LINK "${extra_module_path}" "${compile_dir}/${m_filename}" COPY_ON_ERROR SYMBOLIC)
+        file(CREATE_LINK "${extra_module_path}" "${compile_subdir}/${m_filename}" COPY_ON_ERROR SYMBOLIC)
     endforeach()
 
     # Make a findlib.conf
@@ -273,8 +301,8 @@ function(dkcoder_compile)
     set(should_poll OFF)
     set(sticky_error OFF)
     set(first ON)
-    if(ARG_DUNE_BUILD_DIR)
-        list(APPEND dune_args "--build-dir=${ARG_DUNE_BUILD_DIR}")
+    if(ARG_PROJECT_DIR)
+        list(APPEND dune_args "--build-dir=${ARG_PROJECT_DIR}/_build")
     endif()
     if(ARG_WATCH)
         list(APPEND build_args "--watch")
@@ -596,7 +624,7 @@ function(run)
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
     set(noValues HELP QUIET NO_SYSTEM_PATH WATCH DUMP_MERLIN)
-    set(singleValues VERSION EXPRESSION OUTPUT DUNE_BUILD_DIR POLL)
+    set(singleValues VERSION EXPRESSION OUTPUT PROJECT_DIR POLL)
     set(multiValues MODULES)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -659,19 +687,20 @@ function(run)
         cmake_path(REPLACE_EXTENSION ARG_EXPRESSION LAST_ONLY .cdi OUTPUT_VARIABLE OUTPUT)
     endif()
 
-    # DUNE_BUILD_DIR
-    set(expand_DUNE_BUILD_DIR)
-    if(ARG_DUNE_BUILD_DIR)
-        set(duneBuildDir ${ARG_DUNE_BUILD_DIR})
-        cmake_path(IS_RELATIVE duneBuildDir duneBuildDirIsRel)
-        if(duneBuildDirIsRel)
-            cmake_path(ABSOLUTE_PATH duneBuildDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE)
+    # PROJECT_DIR
+    set(expand_PROJECT_DIR)
+    if(ARG_PROJECT_DIR)
+        set(projectDir ${ARG_PROJECT_DIR})
+        cmake_path(NORMAL_PATH projectDir)
+        cmake_path(IS_RELATIVE projectDir projectDirIsRel)
+        if(projectDirIsRel)
+            cmake_path(ABSOLUTE_PATH projectDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE)
         endif()
-        set(expand_DUNE_BUILD_DIR DUNE_BUILD_DIR "${duneBuildDir}")
+        set(expand_PROJECT_DIR PROJECT_DIR "${projectDir}")
     endif()
 
     dkcoder_install(LOGLEVEL ${loglevel} VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
     dkcoder_compile(LOGLEVEL ${loglevel} EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES}
         OUTPUT_PATH ${OUTPUT}
-        ${expand_DUMP_MERLIN} ${expand_WATCH} ${expand_POLL} ${expand_DUNE_BUILD_DIR})
+        ${expand_DUMP_MERLIN} ${expand_WATCH} ${expand_POLL} ${expand_PROJECT_DIR})
 endfunction()
