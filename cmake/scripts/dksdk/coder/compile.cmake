@@ -174,7 +174,7 @@ Optimizations
 endfunction()
 
 function(dkcoder_compile)
-    set(noValues WATCH)
+    set(noValues WATCH DUMP_MERLIN)
     set(singleValues LOGLEVEL EXPRESSION_PATH OUTPUT_PATH DUNE_BUILD_DIR POLL)
     set(multiValues EXTRA_MODULE_PATHS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
@@ -267,12 +267,14 @@ function(dkcoder_compile)
     file(MAKE_DIRECTORY "${output_dir}")
 
     # Execute the `@gen-cdi` rule
+    set(dune_args)
     set(build_args)
     set(execute_args COMMAND_ERROR_IS_FATAL ANY)
     set(should_poll OFF)
     set(sticky_error OFF)
+    set(first ON)
     if(ARG_DUNE_BUILD_DIR)
-        list(APPEND build_args "--build-dir=${ARG_DUNE_BUILD_DIR}")
+        list(APPEND dune_args "--build-dir=${ARG_DUNE_BUILD_DIR}")
     endif()
     if(ARG_WATCH)
         list(APPEND build_args "--watch")
@@ -309,29 +311,45 @@ function(dkcoder_compile)
             set(should_execute ON)
         endif()
 
+        # Calculate environment variables
+        #   Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
+        #   Since we have a rule that does [ocamlrun], which depends on
+        #   compiling a bytecode executable, we have to do union of environments for
+        #   both ocamlc + ocamlrun.
+        set(envMods
+            "OCAMLLIB=${DKCODER_LIB}/ocaml"
+            "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
+            #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
+            "CDI_OUTPUT=${output_abspath}" # This environment variable is communication to `@gen-cdi` rule
+            #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
+            #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
+            --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
+            --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+            --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
+            --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
+            --modify "PATH=path_list_prepend:${DKCODER_BIN}"
+        )
+
+        if(first AND ARG_DUMP_MERLIN)
+            # "Exit code 0xc0000135"
+            #   This means Visual C++ Redistributables have not been installed.
+            execute_process(
+                WORKING_DIRECTORY "${compile_dir}"
+                COMMAND
+                "${CMAKE_COMMAND}" -E env ${envMods} --
+                "${DKCODER_DUNE}" ocaml merlin dump-config . ${dune_args}
+
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+        endif()
+
         if(should_execute)
             # "Exit code 0xc0000135"
             #   This means Visual C++ Redistributables have not been installed.
             execute_process(
                 COMMAND
 
-                # Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
-                # Since we have a rule that does [ocamlrun], which depends on
-                # compiling a bytecode executable, we have to do union of environments for
-                # both ocamlc + ocamlrun.
-                "${CMAKE_COMMAND}" -E env
-                "OCAMLLIB=${DKCODER_LIB}/ocaml"
-                "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
-                #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
-                "CDI_OUTPUT=${output_abspath}" # This environment variable is communication to `@gen-cdi` rule
-                #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
-                #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
-                --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-                --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-                --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-                --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-                --modify "PATH=path_list_prepend:${DKCODER_BIN}"
-                --
+                "${CMAKE_COMMAND}" -E env ${envMods} --
 
                 "${DKCODER_DUNE}" build
                 --root "${compile_dir}"
@@ -339,6 +357,7 @@ function(dkcoder_compile)
                 --no-buffer
                 --no-print-directory
                 --no-config
+                ${dune_args}
                 ${build_args}
                 "@gen-cdi"
 
@@ -360,6 +379,7 @@ function(dkcoder_compile)
 
         # Yes, so wait before trying again.
         execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep ${ARG_POLL} COMMAND_ERROR_IS_FATAL ANY)
+        set(first OFF)
     endwhile()
 endfunction()
 
@@ -575,7 +595,7 @@ function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    set(noValues HELP QUIET NO_SYSTEM_PATH WATCH)
+    set(noValues HELP QUIET NO_SYSTEM_PATH WATCH DUMP_MERLIN)
     set(singleValues VERSION EXPRESSION OUTPUT DUNE_BUILD_DIR POLL)
     set(multiValues MODULES)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
@@ -596,6 +616,12 @@ function(run)
     set(expand_NO_SYSTEM_PATH)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
+    endif()
+
+    # DUMP_MERLIN (hidden)
+    set(expand_DUMP_MERLIN)
+    if(ARG_DUMP_MERLIN)
+        list(APPEND expand_DUMP_MERLIN DUMP_MERLIN)
     endif()
 
     # WATCH
@@ -647,5 +673,5 @@ function(run)
     dkcoder_install(LOGLEVEL ${loglevel} VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
     dkcoder_compile(LOGLEVEL ${loglevel} EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES}
         OUTPUT_PATH ${OUTPUT}
-        ${expand_WATCH} ${expand_POLL} ${expand_DUNE_BUILD_DIR})
+        ${expand_DUMP_MERLIN} ${expand_WATCH} ${expand_POLL} ${expand_DUNE_BUILD_DIR})
 endfunction()
