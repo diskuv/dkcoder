@@ -129,6 +129,12 @@ VERSION version
   to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome this
   limitation.
 
+DUNE_BUILD_DIR dir
+  Set the build directory for Dune (the build tool for OCaml).
+  Defaults to a directory that is internal to the dkcoder environment.
+  If specified as a relative directory, it will be relative to your project's
+  root directory (where your ./dk and ./dk.cmd scripts are located).
+
 POLL seconds
   Watch the file system for changes to the EXPRESSION file and the MODULES files
   (if any) by waking up every `seconds` seconds. `seconds` may be a floating
@@ -169,7 +175,7 @@ endfunction()
 
 function(dkcoder_compile)
     set(noValues WATCH)
-    set(singleValues LOGLEVEL EXPRESSION_PATH OUTPUT_PATH POLL)
+    set(singleValues LOGLEVEL EXPRESSION_PATH OUTPUT_PATH DUNE_BUILD_DIR POLL)
     set(multiValues EXTRA_MODULE_PATHS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -265,8 +271,11 @@ function(dkcoder_compile)
     set(execute_args COMMAND_ERROR_IS_FATAL ANY)
     set(should_poll OFF)
     set(sticky_error OFF)
+    if(ARG_DUNE_BUILD_DIR)
+        list(APPEND build_args "--build-dir=${ARG_DUNE_BUILD_DIR}")
+    endif()
     if(ARG_WATCH)
-        set(build_args "--watch")
+        list(APPEND build_args "--watch")
     elseif(ARG_POLL)
         set(should_poll ON)
         set(execute_args RESULT_VARIABLE gen_cdi_error)
@@ -567,7 +576,7 @@ function(run)
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
     set(noValues HELP QUIET NO_SYSTEM_PATH WATCH)
-    set(singleValues VERSION EXPRESSION OUTPUT POLL)
+    set(singleValues VERSION EXPRESSION OUTPUT DUNE_BUILD_DIR POLL)
     set(multiValues MODULES)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -624,7 +633,19 @@ function(run)
         cmake_path(REPLACE_EXTENSION ARG_EXPRESSION LAST_ONLY .cdi OUTPUT_VARIABLE OUTPUT)
     endif()
 
+    # DUNE_BUILD_DIR
+    set(expand_DUNE_BUILD_DIR)
+    if(ARG_DUNE_BUILD_DIR)
+        set(duneBuildDir ${ARG_DUNE_BUILD_DIR})
+        cmake_path(IS_RELATIVE duneBuildDir duneBuildDirIsRel)
+        if(duneBuildDirIsRel)
+            cmake_path(ABSOLUTE_PATH duneBuildDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE)
+        endif()
+        set(expand_DUNE_BUILD_DIR DUNE_BUILD_DIR "${duneBuildDir}")
+    endif()
+
     dkcoder_install(LOGLEVEL ${loglevel} VERSION ${VERSION} ${expand_NO_SYSTEM_PATH} ${expand_ENFORCE_SHA256})
-    dkcoder_compile(LOGLEVEL ${loglevel} EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES} OUTPUT_PATH ${OUTPUT}
-        ${expand_WATCH} ${expand_POLL})
+    dkcoder_compile(LOGLEVEL ${loglevel} EXPRESSION_PATH ${ARG_EXPRESSION} EXTRA_MODULE_PATHS ${ARG_MODULES}
+        OUTPUT_PATH ${OUTPUT}
+        ${expand_WATCH} ${expand_POLL} ${expand_DUNE_BUILD_DIR})
 endfunction()
