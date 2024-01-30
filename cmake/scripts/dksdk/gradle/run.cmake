@@ -17,7 +17,6 @@ function(help)
         set(ARG_MODE FATAL_ERROR)
     endif()
     message(${ARG_MODE} [[usage: ./dk dksdk.gradle.run
-    [BINARY_DIR <dir>]
     [OUTPUT_FILE <file>]
     [JAVA_HOME <JAVA_HOME>]
     [QUIET]
@@ -53,12 +52,6 @@ Arguments
 HELP
   Print this help message.
 
-BINARY_DIR <dir>
-  The CMake binary directory (sometimes called the CMake "build" directory).
-  This binary directory contains a `CMakeCache.txt` file.
-
-  The default is `build_dev` if it exists, or else `build`.
-
 ARGS <ARGS>
   The ARGS <ARGS> are just what you would pass to Gradle itself, and
   are documented at https://docs.gradle.org/current/userguide/command_line_interface.html.
@@ -81,7 +74,7 @@ function(run)
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
     set(noValues HELP QUIET)
-    set(singleValues BINARY_DIR OUTPUT_FILE JAVA_HOME)
+    set(singleValues OUTPUT_FILE JAVA_HOME)
     set(multiValues ARGS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -100,19 +93,6 @@ function(run)
     else()
         set(loglevel STATUS)
     endif()
-
-    # BINARY_DIR
-    if(ARG_BINARY_DIR)
-        set(binaryDir "${ARG_BINARY_DIR}")
-    else()
-        if(IS_DIRECTORY build_dev)
-            set(binaryDir "build_dev")
-        else()
-            set(binaryDir "build")
-        endif()
-    endif()
-    cmake_path(ABSOLUTE_PATH binaryDir)
-    message(${loglevel} "Using BINARY_DIR: ${binaryDir}")
 
     # OUTPUT_FILE
     set(execute_process_args)
