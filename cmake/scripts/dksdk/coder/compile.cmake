@@ -162,11 +162,6 @@ WATCH
   watches within the project directory and does not travel through symlinks (at
   least on Windows).
 
-  ERRATA: Ctrl-C should abort the watch mode but due to a bug with CMake (at
-  least on Windows 3.25.3) it may not work. Instead use `taskkill /F /IM dune.exe`
-  on Windows or `pkill -f dune.exe` on Unix. Confer with
-  https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
-
 Optimizations
 =============
 
@@ -180,6 +175,32 @@ Optimizations
    complicated).
 ")
 endfunction()
+
+macro(dkcoder_prep_environment)
+    set(envMods_UNIX)
+    set(envMods_DOS)
+    set(envMods_CMAKE)
+endmacro()
+
+macro(dkcoder_add_environment_mod term)
+    if(envMods_UNIX)
+        string(APPEND envMods_UNIX " ")
+        string(APPEND envMods_DOS " ")
+    endif()
+    string(APPEND envMods_DOS "--modify \"${term}\"")
+    string(APPEND envMods_UNIX "--modify '${term}'")
+    list(APPEND envMods_CMAKE --modify "${term}")
+endmacro()    
+
+macro(dkcoder_add_environment_set namevalue)
+    if(envMods_UNIX)
+        string(APPEND envMods_UNIX " ")
+        string(APPEND envMods_DOS " ")
+    endif()
+    string(APPEND envMods_DOS "\"${namevalue}\"")
+    string(APPEND envMods_UNIX "'${namevalue}'")
+    list(APPEND envMods_CMAKE "${namevalue}")
+endmacro()    
 
 function(dkcoder_compile)
     set(noValues WATCH DUMP_MERLIN)
@@ -294,8 +315,28 @@ function(dkcoder_compile)
     cmake_path(GET output_abspath PARENT_PATH output_dir)
     file(MAKE_DIRECTORY "${output_dir}")
 
-    # Execute the `@gen-cdi` rule
+    # Calculate environment variables
+    #   Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
+    #   Since we have a rule that does [ocamlrun], which depends on
+    #   compiling a bytecode executable, we have to do union of environments for
+    #   both ocamlc + ocamlrun.
+    dkcoder_prep_environment()
+    dkcoder_add_environment_set("OCAMLLIB=${DKCODER_LIB}/ocaml")
+    dkcoder_add_environment_set("OCAMLFIND_CONF=${compile_dir}/findlib.conf")
+    #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
+    dkcoder_add_environment_set("CDI_OUTPUT=${output_abspath}") # This environment variable is communication to `@gen-cdi` rule
+    #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
+    #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
+    dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
+    dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
+    dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
+    dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
+    dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_BIN}")
+    
+    # Prepare to execute the `@gen-cdi` rule
     set(dune_args)
+    set(dune_args_SQUOTE)
+    set(dune_args_DQUOTE)
     set(build_args)
     set(execute_args COMMAND_ERROR_IS_FATAL ANY)
     set(should_poll OFF)
@@ -303,6 +344,8 @@ function(dkcoder_compile)
     set(first ON)
     if(ARG_PROJECT_DIR)
         list(APPEND dune_args "--build-dir=${ARG_PROJECT_DIR}/_build")
+        list(APPEND dune_args_SQUOTE "'--build-dir=${ARG_PROJECT_DIR}/_build'")
+        list(APPEND dune_args_DQUOTE "\"--build-dir=${ARG_PROJECT_DIR}/_build\"")
     endif()
     if(ARG_WATCH)
         list(APPEND build_args "--watch")
@@ -311,6 +354,36 @@ function(dkcoder_compile)
         set(execute_args RESULT_VARIABLE gen_cdi_error)
         message(${ARG_LOGLEVEL} "Polling for changes every ${ARG_POLL} seconds ...")
     endif()
+
+    # If we aren't polling we should set the postscript and get out of here.
+    # In particular, we need to execute `dune build --watch` outside of CMake
+    # since CMake intercepts signals and makes the watch mode hang the terminal
+    # on Windows. Former notes:
+    #   Ctrl-C should abort the watch mode but due to a bug with CMake (at
+    #   least on Windows 3.25.3) it may not work. Instead use `taskkill /F /IM dune.exe`
+    #   on Windows or `pkill -f dune.exe` on Unix. Confer with
+    #   https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
+    if(NOT should_poll)
+        list(JOIN dune_args_SQUOTE " " dune_args_SQUOTE_SPACES)
+        list(JOIN dune_args_DQUOTE " " dune_args_DQUOTE_SPACES)
+        list(JOIN build_args " " build_args_SPACES)
+        if(CMAKE_HOST_WIN32)
+            cmake_path(NATIVE_PATH CMAKE_COMMAND CMAKE_COMMAND_NATIVE)
+            file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[REM @ECHO OFF
+"@CMAKE_COMMAND_NATIVE@" -E env @envMods_DOS@ -- "@DKCODER_DUNE@" build --root "@compile_dir@" --display=short --no-buffer --no-print-directory --no-config @dune_args_DQUOTE_SPACES@ @build_args_SPACES@ "@gen-cdi"
+]]
+                @ONLY NEWLINE_STYLE DOS)
+        else()
+            file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[#!/bin/sh
+set -euf
+exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_DUNE@' build --root '@compile_dir@' --display=short --no-buffer --no-print-directory --no-config @dune_args_SQUOTE_SPACES@ @build_args_SPACES@ @gen-cdi
+]]
+                @ONLY NEWLINE_STYLE UNIX)
+        endif()
+        return()
+    endif()
+
+    # Start polling
     while(1)
         # Should we execute? Not if the output .cdi is newer than the input files.
         # We'll always run though if we are not polling.
@@ -339,32 +412,13 @@ function(dkcoder_compile)
             set(should_execute ON)
         endif()
 
-        # Calculate environment variables
-        #   Environment variables tested at dksdk-coder/ci/test-std-helper-dunebuild.sh.
-        #   Since we have a rule that does [ocamlrun], which depends on
-        #   compiling a bytecode executable, we have to do union of environments for
-        #   both ocamlc + ocamlrun.
-        set(envMods
-            "OCAMLLIB=${DKCODER_LIB}/ocaml"
-            "OCAMLFIND_CONF=${compile_dir}/findlib.conf"
-            #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
-            "CDI_OUTPUT=${output_abspath}" # This environment variable is communication to `@gen-cdi` rule
-            #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
-            #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
-            --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-            --modify "CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-            --modify "PATH=path_list_prepend:${DKCODER_LIB}/stublibs"
-            --modify "PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs"
-            --modify "PATH=path_list_prepend:${DKCODER_BIN}"
-        )
-
         if(first AND ARG_DUMP_MERLIN)
             # "Exit code 0xc0000135"
             #   This means Visual C++ Redistributables have not been installed.
             execute_process(
                 WORKING_DIRECTORY "${compile_dir}"
                 COMMAND
-                "${CMAKE_COMMAND}" -E env ${envMods} --
+                "${CMAKE_COMMAND}" -E env ${envMods_CMAKE} --
                 "${DKCODER_DUNE}" ocaml merlin dump-config . ${dune_args}
 
                 COMMAND_ERROR_IS_FATAL ANY
@@ -377,7 +431,7 @@ function(dkcoder_compile)
             execute_process(
                 COMMAND
 
-                "${CMAKE_COMMAND}" -E env ${envMods} --
+                "${CMAKE_COMMAND}" -E env ${envMods_CMAKE} --
 
                 "${DKCODER_DUNE}" build
                 --root "${compile_dir}"
