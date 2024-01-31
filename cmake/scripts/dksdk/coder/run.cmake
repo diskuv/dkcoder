@@ -132,6 +132,6 @@ set -euf
 export DKCODER_PROGRAM='./dk dksdk.coder.run'
 exec "@DKCODER@" "$@"
 ]]
-            @ONLY NEWLINE_STYLE DOS)
+            @ONLY NEWLINE_STYLE UNIX)
     endif()
 endfunction()
