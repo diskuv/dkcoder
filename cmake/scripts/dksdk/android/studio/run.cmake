@@ -37,6 +37,9 @@ HELP
 ARGS <ARGS>
   The ARGS <ARGS> are just what you would pass to Android Studio itself.
 
+SCALE
+  Set to 2 if you want bigger fonts on a high DPI monitor. Defaults to 1.
+
 QUIET
   Do not print CMake STATUS messages. This flag has no effect on Android Studio.
 ]])
@@ -47,7 +50,7 @@ function(run)
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
     set(noValues HELP QUIET)
-    set(singleValues BINARY_DIR OUTPUT_FILE JAVA_HOME)
+    set(singleValues BINARY_DIR OUTPUT_FILE JAVA_HOME SCALE)
     set(multiValues ARGS)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -63,6 +66,12 @@ function(run)
         set(loglevel STATUS)
     endif()
 
+    # SCALE
+    set(scale 1)
+    if(ARG_SCALE)
+        set(scale ${ARG_SCALE})
+    endif()
+
     # Get helper functions from other commands
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/download.cmake)
 
@@ -71,6 +80,7 @@ function(run)
 
     execute_process(
         COMMAND
+        "${CMAKE_COMMAND}" -E "GDK_SCALE=${scale}" --
         "${ANDROID_STUDIO}" ${ARG_ARGS}
         ENCODING UTF-8
         COMMAND_ERROR_IS_FATAL ANY)
