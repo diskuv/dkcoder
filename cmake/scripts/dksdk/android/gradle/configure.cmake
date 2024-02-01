@@ -48,49 +48,6 @@ OVERWRITE
 ")
 endfunction()
 
-macro(_install_android_studio_helper ARCHIVE_NAME TYPE)
-    set(archive_name ${ARCHIVE_NAME})
-    set(url ${android_studio_url_${TYPE}})
-    message(${loglevel} "Downloading Android Studio from ${url}")
-    file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/${ARCHIVE_NAME}
-        EXPECTED_HASH SHA256=${android_studio_256_${TYPE}})
-endmacro()
-
-function(install_android_studio)
-    set(noValues NO_SYSTEM_PATH)
-    set(singleValues)
-    set(multiValues)
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
-
-    set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/android-studio/bin)
-    set(find_program_INITIAL)
-    if(ARG_NO_SYSTEM_PATH)
-        list(APPEND find_program_INITIAL NO_DEFAULT_PATH)
-    endif()
-    find_program(ANDROID_STUDIO NAMES studio.sh HINTS ${hints} ${find_program_INITIAL})
-
-    if(NOT ANDROID_STUDIO)
-        # Download into .ci/local/share/android-studio (which is one of the HINTS)
-        if(CMAKE_HOST_WIN32)
-            _install_android_studio_helper(studio.zip WINDOWS)
-        elseif(CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL arm64)
-            _install_android_studio_helper(studio.zip MAC_ARM64)
-        elseif(CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86_64)
-            _install_android_studio_helper(studio.zip MAC)
-        elseif(CMAKE_HOST_UNIX)
-            _install_android_studio_helper(studio.tar.gz LINUX)
-        else()
-            message(FATAL_ERROR "Your platform is currently not supported by this download script")
-        endif()
-
-        message(${loglevel} "Extracting Android Studio")
-        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/${archive_name}
-            DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share)
-    endif()
-
-    find_program(ANDROID_STUDIO NAMES studio.sh REQUIRED HINTS ${hints})
-endfunction()
-
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
