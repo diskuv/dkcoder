@@ -116,7 +116,7 @@ function(install_android_studio)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND find_program_INITIAL NO_DEFAULT_PATH)
     endif()
-    find_program(ANDROID_STUDIO NAMES studio.sh HINTS ${hints} ${find_program_INITIAL})
+    find_program(ANDROID_STUDIO NAMES studio.sh studio.bat HINTS ${hints} ${find_program_INITIAL})
 
     if(NOT ANDROID_STUDIO)
         # Download into .ci/local/share/android-studio (which is one of the HINTS)
