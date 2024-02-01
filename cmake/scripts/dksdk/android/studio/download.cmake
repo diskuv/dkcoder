@@ -137,7 +137,7 @@ function(install_android_studio)
             DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share)
     endif()
 
-    find_program(ANDROID_STUDIO NAMES studio.sh REQUIRED HINTS ${hints})
+    find_program(ANDROID_STUDIO NAMES studio.sh studio.bat REQUIRED HINTS ${hints})
 endfunction()
 
 function(run)
