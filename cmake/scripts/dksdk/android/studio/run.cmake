@@ -80,7 +80,7 @@ function(run)
 
     execute_process(
         COMMAND
-        "${CMAKE_COMMAND}" -E "GDK_SCALE=${scale}" --
+        "${CMAKE_COMMAND}" -E env "GDK_SCALE=${scale}" --
         "${ANDROID_STUDIO}" ${ARG_ARGS}
         ENCODING UTF-8
         COMMAND_ERROR_IS_FATAL ANY)
