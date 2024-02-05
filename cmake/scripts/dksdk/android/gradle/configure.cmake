@@ -48,6 +48,16 @@ OVERWRITE
 ")
 endfunction()
 
+# Mimic the escaping done by Android Studio itself.
+# Example:
+#   sdk.dir=Y\:\\source\\dksdk-ffi-java\\.ci\\local\\share\\android-sdk
+#   cmake.dir=C\:/Users/beckf/AppData/Local/Programs/DkSDK/dktool/cmake-3.25.3-windows-x86_64
+# So backslashes and colons are escaped.
+macro(android_local_properties_escape varname)
+    string(REPLACE "\\" "\\\\" ${varname} "${${varname}}")
+    string(REPLACE ":" "\\:" ${varname} "${${varname}}")
+endmacro()
+
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
@@ -90,14 +100,16 @@ function(run)
     cmake_path(GET android_sdk_DIR PARENT_PATH android_sdk_DIR) # latest,<version>
     cmake_path(GET android_sdk_DIR PARENT_PATH android_sdk_DIR) # cmdline-tools
     cmake_path(GET android_sdk_DIR PARENT_PATH android_sdk_DIR) # <android-sdk>
-    string(APPEND content "sdk.dir=${android_sdk_DIR}\n")
     message(${loglevel} "Android SDK: ${android_sdk_DIR}")
+    android_local_properties_escape(android_sdk_DIR)
+    string(APPEND content "sdk.dir=${android_sdk_DIR}\n")
 
     # Find if there is a standalone cmake
     check_standalone_cmake(IS_STANDALONE STANDALONE_DIR)
     if(IS_STANDALONE)
-        string(APPEND content "cmake.dir=${STANDALONE_DIR}\n")
         message(${loglevel} "CMake ${CMAKE_VERSION}: ${STANDALONE_DIR}")
+        android_local_properties_escape(STANDALONE_DIR)
+        string(APPEND content "cmake.dir=${STANDALONE_DIR}\n")
     endif()
 
     file(WRITE "${CMAKE_SOURCE_DIR}/local.properties" "${content}")
