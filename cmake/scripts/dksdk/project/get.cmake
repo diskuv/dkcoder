@@ -27,14 +27,20 @@ Directory Structure
 
 The dependencies will be placed into the `fetch/` directory.
 
-dkproject.jsonc
-fetch/
-├── .gitignore
-├── dune
-├── project1/
-├── project2/
-├── ...
-└── projectN/
+./
+├── cmake
+│   └── scripts
+│       └── __dk-find-scripts
+├── dk
+├── dk.cmd
+├── dkproject.jsonc
+└── fetch/
+    ├── .gitignore
+    ├── dune
+    ├── project1/
+    ├── project2/
+    ├── ...
+    └── projectN/
 
 If `fetch/.gitignore` does not exist, it will be created but not overwritten.
 The file will instruct Git to not look at the contents of the `fetch/` directory
