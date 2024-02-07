@@ -114,7 +114,7 @@ function(dksdk_project_get)
             -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
             -D "COMMAND_GET=${ARG_FETCH_DIR}"
             -D "CACHE_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-            -P "${dksdk-access_SOURCE_DIR}/cmake/scripts/get.cmake"
+            -P "${dksdk-access_SOURCE_DIR}/cmake/run/get.cmake"
             COMMAND_ERROR_IS_FATAL ANY
     )
 endfunction()
