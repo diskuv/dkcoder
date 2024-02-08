@@ -104,6 +104,13 @@ function(dksdk_project_get)
                 SUBBUILD_DIR "${access_subbuild_dir}"
                 GIT_REPOSITORY https://gitlab.com/diskuv/dksdk-access.git
                 GIT_TAG main
+                # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
+                # has still not been fixed. That means empty strings get removed.
+                # ExternalProject_Add(GIT_SUBMODULES) in dktool-subbuild/CMakeLists.txt
+                # means fetch all submodules.
+                # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
+                # has a workaround.
+                GIT_SUBMODULES cmake # Non-git-submodule dir that already exists
                 GIT_SUBMODULES_RECURSE OFF)
     endif()
 
