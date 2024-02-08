@@ -82,12 +82,30 @@ function(dksdk_project_get)
         set(interactive 1)
     endif()
 
-    # Fetch dksdk-access
-    FetchContent_Populate(dksdk-access
-            QUIET
-            GIT_REPOSITORY https://gitlab.com/diskuv/dksdk-access.git
-            GIT_TAG main
-            GIT_SUBMODULES_RECURSE OFF)
+    # Fetch dksdk-access.
+    # But we don't want to download every time we run the script.
+    #
+    #   The default, but explicit so we know where it is.
+    set(access_subbuild_dir "${CMAKE_CURRENT_BINARY_DIR}/dksdk-access-subbuild")
+    #   Also the default, but explicit since we don't always call FetchContent_Populate().
+    set(access_src_dir "${CMAKE_CURRENT_BINARY_DIR}/dksdk-access-src")
+    #   Prior downloads are fine if done within the last one hour.
+    string(TIMESTAMP now_EPOCHSECS "%s")
+    math(EXPR min_valid_EPOCHSECS "${now_EPOCHSECS} - 60*60")
+    set(tstamp_EPOCHSECS 0)
+    if(EXISTS "${access_subbuild_dir}/build.ninja")
+        file(TIMESTAMP "${access_subbuild_dir}/build.ninja" tstamp_EPOCHSECS "%s")
+    endif()
+    if(NOT tstamp_EPOCHSECS OR tstamp_EPOCHSECS LESS min_valid_EPOCHSECS)
+        # Cache miss. Time to update dksdk-access.
+        FetchContent_Populate(dksdk-access
+                QUIET
+                SOURCE_DIR "${access_src_dir}"
+                SUBBUILD_DIR "${access_subbuild_dir}"
+                GIT_REPOSITORY https://gitlab.com/diskuv/dksdk-access.git
+                GIT_TAG main
+                GIT_SUBMODULES_RECURSE OFF)
+    endif()
 
     # Do file exclusions now so that IDEs + build systems don't see/scan
     # content during the 'Do get' step
@@ -120,7 +138,7 @@ function(dksdk_project_get)
             -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
             -D "COMMAND_GET=${ARG_FETCH_DIR}"
             -D "CACHE_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-            -P "${dksdk-access_SOURCE_DIR}/cmake/run/get.cmake"
+            -P "${access_src_dir}/cmake/run/get.cmake"
             COMMAND_ERROR_IS_FATAL ANY
     )
 endfunction()
