@@ -66,7 +66,7 @@ SOURCE_DIR <dir>
   The directory assigned to the \${sourceDir} variable used inside `dkproject.jsonc`.
   The \${sourceParentDir} will be assigned to the parent of \${sourceDir}.
   Defaults to the directory containing `./dk` and `dkproject.jsonc`.
-  Relative paths are interpreted relative to the `./dk` and `./dk.cmd` scripts.
+  Relative paths are interpreted relative to `dkproject.jsonc`.
 
   Use when you want to preserve the local development environment of <dir>; the
   convention inside `dkproject.jsonc` is that local overrides will be optionally
@@ -210,10 +210,8 @@ function(run)
     # SOURCE_DIR
     set(expand_SOURCE_DIR)
     if(ARG_SOURCE_DIR)
-        set(sourceDir "${ARG_SOURCE_DIR}")
-        cmake_path(ABSOLUTE_PATH sourceDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE
-            OUTPUT_VARIABLE sourceDirAbs)
-        set(expand_SOURCE_DIR SOURCE_DIR "${sourceDirAbs}")
+        cmake_path(NORMAL_PATH ARG_SOURCE_DIR OUTPUT_VARIABLE sourceDir)
+        set(expand_SOURCE_DIR SOURCE_DIR "${sourceDir}")
     endif()
 
     # NONINTERACTIVE

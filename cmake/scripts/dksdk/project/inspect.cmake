@@ -54,14 +54,26 @@ Common Options
 
 QUIET
   Do not print CMake STATUS messages.
+
+SOURCE_DIR <dir>
+  The directory assigned to the \${sourceDir} variable used inside `dkproject.jsonc`.
+  The \${sourceParentDir} will be assigned to the parent of \${sourceDir}.
+  Defaults to the directory containing `./dk` and `dkproject.jsonc`.
+  Relative paths are interpreted relative to `dkproject.jsonc`.
+
 ")
 endfunction()
 
 function(dksdk_project_inspect_variables)
     set(noValues NONINTERACTIVE)
-    set(singleValues LOG_LEVEL CONFIG_FILE)
+    set(singleValues LOG_LEVEL CONFIG_FILE SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    set(source_dir_OPTS)
+    if(ARG_SOURCE_DIR)
+        set(source_dir_OPTS -D "SOURCE_DIR=${ARG_SOURCE_DIR}")
+    endif()
 
     # Fetch dksdk-access
     FetchContent_Populate(dksdk-access
@@ -75,6 +87,7 @@ function(dksdk_project_inspect_variables)
             COMMAND
             "${CMAKE_COMMAND}"
             -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
+            ${source_dir_OPTS}
             -D COMMAND_DUMP_VARIABLES=1
             -P "${dksdk-access_SOURCE_DIR}/cmake/run/get.cmake"
             COMMAND_ERROR_IS_FATAL ANY
@@ -83,9 +96,14 @@ endfunction()
 
 function(dksdk_project_inspect_dependencies)
     set(noValues NONINTERACTIVE)
-    set(singleValues LOG_LEVEL CONFIG_FILE)
+    set(singleValues LOG_LEVEL CONFIG_FILE SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    set(source_dir_OPTS)
+    if(ARG_SOURCE_DIR)
+        set(source_dir_OPTS -D "SOURCE_DIR=${ARG_SOURCE_DIR}")
+    endif()
 
     # Fetch dksdk-access
     FetchContent_Populate(dksdk-access
@@ -99,6 +117,7 @@ function(dksdk_project_inspect_dependencies)
             COMMAND
             "${CMAKE_COMMAND}"
             -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
+            ${source_dir_OPTS}
             -D COMMAND_DUMP_DEPENDENCIES=1
             -P "${dksdk-access_SOURCE_DIR}/cmake/run/get.cmake"
             COMMAND_ERROR_IS_FATAL ANY
@@ -110,7 +129,7 @@ function(run)
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
     set(noValues HELP QUIET VARIABLES DEPENDENCIES)
-    set(singleValues)
+    set(singleValues SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -126,6 +145,13 @@ function(run)
         set(logLevel STATUS)
     endif()
 
+    # SOURCE_DIR
+    set(expand_SOURCE_DIR)
+    if(ARG_SOURCE_DIR)
+        cmake_path(NORMAL_PATH ARG_SOURCE_DIR OUTPUT_VARIABLE sourceDir)
+        set(expand_SOURCE_DIR SOURCE_DIR "${sourceDir}")
+    endif()
+
     # configFile
     set(configFile dkproject.jsonc)
     cmake_path(ABSOLUTE_PATH configFile BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE
@@ -133,10 +159,10 @@ function(run)
 
     if(ARG_VARIABLES)
         dksdk_project_inspect_variables(LOG_LEVEL ${logLevel}
-                CONFIG_FILE "${configFileAbs}")
+                CONFIG_FILE "${configFileAbs}" ${expand_SOURCE_DIR})
     endif()
     if(ARG_DEPENDENCIES)
         dksdk_project_inspect_dependencies(LOG_LEVEL ${logLevel}
-                CONFIG_FILE "${configFileAbs}")
+                CONFIG_FILE "${configFileAbs}" ${expand_SOURCE_DIR})
     endif()
 endfunction()
