@@ -90,13 +90,17 @@ function(dksdk_project_get)
     #   Also the default, but explicit since we don't always call FetchContent_Populate().
     set(access_src_dir "${CMAKE_CURRENT_BINARY_DIR}/dksdk-access-src")
     #   Prior downloads are fine if done within the last one hour.
+    set(ttl_MINUTES 60)
+    if(DEFINED ENV{DKTOOL_TTL_MINUTES})
+        set(ttl_MINUTES "$ENV{DKTOOL_TTL_MINUTES}")
+    endif()
     string(TIMESTAMP now_EPOCHSECS "%s")
-    math(EXPR min_valid_EPOCHSECS "${now_EPOCHSECS} - 60*60")
+    math(EXPR min_valid_EPOCHSECS "${now_EPOCHSECS} - 60*${ttl_MINUTES}")
     set(tstamp_EPOCHSECS 0)
     if(EXISTS "${access_subbuild_dir}/build.ninja")
         file(TIMESTAMP "${access_subbuild_dir}/build.ninja" tstamp_EPOCHSECS "%s")
     endif()
-    if(NOT tstamp_EPOCHSECS OR tstamp_EPOCHSECS LESS min_valid_EPOCHSECS)
+    if(NOT tstamp_EPOCHSECS OR tstamp_EPOCHSECS LESS_EQUAL min_valid_EPOCHSECS)
         # Cache miss. Time to update dksdk-access.
         FetchContent_Populate(dksdk-access
                 QUIET
