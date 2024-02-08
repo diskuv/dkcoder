@@ -28,6 +28,10 @@ function(parse_dktool_command_line)
         message(NOTICE [[Usage:
   ./dk <command> HELP
   ./dk <command> [args]
+
+Environment variables:
+  DKTOOL_TTL_MINUTES=<n>. How many minutes before updates are fetched.
+    Defaults to 60 minutes.
 ]])
     else()
         set(command ${ARGV0})
