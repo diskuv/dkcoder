@@ -62,6 +62,24 @@ FETCH_DIR <dir>
   The directory to place the dependencies. Defaults to `fetch/`.
   Relative paths are interpreted relative to the `./dk` and `./dk.cmd` scripts.
 
+SOURCE_DIR <dir>
+  The directory assigned to the \${sourceDir} variable used inside `dkproject.jsonc`.
+  The \${sourceParentDir} will be assigned to the parent of \${sourceDir}.
+  Defaults to the directory containing `./dk` and `dkproject.jsonc`.
+  Relative paths are interpreted relative to the `./dk` and `./dk.cmd` scripts.
+
+  Use when you want to preserve the local development environment of <dir>; the
+  convention inside `dkproject.jsonc` is that local overrides will be optionally
+  available either in <dir>'s sibling directories or <dir>/fetch's subdirectories.
+  The typical use case is when <dir> is on a host machine (perhaps a Windows host)
+  and `dkproject.jsonc` (etc.) has been checked out in a guest machine (perhaps
+  WSL2 or Docker) through a mounted drive or volume. Often the performance of the
+  mount is quite poor (could be 100X slowdown on WSL2 I/O), so a copy of the local
+  development environment speeds up builds tremendously.
+  
+  The local development environment will be copied in this version, although future
+  versions may use symlinks when the I/O speed to read <dir> is fast.
+
 NONINTERACTIVE
   Best effort attempt to stop `git` and any other source fetching tools from asking
   interactive questions like username/password prompts. Use when scripting.
@@ -70,7 +88,7 @@ endfunction()
 
 function(dksdk_project_get)
     set(noValues NONINTERACTIVE)
-    set(singleValues LOG_LEVEL FETCH_DIR CONFIG_FILE)
+    set(singleValues LOG_LEVEL FETCH_DIR CONFIG_FILE SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -80,6 +98,11 @@ function(dksdk_project_get)
         set(interactive 0)
     else()
         set(interactive 1)
+    endif()
+
+    set(source_dir_OPTS)
+    if(ARG_SOURCE_DIR)
+        set(source_dir_OPTS -D "SOURCE_DIR=${ARG_SOURCE_DIR}")
     endif()
 
     # Fetch dksdk-access.
@@ -147,6 +170,7 @@ function(dksdk_project_get)
             "${CMAKE_COMMAND}"
             -D INTERACTIVE=${interactive}
             -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
+            ${source_dir_OPTS}            
             -D "COMMAND_GET=${ARG_FETCH_DIR}"
             -D "CACHE_DIR=${CMAKE_CURRENT_BINARY_DIR}"
             -P "${access_src_dir}/cmake/run/get.cmake"
@@ -159,7 +183,7 @@ function(run)
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
     set(noValues HELP QUIET NONINTERACTIVE)
-    set(singleValues FETCH_DIR)
+    set(singleValues FETCH_DIR SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -183,6 +207,15 @@ function(run)
     cmake_path(ABSOLUTE_PATH fetchDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE
             OUTPUT_VARIABLE fetchDirAbs)
 
+    # SOURCE_DIR
+    set(expand_SOURCE_DIR)
+    if(ARG_SOURCE_DIR)
+        set(sourceDir "${ARG_SOURCE_DIR}")
+        cmake_path(ABSOLUTE_PATH sourceDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE
+            OUTPUT_VARIABLE sourceDirAbs)
+        set(expand_SOURCE_DIR SOURCE_DIR "${sourceDirAbs}")
+    endif()
+
     # NONINTERACTIVE
     set(expand_NONINTERACTIVE)
     if(ARG_NONINTERACTIVE)
@@ -197,6 +230,7 @@ function(run)
     dksdk_project_get(LOG_LEVEL ${logLevel}
             FETCH_DIR "${fetchDirAbs}"
             CONFIG_FILE "${configFileAbs}"
-            ${expand_NONINTERACTIVE})
+            ${expand_NONINTERACTIVE}
+            ${expand_SOURCE_DIR})
     message(STATUS "Project dependencies have been updated.")
 endfunction()
