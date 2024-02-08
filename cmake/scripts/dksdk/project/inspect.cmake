@@ -39,7 +39,12 @@ Commands
 ========
 
 VARIABLES
-    Show variables available to dkproject.jsonc.
+    Show variables available to `dkproject.jsonc`.
+
+DEPENDENCIES
+    Show dependencies defined by `dkproject.jsonc`. May contain sensitive
+    data like authentication credentials so do not dump to CI console or
+    any log file without a URL masker.
 
 HELP
   Print this help message.
@@ -52,7 +57,7 @@ QUIET
 ")
 endfunction()
 
-function(dksdk_project_inspect)
+function(dksdk_project_inspect_variables)
     set(noValues NONINTERACTIVE)
     set(singleValues LOG_LEVEL CONFIG_FILE)
     set(multiValues)
@@ -76,11 +81,35 @@ function(dksdk_project_inspect)
     )
 endfunction()
 
+function(dksdk_project_inspect_dependencies)
+    set(noValues NONINTERACTIVE)
+    set(singleValues LOG_LEVEL CONFIG_FILE)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # Fetch dksdk-access
+    FetchContent_Populate(dksdk-access
+            QUIET
+            GIT_REPOSITORY https://gitlab.com/diskuv/dksdk-access.git
+            GIT_TAG main
+            GIT_SUBMODULES_RECURSE OFF)
+
+    # Do get
+    execute_process(
+            COMMAND
+            "${CMAKE_COMMAND}"
+            -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
+            -D COMMAND_DUMP_DEPENDENCIES=1
+            -P "${dksdk-access_SOURCE_DIR}/cmake/run/get.cmake"
+            COMMAND_ERROR_IS_FATAL ANY
+    )
+endfunction()
+
 function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    set(noValues HELP QUIET)
+    set(noValues HELP QUIET VARIABLES DEPENDENCIES)
     set(singleValues)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
@@ -102,6 +131,12 @@ function(run)
     cmake_path(ABSOLUTE_PATH configFile BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE
             OUTPUT_VARIABLE configFileAbs)
 
-    dksdk_project_inspect(LOG_LEVEL ${logLevel}
-            CONFIG_FILE "${configFileAbs}")
+    if(ARG_VARIABLES)
+        dksdk_project_inspect_variables(LOG_LEVEL ${logLevel}
+                CONFIG_FILE "${configFileAbs}")
+    endif()
+    if(ARG_DEPENDENCIES)
+        dksdk_project_inspect_dependencies(LOG_LEVEL ${logLevel}
+                CONFIG_FILE "${configFileAbs}")
+    endif()
 endfunction()
