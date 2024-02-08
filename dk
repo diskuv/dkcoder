@@ -528,6 +528,8 @@ install_macos_prog() {
   shift
   if [ -x "/usr/bin/$install_macos_prog_NAME" ]; then
     export DK_PROG_INSTALLED_LOCATION="/usr/bin/$install_macos_prog_NAME"
+  elif [ -x "/bin/$install_macos_prog_NAME" ]; then
+    export DK_PROG_INSTALLED_LOCATION="/bin/$install_macos_prog_NAME"
   elif [ -x "/usr/local/bin/$install_macos_prog_NAME" ]; then
     export DK_PROG_INSTALLED_LOCATION="/usr/local/bin/$install_macos_prog_NAME"
   elif get_homebrew_binary "$install_macos_prog_NAME"; then
