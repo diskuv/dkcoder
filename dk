@@ -485,6 +485,8 @@ install_linux_prog() {
   shift
   if [ -x "/usr/bin/$install_linux_prog_NAME" ]; then
     export DK_PROG_INSTALLED_LOCATION="/usr/bin/$install_linux_prog_NAME"
+  elif [ -x "/bin/$install_linux_prog_NAME" ]; then
+    export DK_PROG_INSTALLED_LOCATION="/bin/$install_linux_prog_NAME"
   else
     if command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
