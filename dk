@@ -340,10 +340,20 @@ sha256compute() {
         sha256compute_FILE=$(/usr/bin/cygpath -a "$sha256compute_FILE")
     fi
 
-    if [ -x /usr/bin/shasum ]; then
-        /usr/bin/shasum -a 256 "$sha256compute_FILE" | awk '{print $1}'
-    elif [ -x /usr/bin/sha256sum ]; then
-        /usr/bin/sha256sum "$sha256compute_FILE" | awk '{print $1}'
+    autodetect_system_binaries
+    if [ -x /usr/bin/shasum ]; then # macOS, OpenBSD, Debian
+        # CODESITE #1 (duplicates elsewhere).
+        # On Debian shasum is a perl script, and perl needs locale settings or it will complain.
+        # Confer: https://www.thomas-krenn.com/en/wiki/Perl_warning_Setting_locale_failed_in_Debian
+        # Confer: https://stackoverflow.com/a/52004330/21513816           
+        #   shellcheck disable=SC2016
+        LANG=C.UTF-8 LC_ALL=C.UTF-8 /usr/bin/shasum -a 256 "$sha256compute_FILE" | "$DKMLSYS_AWK" '{print $1}'
+    elif [ -x /usr/bin/sha256sum ]; then # Linux, MSYS2
+        #   shellcheck disable=SC2016
+        /usr/bin/sha256sum "$sha256compute_FILE" | "$DKMLSYS_AWK" '{print $1}'
+    elif [ -x /sbin/sha256 ]; then # FreeBSD
+        #   shellcheck disable=SC2016
+        /sbin/sha256 -r "$sha256compute_FILE" | "$DKMLSYS_AWK" '{print $1}'
     else
         printf "FATAL: %s\n" "No sha256 checksum utility found" >&2
         exit 107
@@ -357,12 +367,27 @@ sha256check() {
     shift
     sha256check_SUM="$1"
     shift
-    if [ -x /usr/bin/shasum ]; then
-        printf "%s  %s" "$sha256check_SUM" "$sha256check_FILE" | /usr/bin/shasum -a 256 -c >&2
-    elif [ -x /usr/bin/sha256sum ]; then
+
+    if [ -x /usr/bin/shasum ]; then # macOS, OpenBSD, Debian
+        # CODESITE #1 (duplicates elsewhere).
+        # On Debian shasum is a perl script, and perl needs locale settings or it will complain.
+        # Confer: https://www.thomas-krenn.com/en/wiki/Perl_warning_Setting_locale_failed_in_Debian
+        # Confer: https://stackoverflow.com/a/52004330/21513816           
+        #   shellcheck disable=SC2016        
+        printf "%s  %s" "$sha256check_SUM" "$sha256check_FILE" | LANG=C.UTF-8 LC_ALL=C.UTF-8 /usr/bin/shasum -a 256 -c >&2
+    elif [ -x /usr/bin/sha256sum ]; then # Linux, MSYS2
         printf "%s  %s" "$sha256check_SUM" "$sha256check_FILE" | /usr/bin/sha256sum -c >&2
+    elif [ -x /sbin/sha256 ]; then # FreeBSD
+        /sbin/sha256 -c "$sha256check_SUM" "$sha256check_FILE" >&2
     else
         printf "FATAL: %s\n" "No sha256 checksum utility found" >&2
+
+        # REMOVEME!
+        if [ -d /sbin ]; then printf "/sbin:\n" >&2; ls /sbin >&2; fi
+        if [ -d /usr/sbin ]; then printf "/usr/sbin:\n" >&2; ls /usr/sbin >&2; fi
+        if [ -d /bin ]; then printf "/bin:\n" >&2; ls /bin >&2; fi
+        if [ -d /usr/bin ]; then printf "/usr/bin:\n" >&2; ls /usr/bin >&2; fi
+
         exit 107
     fi
 }
