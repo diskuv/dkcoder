@@ -135,24 +135,41 @@ endfunction()
     if(NOT IS_DIRECTORY cmake/scripts/dksdk)
         # If this project (ex. dktool) has the system scripts, it must
         # have all of them. Otherwise we download the system scripts.
-        FetchContent_Populate(dktool
-            QUIET
-            GIT_REPOSITORY https://gitlab.com/diskuv/dktool.git
-            GIT_TAG 1.0
-            # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
-            # has still not been fixed. That means empty strings get removed.
-            # ExternalProject_Add(GIT_SUBMODULES) in dktool-subbuild/CMakeLists.txt
-            # means fetch all submodules.
-            # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
-            # has a workaround.
-            GIT_SUBMODULES cmake # Non-git-submodule dir that already exists
-            GIT_SUBMODULES_RECURSE OFF
-        )
+        # But we don't want to download every time we run the script.
+        #
+        #   The default, but explicit so we know where it is.
+        set(dktool_subbuild_dir "${CMAKE_CURRENT_BINARY_DIR}/dktool-subbuild")
+        #   Also the default, but explicit since we don't always call FetchContent_Populate().
+        set(dktool_src_dir "${CMAKE_CURRENT_BINARY_DIR}/dktool-src")
+        #   Prior downloads are fine if done within the last one hour.
+        string(TIMESTAMP now_EPOCHSECS "%s")
+        math(EXPR min_valid_EPOCHSECS "${now_EPOCHSECS} - 60*60")
+        set(tstamp_EPOCHSECS 0)
+        if(EXISTS "${dktool_subbuild_dir}/build.ninja")
+            file(TIMESTAMP "${dktool_subbuild_dir}/build.ninja" tstamp_EPOCHSECS "%s")
+        endif()
+        if(NOT tstamp_EPOCHSECS OR tstamp_EPOCHSECS LESS min_valid_EPOCHSECS)
+            # Cache miss. Time to update dktool.
+            FetchContent_Populate(dktool
+                QUIET
+                SOURCE_DIR "${dktool_src_dir}"
+                SUBBUILD_DIR "${dktool_subbuild_dir}"
+                GIT_REPOSITORY https://gitlab.com/diskuv/dktool.git
+                GIT_TAG 1.0
+                # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
+                # has still not been fixed. That means empty strings get removed.
+                # ExternalProject_Add(GIT_SUBMODULES) in dktool-subbuild/CMakeLists.txt
+                # means fetch all submodules.
+                # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
+                # has a workaround.
+                GIT_SUBMODULES cmake # Non-git-submodule dir that already exists
+                GIT_SUBMODULES_RECURSE OFF)
+        endif()
         file(GLOB_RECURSE system_command_files
             LIST_DIRECTORIES FALSE
-            RELATIVE ${dktool_SOURCE_DIR}/cmake/scripts
-            ${dktool_SOURCE_DIR}/cmake/scripts/dkml/*.cmake
-            ${dktool_SOURCE_DIR}/cmake/scripts/dksdk/*.cmake)
+            RELATIVE ${dktool_src_dir}/cmake/scripts
+            ${dktool_src_dir}/cmake/scripts/dkml/*.cmake
+            ${dktool_src_dir}/cmake/scripts/dksdk/*.cmake)
         foreach(command_file IN LISTS system_command_files)
             # Normalize and lowercase
             cmake_path(NORMAL_PATH command_file)
@@ -172,11 +189,11 @@ endfunction()
             message(VERBOSE "Shimming ${command_function_name}")
             cmake_language(EVAL CODE "
 function(${command_function_name})
-    include(\"${dktool_SOURCE_DIR}/cmake/scripts/${command_file}\")
+    include(\"${dktool_src_dir}/cmake/scripts/${command_file}\")
     if(COMMAND run)
         run(${quotedArgs})
     else()
-        message(FATAL_ERROR [[The system script ${dktool_SOURCE_DIR}/cmake/scripts/${command_file} was missing:
+        message(FATAL_ERROR [[The system script ${dktool_src_dir}/cmake/scripts/${command_file} was missing:
   function(run)
     # The system code
   endfunction()
