@@ -558,8 +558,12 @@ install_macos_prog() {
 
 case $BUILDHOST_ARCH in
   linux_*)
-    install_linux_prog wget wget # For [downloadfile]
-    install_linux_prog tar tar # For handling tar balls later in this script
+    #   Need either [wget] or [curl] for [downloadfile]
+    if [ ! -x /usr/bin/wget ] && [ ! -x /bin/wget ] && [ ! -x /usr/bin/curl ] && [ ! -x /bin/curl ]; then
+      install_linux_prog wget wget || install_linux_prog curl curl
+    fi
+    #   For handling tar balls later in this script
+    install_linux_prog tar tar
     ;;
 esac
 
