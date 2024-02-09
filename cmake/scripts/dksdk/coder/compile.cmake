@@ -125,54 +125,57 @@ VERSION version
 
   CAUTION: If the version is a branch rather than a specific version number,
   there is no way for `dksdk.coder.compile` to know about branch updates. The
-  branch version will never be updated once downloaded initially. You will need
-  to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome this
-  limitation.
+  branch version will never be updated once downloaded initially. You will
+  need to delete the branch at `${DKCODER_HOME_NATIVE}` manually to overcome
+  this limitation.
 
 PROJECT_DIR dir
-  Optional. Sets the project directory and tells the build tool for OCaml (\"Dune\")
-  to generate its build files in the project directory.
-  If specified as a relative directory, the project directory will be relative to
-  where your ./dk and ./dk.cmd scripts are located. So `PROJECT_DIR .` is valid and
-  most often the correct choice.
-  When the project directory is specified, the expressions and the modules are built
-  with the relative path that reflects the project tree. For example, if you had
-  `EXPRESSION /some/project/cde/a.ml` and `PROJECT_DIR /some/project` then Dune
-  will be given the relative path `cde/a.ml` to compile.
-  Although not strictly required, using this setting benefits \"Merlin\"-based IDEs
-  like Visual Studio Code so they can map the build artifacts with the source code
-  in your project.
+  Optional. Sets the project directory and tells the build tool for OCaml
+  (\"Dune\") to generate its build files in the project directory. The
+  project directory may start with a tilde (~) which will be treated as the
+  home directory on Unix or the USERPROFILE directory on Windows.
+  If specified as a relative directory, the project directory will be
+  relative to where your ./dk and ./dk.cmd scripts are located. So
+  `PROJECT_DIR .` is valid and most often the correct choice.
+  When the project directory is specified, the expressions and the modules
+  are built with the relative path that reflects the project tree. For
+  example, if you had `EXPRESSION /some/project/cde/a.ml` and
+  `PROJECT_DIR /some/project` then Dune will be given the relative path
+  `cde/a.ml` to compile.
+  Although not strictly required, using this setting benefits
+  \"Merlin\"-based IDEs like Visual Studio Code so they can map the build
+  artifacts with the source code in your project.
 
 POLL seconds
-  Watch the file system for changes to the EXPRESSION file and the MODULES files
-  (if any) by waking up every `seconds` seconds. `seconds` may be a floating
-  point number like `0.5`.
+  Watch the file system for changes to the EXPRESSION file and the MODULES
+  files (if any) by waking up every `seconds` seconds. `seconds` may be a
+  floating point number like `0.5`.
 
 WATCH
   (EXPERIMENTAL)
-  Watch the file system for changes to the EXPRESSION file and the MODULES files
-  (if any). Whenever there is a change recreate the OUTPUT file. You will need
-  to press Ctrl-C to exit the watch mode.
+  Watch the file system for changes to the EXPRESSION file and the MODULES
+  files (if any). Whenever there is a change recreate the OUTPUT file. You
+  will need to press Ctrl-C to exit the watch mode.
 
-  This mode only works on filesystems with support for symlinks. Linux and macOS
-  will have no problems, but early Windows 10 machines or Windows FAT/FAT32
-  drives will not detect the file changes in watch mode.
+  This mode only works on filesystems with support for symlinks. Linux and
+  macOS will have no problems, but early Windows 10 machines or Windows
+  FAT/FAT32 drives will not detect the file changes in watch mode.
 
-  ERRATA: This command may never work since Dune (the underlying build tool) only
-  watches within the project directory and does not travel through symlinks (at
-  least on Windows).
+  ERRATA: This command may never work since Dune (the underlying build tool)
+  only watches within the project directory and does not travel through
+  symlinks (at least on Windows).
 
 Optimizations
 =============
 
-1. The first time you run `dksdk.coder.compile` will download and install DkSDK
-   Coder cached on the [VERSION]. Subsequent times will not redownload nor
-   reinstall DkSDK Coder unless the [VERSION] is different.
+1. The first time you run `dksdk.coder.compile` will download and install
+   DkSDK Coder cached on the [VERSION]. Subsequent times will not redownload
+   nor reinstall DkSDK Coder unless the [VERSION] is different.
 2. A compilation directory will be created and cached based on the absolute
-   path to the [EXPRESSION filename] and any [MODULES filenames]. That means first time
-   compilations for a EXPRESSION and MODULES may take a few seconds, but subsequent
-   compiles should be quick (assuming the EXPRESSION and MODULES are not terribly
-   complicated).
+   path to the [EXPRESSION filename] and any [MODULES filenames]. That means
+   first time compilations for a EXPRESSION and MODULES may take a few
+   seconds, but subsequent compiles should be quick (assuming the EXPRESSION
+   and MODULES are not terribly complicated).
 ")
 endfunction()
 
@@ -744,12 +747,7 @@ function(run)
     # PROJECT_DIR
     set(expand_PROJECT_DIR)
     if(ARG_PROJECT_DIR)
-        set(projectDir ${ARG_PROJECT_DIR})
-        cmake_path(NORMAL_PATH projectDir)
-        cmake_path(IS_RELATIVE projectDir projectDirIsRel)
-        if(projectDirIsRel)
-            cmake_path(ABSOLUTE_PATH projectDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE)
-        endif()
+        file(REAL_PATH "${ARG_PROJECT_DIR}" projectDir BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" EXPAND_TILDE) # Compared to cmake_path(ABSOLUTE_PATH) any trailing slash is removed and file(GET PARENT_PATH) works correctly.
         set(expand_PROJECT_DIR PROJECT_DIR "${projectDir}")
     endif()
 

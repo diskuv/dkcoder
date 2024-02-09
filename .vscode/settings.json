@@ -111,5 +111,6 @@
     "ocaml.sandbox": {
         "kind": "opam",
         "switch": "Y:\\source\\dksdk-type"
-    }
+    },
+    "editor.wordWrapColumn": 78
 }
