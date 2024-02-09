@@ -63,26 +63,32 @@ FETCH_DIR <dir>
   Relative paths are interpreted relative to the `./dk` and `./dk.cmd` scripts.
 
 SOURCE_DIR <dir>
-  The directory assigned to the \${sourceDir} variable used inside `dkproject.jsonc`.
+  Sets the directory assigned to the \${sourceDir} variable that is used
+  within `dkproject.jsonc`.
   The \${sourceParentDir} will be assigned to the parent of \${sourceDir}.
+  The SOURCE_DIR may start with a tilde (~) which will be treated as the home
+  directory on Unix or the USERPROFILE directory on Windows.
   Defaults to the directory containing `./dk` and `dkproject.jsonc`.
   Relative paths are interpreted relative to `dkproject.jsonc`.
 
-  Use when you want to preserve the local development environment of <dir>; the
-  convention inside `dkproject.jsonc` is that local overrides will be optionally
-  available either in <dir>'s sibling directories or <dir>/fetch's subdirectories.
-  The typical use case is when <dir> is on a host machine (perhaps a Windows host)
-  and `dkproject.jsonc` (etc.) has been checked out in a guest machine (perhaps
-  WSL2 or Docker) through a mounted drive or volume. Often the performance of the
-  mount is quite poor (could be 100X slowdown on WSL2 I/O), so a copy of the local
-  development environment speeds up builds tremendously.
+  Use when you want to preserve the local development environment of <dir>;
+  the convention inside `dkproject.jsonc` is that local overrides will be
+  optionally available either in <dir>'s sibling directories or <dir>/fetch's
+  subdirectories.
+  The typical use case is when <dir> is on a host machine (perhaps a Windows
+  host) and `dkproject.jsonc` (etc.) has been checked out in a guest machine
+  (perhaps WSL2 or Docker) through a mounted drive or volume. Often the
+  performance of the mount is quite poor (could be 100X slowdown on WSL2
+  I/O), so a copy of the local development environment speeds up builds
+  tremendously.
   
-  The local development environment will be copied in this version, although future
-  versions may use symlinks when the I/O speed to read <dir> is fast.
+  The local development environment will be copied in this version, although
+  future versions may use symlinks when the I/O speed to read <dir> is fast.
 
 NONINTERACTIVE
-  Best effort attempt to stop `git` and any other source fetching tools from asking
-  interactive questions like username/password prompts. Use when scripting.
+  Best effort attempt to stop `git` and any other source fetching tools from
+  asking interactive questions like username/password prompts. Use when
+  scripting.
 ")
 endfunction()
 
@@ -210,8 +216,9 @@ function(run)
     # SOURCE_DIR
     set(expand_SOURCE_DIR)
     if(ARG_SOURCE_DIR)
-        cmake_path(NORMAL_PATH ARG_SOURCE_DIR OUTPUT_VARIABLE sourceDir)
-        set(expand_SOURCE_DIR SOURCE_DIR "${sourceDir}")
+        # Do not do any translation of SOURCE_DIR since <dksdk-access>/cmake/run/get.cmake
+        # has transformations for relative paths and expanding tildes.
+        set(expand_SOURCE_DIR SOURCE_DIR "${ARG_SOURCE_DIR}")
     endif()
 
     # NONINTERACTIVE
