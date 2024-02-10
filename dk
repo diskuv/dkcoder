@@ -655,29 +655,41 @@ download_cmake() {
       cmake_bindir=$(dirname "$DK_PROG_INSTALLED_LOCATION")
       ;;
     linux_x86_64)
-      cmake_base="cmake-$cmake_majminpat_ver-linux-x86_64"
-      printf "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux x86_64" >&2
-      downloadfile \
-        "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
-        "$tools_dir/dl/cmake.tar.gz" \
-        $cmake_cksum256_linux_x86_64
-      cmake_bindir="$cmake_destdir/bin" ;;
+      if [ -x /sbin/apk ]; then
+        install_linux_prog cmake cmake cmake
+      else
+        cmake_base="cmake-$cmake_majminpat_ver-linux-x86_64"
+        printf "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux x86_64" >&2
+        downloadfile \
+          "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
+          "$tools_dir/dl/cmake.tar.gz" \
+          $cmake_cksum256_linux_x86_64
+        cmake_bindir="$cmake_destdir/bin"
+      fi ;;
     linux_x86)
-      # CMake does not provide 32-bit binaries. But pypi does at https://pypi.org/project/cmake/
-      printf "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux x86" >&2
-      downloadfile \
-        https://files.pythonhosted.org/packages/11/6e/aeeddf2f5b16542b6a30ceab4896421e8705d8e9a9296dba79395db11b00/cmake-3.25.2-py2.py3-none-manylinux_2_17_i686.manylinux2014_i686.whl \
-        "$tools_dir/dl/cmake.whl" \
-        $cmake_cksum256_linux_x86
-      cmake_bindir="$cmake_destdir/bin" ;;
+      if [ -x /sbin/apk ]; then
+        install_linux_prog cmake cmake cmake
+      else
+        # CMake does not provide 32-bit binaries. But pypi does at https://pypi.org/project/cmake/
+        printf "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux x86" >&2
+        downloadfile \
+          https://files.pythonhosted.org/packages/11/6e/aeeddf2f5b16542b6a30ceab4896421e8705d8e9a9296dba79395db11b00/cmake-3.25.2-py2.py3-none-manylinux_2_17_i686.manylinux2014_i686.whl \
+          "$tools_dir/dl/cmake.whl" \
+          $cmake_cksum256_linux_x86
+        cmake_bindir="$cmake_destdir/bin"
+      fi ;;
     linux_arm64)
-      cmake_base="cmake-$cmake_majminpat_ver-linux-aarch64"
-      printf "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux ARM64" >&2
-      downloadfile \
-        "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
-        "$tools_dir/dl/cmake.tar.gz" \
-        $cmake_cksum256_linux_arm64
-      cmake_bindir="$cmake_destdir/bin" ;;
+      if [ -x /sbin/apk ]; then
+        install_linux_prog cmake cmake cmake
+      else
+        cmake_base="cmake-$cmake_majminpat_ver-linux-aarch64"
+        printf "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux ARM64" >&2
+        downloadfile \
+          "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
+          "$tools_dir/dl/cmake.tar.gz" \
+          $cmake_cksum256_linux_arm64
+        cmake_bindir="$cmake_destdir/bin"
+      fi ;;
   esac
 }
 export_cmake_vars() {
@@ -690,10 +702,12 @@ export_cmake_vars() {
         cmake_bindir=$(dirname "$cmake_bindir")
       fi
       ;;
-    linux_x86_64)
-      cmake_bindir="$cmake_destdir/bin" ;;
-    linux_x86)
-      cmake_bindir="$cmake_destdir/bin" ;;
+    linux_x86_64|linux_x86|linux_arm64)
+      if [ -x /sbin/apk ]; then
+        cmake_bindir=/usr/bin
+      else
+        cmake_bindir="$cmake_destdir/bin"
+      fi ;;
   esac
 }
 have_correct_cmake=0
@@ -757,7 +771,7 @@ fi
 
 # Put tools in PATH
 export_cmake_vars
-if [ -n "$cmake_bindir" ] && [ -d "$cmake_bindir" ]; then
+if [ -n "$cmake_bindir" ] && [ -d "$cmake_bindir" ] && [ ! "$cmake_bindir" = "/usr/bin" ]; then
   tools_bin_dir=$(cd "$cmake_bindir" && pwd)
   export PATH="$tools_bin_dir:$PATH"
 else
