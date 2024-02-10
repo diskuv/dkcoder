@@ -509,15 +509,6 @@ cmake_cksum256_linux_x86_64="783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87
 cmake_cksum256_linux_x86="715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c"
 cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
 
-# We use a fixed (ie. stable!) version of Alpine that has its version
-# of CMake slightly greater or equal to what we want (cmake_majmin_ver).
-# Alpine v3.18 has CMake 3.26.5-r0.
-# User can override the repository with environment variable (for example):
-#   DKTOOL_ALPINE_REPOSITORY=https://dl-cdn.alpinelinux.org/alpine/edge/main
-#   DKTOOL_ALPINE_REPOSITORY=https://dl-cdn.alpinelinux.org/alpine/edge/community
-# Confer: https://pkgs.alpinelinux.org/packages
-DKTOOL_ALPINE_REPOSITORY=${DKTOOL_ALPINE_REPOSITORY:-https://dl-cdn.alpinelinux.org/alpine/v3.18/main}
-
 install_linux_prog() {
   install_linux_prog_NAME=$1
   shift
@@ -532,10 +523,10 @@ install_linux_prog() {
   else
     if [ -x /sbin/apk ]; then
       if [ "$(id -u)" -eq 0 ]; then
-        /sbin/apk add "$install_linux_prog_ALPINE_PKG" "--repository=$DKTOOL_ALPINE_REPOSITORY"
+        /sbin/apk add "$install_linux_prog_ALPINE_PKG"
       else
-        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG '--repository=$DKTOOL_ALPINE_REPOSITORY'"
-        sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG" "--repository=$DKTOOL_ALPINE_REPOSITORY"
+        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG"
+        sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG"
       fi
     elif command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
