@@ -503,6 +503,21 @@ fi
 # PREREQS
 # -------
 
+cmake_majmin_ver=3.25
+cmake_majminpat_ver=3.25.2
+cmake_cksum256_linux_x86_64="783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87f0cf233748d99"
+cmake_cksum256_linux_x86="715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c"
+cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
+
+# We use a fixed (ie. stable!) version of Alpine that has its version
+# of CMake slightly greater or equal to what we want (cmake_majmin_ver).
+# Alpine v3.18 has CMake 3.26.5-r0.
+# User can override the repository with environment variable (for example):
+#   DKTOOL_ALPINE_REPOSITORY=https://dl-cdn.alpinelinux.org/alpine/edge/main
+#   DKTOOL_ALPINE_REPOSITORY=https://dl-cdn.alpinelinux.org/alpine/edge/community
+# Confer: https://pkgs.alpinelinux.org/packages
+DKTOOL_ALPINE_REPOSITORY=${DKTOOL_ALPINE_REPOSITORY:-https://dl-cdn.alpinelinux.org/alpine/v3.18/main}
+
 install_linux_prog() {
   install_linux_prog_NAME=$1
   shift
@@ -517,10 +532,10 @@ install_linux_prog() {
   else
     if [ -x /sbin/apk ]; then
       if [ "$(id -u)" -eq 0 ]; then
-        /sbin/apk add "$install_linux_prog_ALPINE_PKG"
+        /sbin/apk add "$install_linux_prog_ALPINE_PKG" "--repository=$DKTOOL_ALPINE_REPOSITORY"
       else
-        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG"
-        sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG"
+        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG '--repository=$DKTOOL_ALPINE_REPOSITORY'"
+        sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG" "--repository=$DKTOOL_ALPINE_REPOSITORY"
       fi
     elif command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
@@ -630,8 +645,6 @@ case $BUILDHOST_ARCH in
 esac
 
 cmake_base=
-cmake_majmin_ver=3.25
-cmake_majminpat_ver=3.25.2
 cmake_bindir=
 cmake_destdir=$tools_dir/cmake-$cmake_majminpat_ver
 install -d "$tools_dir/dl"
@@ -647,7 +660,7 @@ download_cmake() {
       downloadfile \
         "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
         "$tools_dir/dl/cmake.tar.gz" \
-        783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87f0cf233748d99
+        $cmake_cksum256_linux_x86_64
       cmake_bindir="$cmake_destdir/bin" ;;
     linux_x86)
       # CMake does not provide 32-bit binaries. But pypi does at https://pypi.org/project/cmake/
@@ -655,7 +668,7 @@ download_cmake() {
       downloadfile \
         https://files.pythonhosted.org/packages/11/6e/aeeddf2f5b16542b6a30ceab4896421e8705d8e9a9296dba79395db11b00/cmake-3.25.2-py2.py3-none-manylinux_2_17_i686.manylinux2014_i686.whl \
         "$tools_dir/dl/cmake.whl" \
-        715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c
+        $cmake_cksum256_linux_x86
       cmake_bindir="$cmake_destdir/bin" ;;
     linux_arm64)
       cmake_base="cmake-$cmake_majminpat_ver-linux-aarch64"
@@ -663,7 +676,7 @@ download_cmake() {
       downloadfile \
         "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
         "$tools_dir/dl/cmake.tar.gz" \
-        9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5
+        $cmake_cksum256_linux_arm64
       cmake_bindir="$cmake_destdir/bin" ;;
   esac
 }
