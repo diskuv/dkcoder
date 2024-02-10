@@ -771,9 +771,12 @@ fi
 
 # Put tools in PATH
 export_cmake_vars
-if [ -n "$cmake_bindir" ] && [ -d "$cmake_bindir" ] && [ ! "$cmake_bindir" = "/usr/bin" ]; then
+if [ ! "$cmake_bindir" = "/usr/bin" ]; then
+  true
+elif [ -n "$cmake_bindir" ] && [ -d "$cmake_bindir" ]; then
   tools_bin_dir=$(cd "$cmake_bindir" && pwd)
   export PATH="$tools_bin_dir:$PATH"
+  unset tools_bin_dir
 else
   echo "This platform is not supported. No cmake 3.25+ download logic has been added" >&2
   exit 1
