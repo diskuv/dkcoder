@@ -508,12 +508,21 @@ install_linux_prog() {
   shift
   install_linux_prog_PKG=$1
   shift
+  install_linux_prog_ALPINE_PKG=$1
+  shift
   if [ -x "/usr/bin/$install_linux_prog_NAME" ]; then
     export DK_PROG_INSTALLED_LOCATION="/usr/bin/$install_linux_prog_NAME"
   elif [ -x "/bin/$install_linux_prog_NAME" ]; then
     export DK_PROG_INSTALLED_LOCATION="/bin/$install_linux_prog_NAME"
   else
-    if command -v yum > /dev/null 2> /dev/null; then
+    if [ -x /sbin/apk ]; then
+      if [ "$(id -u)" -eq 0 ]; then
+        /sbin/apk add "$install_linux_prog_ALPINE_PKG"
+      else
+        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG"
+        sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG"
+      fi
+    elif command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
         yum install -y "$install_linux_prog_PKG"
       else
@@ -585,10 +594,10 @@ case $BUILDHOST_ARCH in
   linux_*)
     #   Need either [wget] or [curl] for [downloadfile]
     if [ ! -x /usr/bin/wget ] && [ ! -x /bin/wget ] && [ ! -x /usr/bin/curl ] && [ ! -x /bin/curl ]; then
-      install_linux_prog wget wget || install_linux_prog curl curl
+      install_linux_prog wget wget || install_linux_prog curl curl curl
     fi
     #   For handling tar balls later in this script
-    install_linux_prog tar tar
+    install_linux_prog tar tar tar
     ;;
 esac
 
@@ -602,7 +611,7 @@ case $BUILDHOST_ARCH in
     install_macos_prog ninja ninja
     NINJA_EXE=$DK_PROG_INSTALLED_LOCATION;;
   linux_*)
-    install_linux_prog ninja ninja-build
+    install_linux_prog ninja ninja-build ninja
     NINJA_EXE=$DK_PROG_INSTALLED_LOCATION;;
 esac
 
@@ -612,12 +621,12 @@ esac
 case $BUILDHOST_ARCH in
   linux_*)
     #   This is for CMake to do FetchContent()
-    install_linux_prog git git ;;
+    install_linux_prog git git git ;;
 esac
 case $BUILDHOST_ARCH in
   linux_x86)
     #   This is for Python wheel extraction
-    install_linux_prog unzip unzip ;;
+    install_linux_prog unzip unzip unzip ;;
 esac
 
 cmake_base=
