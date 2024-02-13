@@ -143,19 +143,6 @@ Congratulations. Let's get building!
         DESTINATION "${dest}"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     
-    # Prompt next steps for HERE users
-    if(ARG_HERE)
-      set(invocation ./dk)
-      if(WIN32)
-        set(invocation [[.\dk]])
-      endif()
-      message(NOTICE "
-The final installation step is to run:
-
-  ${invocation} dkml.wrapper.upgrade DONE
-")
-    endif()
-
     # Do Git operations automatically
     if(IS_DIRECTORY "${dest}/.git")
       find_package(Git QUIET REQUIRED)
@@ -175,5 +162,18 @@ The final installation step is to run:
       execute_process(WORKING_DIRECTORY "${dest}"
         COMMAND "${GIT_EXECUTABLE}" update-index --chmod=+x "${path_dk}"
         COMMAND_ERROR_IS_FATAL ANY)
+    endif()
+
+    # Prompt next steps for HERE users
+    if(ARG_HERE)
+      set(invocation ./dk)
+      if(WIN32)
+        set(invocation [[.\dk]])
+      endif()
+      message(NOTICE "
+The final installation step is to run:
+
+  ${invocation} dkml.wrapper.upgrade DONE
+")
     endif()
 endfunction()
