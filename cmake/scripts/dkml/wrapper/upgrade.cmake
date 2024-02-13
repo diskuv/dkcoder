@@ -20,6 +20,9 @@ function(help)
 
 Upgrade ./dk, ./dk.cmd and cmake/scripts/__dk-find-scripts.cmake.
 
+If there is a .git/ directory the three (3) files above are
+added to the Git staging area.
+
 Usage
 =====
 
@@ -81,9 +84,13 @@ function(run)
     cmake_path(GET d PARENT_PATH d)
     cmake_path(GET d PARENT_PATH d)
     cmake_path(GET d PARENT_PATH d)
-    cmake_path(APPEND d "dk" OUTPUT_VARIABLE file_dk)
-    cmake_path(APPEND d "dk.cmd" OUTPUT_VARIABLE file_dkcmd)
-    cmake_path(APPEND d "cmake" "scripts" "__dk-find-scripts.cmake" OUTPUT_VARIABLE file_dkfindscriptscmake)
+    cmake_path(SET path_dk "dk")
+    cmake_path(SET path_dkcmd "dk.cmd")
+    cmake_path(SET path_cmake "cmake")
+    cmake_path(APPEND path_cmake "scripts" "__dk-find-scripts.cmake" OUTPUT_VARIABLE path_dkfindscriptscmake)
+    cmake_path(APPEND d ${path_dk} OUTPUT_VARIABLE file_dk)
+    cmake_path(APPEND d ${path_dkcmd} OUTPUT_VARIABLE file_dkcmd)
+    cmake_path(APPEND d ${path_dkfindscriptscmake} OUTPUT_VARIABLE file_dkfindscriptscmake)
 
     # validate
     if(NOT EXISTS ${file_dk})
@@ -103,8 +110,6 @@ function(run)
         file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/dktool")
       endif()
       message(NOTICE [[
-
-Commit the ./dk, ./dk.cmd, and cmake/scripts/__dk-find-scripts.cmake scripts.
 
 Congratulations. Let's get building!
 
@@ -146,10 +151,19 @@ The final installation step is to run:
 ")
     endif()
 
-    # for Windows, the *_EXECUTE permissions above do nothing. And a subsequent `git add` will not set the
-    # git chmod +x bit. So we force it.
-    if(CMAKE_HOST_WIN32 AND IS_DIRECTORY "${dest}/.git")
+    # Do Git operations automatically
+    if(IS_DIRECTORY "${dest}/.git")
       find_package(Git QUIET REQUIRED)
-      execute_process(COMMAND "${GIT_EXECUTABLE}" update-index --chmod=+x ./dk COMMAND_ERROR_IS_FATAL ANY)
+
+      # add the three files
+      execute_process(WORKING_DIRECTORY "${dest}"
+        COMMAND "${GIT_EXECUTABLE}" add "${path_dk}" "${path_dkcmd}" "${path_dkfindscriptscmake}"
+        COMMAND_ERROR_IS_FATAL ANY)
+
+      # for Windows, the *_EXECUTE permissions earlier do nothing. And a subsequent `git add` will not set the
+      # git chmod +x bit. So we force it.
+      execute_process(WORKING_DIRECTORY "${dest}"
+        COMMAND "${GIT_EXECUTABLE}" update-index --chmod=+x "${path_dk}"
+        COMMAND_ERROR_IS_FATAL ANY)
     endif()
 endfunction()
