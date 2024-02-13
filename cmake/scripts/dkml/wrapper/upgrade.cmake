@@ -132,7 +132,7 @@ Congratulations. Let's get building!
     file(INSTALL "${file_dk}"
         DESTINATION "${dest}"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-
+    
     # Prompt next steps for HERE users
     if(ARG_HERE)
       set(invocation ./dk)
@@ -144,5 +144,12 @@ The final installation step is to run:
 
   ${invocation} dkml.wrapper.upgrade DONE
 ")
+    endif()
+
+    # for Windows, the *_EXECUTE permissions above do nothing. And a subsequent `git add` will not set the
+    # git chmod +x bit. So we force it.
+    if(CMAKE_HOST_WIN32 AND IS_DIRECTORY "${dest}/.git")
+      find_package(Git QUIET REQUIRED)
+      execute_process(COMMAND "${GIT_EXECUTABLE}" update-index --chmod=+x ./dk COMMAND_ERROR_IS_FATAL ANY)
     endif()
 endfunction()
