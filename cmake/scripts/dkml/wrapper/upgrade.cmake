@@ -20,8 +20,11 @@ function(help)
 
 Upgrade ./dk, ./dk.cmd and cmake/scripts/__dk-find-scripts.cmake.
 
-If there is a .git/ directory the three (3) files above are
-added to the Git staging area.
+If there is a .git/ directory and no .gitattributes then a 
+default .gitattributes configuration file is added.
+
+And if there is a .git/ directory the .gitattributes, ./dk, ./dk.cmd
+and cmake/scripts/__dk-find-scripts.cmake are added to Git.
 
 Usage
 =====
@@ -86,10 +89,12 @@ function(run)
     cmake_path(GET d PARENT_PATH d)
     cmake_path(SET path_dk "dk")
     cmake_path(SET path_dkcmd "dk.cmd")
+    cmake_path(SET path_gitattributes ".gitattributes")
     cmake_path(SET path_cmake "cmake")
     cmake_path(APPEND path_cmake "scripts" "__dk-find-scripts.cmake" OUTPUT_VARIABLE path_dkfindscriptscmake)
     cmake_path(APPEND d ${path_dk} OUTPUT_VARIABLE file_dk)
     cmake_path(APPEND d ${path_dkcmd} OUTPUT_VARIABLE file_dkcmd)
+    cmake_path(APPEND d ${path_gitattributes} OUTPUT_VARIABLE file_gitattributes)
     cmake_path(APPEND d ${path_dkfindscriptscmake} OUTPUT_VARIABLE file_dkfindscriptscmake)
 
     # validate
@@ -155,9 +160,14 @@ The final installation step is to run:
     if(IS_DIRECTORY "${dest}/.git")
       find_package(Git QUIET REQUIRED)
 
-      # add the three files
+      # install .gitattributes
+      file(INSTALL "${file_gitattributes}"
+        DESTINATION "${dest}"
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+      # add the four files
       execute_process(WORKING_DIRECTORY "${dest}"
-        COMMAND "${GIT_EXECUTABLE}" add "${path_dk}" "${path_dkcmd}" "${path_dkfindscriptscmake}"
+        COMMAND "${GIT_EXECUTABLE}" add "${path_dk}" "${path_dkcmd}" "${path_dkfindscriptscmake}" "${path_gitattributes}"
         COMMAND_ERROR_IS_FATAL ANY)
 
       # for Windows, the *_EXECUTE permissions earlier do nothing. And a subsequent `git add` will not set the
