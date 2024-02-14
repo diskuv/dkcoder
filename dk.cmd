@@ -320,6 +320,12 @@ SET PATH=
 SET PATH=%_DK_PATH%
 SET _DK_PATH=
 
+REM -------------- Escape command line --------------
+REM We pack the entire command line into a double-quoted CMake -D option.
+REM So we need to escape the double quotes for the CMake command line parser: " --> \"
+SET DK_CMDLINE=%*
+SET DK_CMDLINE=%DK_CMDLINE:"=\"%
+
 REM --- Create an 8-byte nonce ---
 REM We should rely on Command Prompt not being compromised. Obviously
 REM there is nothing we can do if it is compromised. But if it is
@@ -341,7 +347,7 @@ REM -------------- Run finder --------------
 SET DK_WORKDIR=%DK_SHARE%\work
 
 cd /d %DK_PROJ_DIR%
-"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKTOOL_PWD:FILEPATH=%DK_PWD%" -D "DKTOOL_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKTOOL_NONCE:STRING=%DK_NONCE%" -D "DKTOOL_CMDLINE:STRING=%*" -P cmake/scripts/__dk-find-scripts.cmake
+"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKTOOL_PWD:FILEPATH=%DK_PWD%" -D "DKTOOL_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKTOOL_NONCE:STRING=%DK_NONCE%" -D "DKTOOL_CMDLINE:STRING=%DK_CMDLINE%" -P cmake/scripts/__dk-find-scripts.cmake
 IF %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
 REM --------------- Execute post-command outside of CMake --------------
