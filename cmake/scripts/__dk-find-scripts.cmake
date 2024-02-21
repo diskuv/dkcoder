@@ -386,20 +386,20 @@ endfunction()
 function(__parse_if_ocaml_command)
     set(noValues)
     set(singleValues COMMAND SUCCESS_VARIABLE
-        PACKAGE_NAMESPACE_VARIABLE PACKAGE_QUALIFIER_VARIABLE LIBRARY_VARIABLE MODULE_VARIABLE)
+        PACKAGE_NAMESPACE_VARIABLE PACKAGE_QUALIFIER_VARIABLE LIBRARY_VARIABLE FULLY_QUALIFIED_MODULE_VARIABLE)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
-    # Format: PackageName_Libraryname.Modulename
-    # Regex: ([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)[.]([A-Z][A-Za-z0-9_]*)
+    # Format: PackageName_Libraryname(.Modulename)+
+    # Regex: ([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)([.][A-Z]([A-Za-z0-9_]*))+
     # Confer: https://diskuv.com/dksdk/run/2024-intro-scripting/
     string(LENGTH "${ARG_COMMAND}" command_LEN)
 
-    if(command MATCHES "^([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)[.]([A-Z][A-Za-z0-9_]*)$")
+    if(command MATCHES "^([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)([.][A-Z]([A-Za-z0-9_]*))+$")
         set(${ARG_PACKAGE_NAMESPACE_VARIABLE} "${CMAKE_MATCH_1}" PARENT_SCOPE)
         set(${ARG_PACKAGE_QUALIFIER_VARIABLE} "${CMAKE_MATCH_2}" PARENT_SCOPE)
         set(${ARG_LIBRARY_VARIABLE} "${CMAKE_MATCH_3}" PARENT_SCOPE)
-        set(${ARG_MODULE_VARIABLE} "${CMAKE_MATCH_4}" PARENT_SCOPE)
+        set(${ARG_FULLY_QUALIFIED_MODULE_VARIABLE} "${CMAKE_MATCH_4}" PARENT_SCOPE)
         set(${ARG_SUCCESS_VARIABLE} ON PARENT_SCOPE)
         return()
     endif()
@@ -469,7 +469,7 @@ Environment variables:
         PACKAGE_NAMESPACE_VARIABLE package_namespace
         PACKAGE_QUALIFIER_VARIABLE package_qualifier
         LIBRARY_VARIABLE library
-        MODULE_VARIABLE module)
+        FULLY_QUALIFIED_MODULE_VARIABLE module)
     if(is_ocaml)
         # Get COMPILE_VERSION. Simultaneously recreate the argument list.
         # Argument list:
