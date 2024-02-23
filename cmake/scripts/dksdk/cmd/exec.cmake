@@ -136,9 +136,10 @@ function(run)
     list(REMOVE_DUPLICATES hints)
 
     # Also include DkSDKFiles/dh/dune and DkSDKFiles/dh/w/build/_boot/dune.exe (preferred)
-    # since CMAKE_DUNE is often 'CMAKE_DUNE-NOTFOUND'. The 'DkSDKFiles/dh/dune' _may_ not
-    # work on Windows (depends on PowerShell/Command Prompt, etc.) since it does not have
-    # the .exe extension.
+    # since CMAKE_DUNE is often 'CMAKE_DUNE-NOTFOUND'.
+    # NOTE A1: The 'DkSDKFiles/dh/dune' executable
+    #  _probably will not_ work on Windows (depends on PowerShell/Command Prompt, etc.) since
+    # it does not have the .exe extension.
     set(duneHome "${binaryDir}/DkSDKFiles/dh")
     set(duneBoot "${duneHome}/w/build/_boot")
     list(APPEND hints "${duneBoot}" "${duneHome}")
@@ -159,7 +160,8 @@ function(run)
         # | Called from Fiber__Scheduler.exec in file "_dn/fiber/src/fiber/scheduler.ml", line 73, characters 8-11
         # \-----------------------------------------------------------------------
         set(duneBinDir)
-        if(BUILD_CMAKE_DUNE)
+        #   See Note A1 above.
+        if(BUILD_CMAKE_DUNE AND (NOT CMAKE_HOST_WIN32 OR BUILD_CMAKE_DUNE MATCHES ".exe$"))
             cmake_path(GET BUILD_CMAKE_DUNE PARENT_PATH duneBinDir)
         elseif(EXISTS "${duneBoot}/dune.exe")
             set(duneBinDir "${duneBoot}")
