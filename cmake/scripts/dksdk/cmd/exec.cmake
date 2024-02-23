@@ -140,7 +140,7 @@ function(run)
     # work on Windows (depends on PowerShell/Command Prompt, etc.) since it does not have
     # the .exe extension.
     set(duneHome "${binaryDir}/DkSDKFiles/dh")
-    set(duneBoot "${binaryDir}/w/build/_boot")
+    set(duneBoot "${duneHome}/w/build/_boot")
     list(APPEND hints "${duneBoot}" "${duneHome}")
 
     # Find the program asked for
