@@ -87,7 +87,7 @@ function(run)
 
     # Add local Ninja to PATH if present. Needed for Android SDK
     if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/ninja/bin")
-        list(APPEND env_ARGS "PATH=path_list_prepend:${CMAKE_SOURCE_DIR}/.ci/ninja/bin")
+        list(APPEND env_ARGS --modify "PATH=path_list_prepend:${CMAKE_SOURCE_DIR}/.ci/ninja/bin")
     endif()
 
     execute_process(
