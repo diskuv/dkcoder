@@ -324,7 +324,7 @@ REM -------------- Escape command line --------------
 REM We pack the entire command line into a double-quoted CMake -D option.
 REM So we need to escape the double quotes for the CMake command line parser: " --> \"
 SET DK_CMDLINE=%*
-SET DK_CMDLINE=%DK_CMDLINE:"=\"%
+IF NOT "%DK_CMDLINE%" == "" SET DK_CMDLINE=%DK_CMDLINE:"=\"%
 
 REM --- Create an 8-byte nonce ---
 REM We should rely on Command Prompt not being compromised. Obviously
