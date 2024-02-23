@@ -135,6 +135,9 @@ function(run)
     endforeach()
     list(REMOVE_DUPLICATES hints)
 
+    # Also include DkSDKFiles/dune-home/dune since CMAKE_DUNE is often 'CMAKE_DUNE-NOTFOUND'
+    list(APPEND hints "${binaryDir}/DkSDKFiles/dune-home")
+
     # Find the program asked for
     find_program(PROG_EXE NAMES ${prog} HINTS ${hints})
 
