@@ -135,9 +135,13 @@ function(run)
     endforeach()
     list(REMOVE_DUPLICATES hints)
 
-    # Also include DkSDKFiles/dune-home/dune since CMAKE_DUNE is often 'CMAKE_DUNE-NOTFOUND'
-    set(duneHome "${binaryDir}/DkSDKFiles/dune-home")
-    list(APPEND hints "${duneHome}")
+    # Also include DkSDKFiles/dh/dune and DkSDKFiles/dh/w/build/_boot/dune.exe (preferred)
+    # since CMAKE_DUNE is often 'CMAKE_DUNE-NOTFOUND'. The 'DkSDKFiles/dh/dune' _may_ not
+    # work on Windows (depends on PowerShell/Command Prompt, etc.) since it does not have
+    # the .exe extension.
+    set(duneHome "${binaryDir}/DkSDKFiles/dh")
+    set(duneBoot "${binaryDir}/w/build/_boot")
+    list(APPEND hints "${duneBoot}" "${duneHome}")
 
     # Find the program asked for
     find_program(PROG_EXE NAMES ${prog} HINTS ${hints})
@@ -157,6 +161,8 @@ function(run)
         set(duneBinDir)
         if(BUILD_CMAKE_DUNE)
             cmake_path(GET BUILD_CMAKE_DUNE PARENT_PATH duneBinDir)
+        elseif(EXISTS "${duneBoot}/dune.exe")
+            set(duneBinDir "${duneBoot}")
         elseif(IS_DIRECTORY "${duneHome}")
             set(duneBinDir "${duneHome}")
         endif()
