@@ -12,6 +12,7 @@
 ##########################################################################
 
 set(NDK_LTS 23.1.7779620)
+set(SDK_PLATFORM 33)
 
 function(help)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "MODE" "")
@@ -22,7 +23,8 @@ function(help)
 
     message(${ARG_MODE} "usage: ./dk dksdk.android.ndk.download
 
-Downloads Android NDK ${NDK_LTS} and if needed Java JDK as well.
+Downloads Android NDK ${NDK_LTS}, Android SDK Platform ${SDK_PLATFORM}
+and if needed a Java JDK as well.
 
 Only meant for CI use, after you have already accepted the terms
 for Android NDK elsewhere.
@@ -36,6 +38,9 @@ in your local.properties.
 We recommend that you use:
     ./dk dksdk.android.cmake.download
 to download an Android CMake version containing Ninja.
+
+The Android SDK Platform is downloaded so Android Studio can recognize
+the directory structure below.
 
 Directory Structure
 ===================
@@ -54,7 +59,7 @@ Places the NDK in .ci/local/share/android-sdk:
     │   ├── ...
     │   └── mips-android-sysimage-license
     ├── ndk
-    │   └── 23.1.7779620
+    │   └── ${NDK_LTS}
     │       ├── build
     │       ├── CHANGELOG.md
     │       ├── meta
@@ -75,8 +80,23 @@ Places the NDK in .ci/local/share/android-sdk:
     │       ├── sources
     │       ├── toolchains
     │       └── wrap.sh
-    └── patcher
-
+    │── patcher
+    └── platforms
+        └── android-${SDK_PLATFORM}
+            ├── android.jar
+            ├── android-stubs-src.jar
+            ├── build.prop
+            ├── core-for-system-modules.jar
+            ├── data
+            ├── framework.aidl
+            ├── optional
+            ├── package.xml
+            ├── sdk.properties
+            ├── skins
+            ├── source.properties
+            ├── templates
+            └── uiautomator.jar
+    
 Proxies
 =======
 
@@ -215,28 +235,39 @@ function(are_licenses_accepted LICENSEDIR)
     set(accepted ON PARENT_SCOPE)
 endfunction()
 
+function(accept_licenses)
+    are_licenses_accepted(${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/licenses)
+
+    if(NOT accepted)
+        string(REPEAT "Y\n" 20 many_yes)
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses" "${many_yes}")
+        execute_process(
+            COMMAND ${run_sdkmanager} --licenses ${SDKMANAGER_COMMON_ARGS}
+            INPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/yes-licenses
+            COMMAND_ERROR_IS_FATAL ANY)
+    endif()
+endfunction()
+
+function(install_sdk)
+    set(ANDROID_JAR ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/platforms/android-${SDK_PLATFORM}/android.jar)
+
+    if(NOT EXISTS ${ANDROID_JAR})
+        # Install into .ci/local/share/android-sdk ...
+        message(${loglevel} "Installing Android SDK Platform")
+        execute_process(
+            COMMAND ${run_sdkmanager} --install ${SDKMANAGER_COMMON_ARGS} "platforms;android-${SDK_PLATFORM}"
+            COMMAND_ERROR_IS_FATAL ANY)
+    endif()
+
+    set(ANDROID_JAR "${ANDROID_JAR}" PARENT_SCOPE)
+endfunction()
+
 function(install_ndk)
     set(ANDROID_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/ndk/${NDK_LTS}/build/cmake/android.toolchain.cmake)
 
     if(NOT EXISTS ${ANDROID_TOOLCHAIN_FILE})
-        # Install toolchain and the rest of the NDK into .ci/local/share/android-sdk ...
-
-        # FIRST licenses have to be accepted
-        are_licenses_accepted(${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/licenses)
-
-        set(run_sdkmanager ${CMAKE_COMMAND} -E env JAVA_HOME=${JAVA_HOME} ${SDKMANAGER})
-
-        if(NOT accepted)
-            string(REPEAT "Y\n" 20 many_yes)
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses" "${many_yes}")
-            execute_process(
-                COMMAND ${run_sdkmanager} --licenses ${SDKMANAGER_COMMON_ARGS}
-                INPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/yes-licenses
-                COMMAND_ERROR_IS_FATAL ANY)
-        endif()
-
-        # SECOND install the NDK
-        message(${loglevel} "Installing Android NDK - ${run_sdkmanager}")
+        # Install into .ci/local/share/android-sdk ...
+        message(${loglevel} "Installing Android NDK")
         execute_process(
             COMMAND ${run_sdkmanager} --install ${SDKMANAGER_COMMON_ARGS} "ndk;${NDK_LTS}"
             COMMAND_ERROR_IS_FATAL ANY)
@@ -282,6 +313,11 @@ function(run)
     install_java_jdk(${expand_NO_SYSTEM_PATH})
     get_jdk_home() # Set JAVA_HOME if available
     install_sdkmanager(${expand_NO_SYSTEM_PATH})
+
+    set(run_sdkmanager ${CMAKE_COMMAND} -E env JAVA_HOME=${JAVA_HOME} ${SDKMANAGER})
+    accept_licenses()
+    install_sdk()
     install_ndk()
+    message(${loglevel} "Android SDK Platform JAR is at: ${ANDROID_JAR}")
     message(${loglevel} "Android toolchain file is at: ${ANDROID_TOOLCHAIN_FILE}")
 endfunction()
