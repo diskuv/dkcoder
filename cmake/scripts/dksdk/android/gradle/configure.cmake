@@ -45,6 +45,12 @@ QUIET
 
 OVERWRITE
   If local.properties already exists, overwrite it.
+
+DISABLE_CMAKE_WSL2_PROXY
+  On Windows if there is a `dkconfig/` Gradle module the DkSDK WSL2
+  Distribution's CMake proxy is configured. The CMake proxy delegates CMake
+  commands into WSL2, and is installed as part of DkSDK FFI Java. Setting
+  this option causes the CMake proxy not to be configured.
 ")
 endfunction()
 
@@ -62,7 +68,7 @@ function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH;OVERWRITE" "" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH;OVERWRITE;DISABLE_CMAKE_WSL2_PROXY" "" "")
 
     if(ARG_HELP)
         help(MODE NOTICE)
@@ -104,12 +110,22 @@ function(run)
     android_local_properties_escape(android_sdk_DIR)
     string(APPEND content "sdk.dir=${android_sdk_DIR}\n")
 
-    # Find if there is a standalone cmake
-    check_standalone_cmake(IS_STANDALONE STANDALONE_DIR)
-    if(IS_STANDALONE)
-        message(${loglevel} "CMake ${CMAKE_VERSION}: ${STANDALONE_DIR}")
-        android_local_properties_escape(STANDALONE_DIR)
-        string(APPEND content "cmake.dir=${STANDALONE_DIR}\n")
+    # CMake
+    if(CMAKE_HOST_WIN32
+            AND EXISTS "${CMAKE_SOURCE_DIR}/dkconfig/build.gradle"
+            AND NOT ARG_DISABLE_CMAKE_WSL2_PROXY)
+        set(proxy_cmake_dir "${CMAKE_SOURCE_DIR}/dkconfig/build/emulators/dksdk-wsl2/cmake.dir")
+        message(${loglevel} "CMake WSL2 Proxy: ${proxy_cmake_dir}")
+        android_local_properties_escape(proxy_cmake_dir)
+        string(APPEND content "cmake.dir=${proxy_cmake_dir}\n")
+    else()
+        # Find if there is a standalone cmake
+        check_standalone_cmake(IS_STANDALONE STANDALONE_DIR)
+        if(IS_STANDALONE)
+            message(${loglevel} "CMake ${CMAKE_VERSION}: ${STANDALONE_DIR}")
+            android_local_properties_escape(STANDALONE_DIR)
+            string(APPEND content "cmake.dir=${STANDALONE_DIR}\n")
+        endif()
     endif()
 
     file(WRITE "${CMAKE_SOURCE_DIR}/local.properties" "${content}")
