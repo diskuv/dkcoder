@@ -22,6 +22,12 @@ function(help)
 
 Searches for Android Studio and then runs it.
 
+The recommendation is to run ./dk dksdk.ninja.link or ./dk dksdk.ninja.copy
+before ./dk dksdk.android.studio.run if there will be any Android native
+development. That will populate the .ci/ninja/bin/ directory which, if
+present, will be added to the PATH. Doing so satisfies the Ninja in PATH
+requirement of https://developer.android.com/studio/projects/install-ndk.
+
 Examples
 ========
 
@@ -59,6 +65,8 @@ function(run)
       return()
     endif()
 
+    set(env_ARGS)
+
     # QUIET
     if(ARG_QUIET)
         set(loglevel DEBUG)
@@ -67,9 +75,8 @@ function(run)
     endif()
 
     # SCALE
-    set(scale 1)
     if(ARG_SCALE)
-        set(scale ${ARG_SCALE})
+        list(APPEND env_ARGS "GDK_SCALE=${ARG_SCALE}")
     endif()
 
     # Get helper functions from other commands
@@ -78,9 +85,14 @@ function(run)
     # Do prereqs
     install_android_studio()
 
+    # Add local Ninja to PATH if present. Needed for Android SDK
+    if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/ninja/bin")
+        list(APPEND env_ARGS "PATH=path_list_prepend:${CMAKE_SOURCE_DIR}/.ci/ninja/bin")
+    endif()
+
     execute_process(
         COMMAND
-        "${CMAKE_COMMAND}" -E env "GDK_SCALE=${scale}" --
+        "${CMAKE_COMMAND}" -E env ${env_ARGS} --
         "${ANDROID_STUDIO}" ${ARG_ARGS}
         ENCODING UTF-8
         COMMAND_ERROR_IS_FATAL ANY)
