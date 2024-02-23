@@ -136,7 +136,8 @@ function(run)
     list(REMOVE_DUPLICATES hints)
 
     # Also include DkSDKFiles/dune-home/dune since CMAKE_DUNE is often 'CMAKE_DUNE-NOTFOUND'
-    list(APPEND hints "${binaryDir}/DkSDKFiles/dune-home")
+    set(duneHome "${binaryDir}/DkSDKFiles/dune-home")
+    list(APPEND hints "${duneHome}")
 
     # Find the program asked for
     find_program(PROG_EXE NAMES ${prog} HINTS ${hints})
@@ -153,8 +154,15 @@ function(run)
         # | Called from Ocaml_lsp_server__Merlin_config.config in file "_dn/_opam/.opam-switch/build/ocaml-lsp-server.1.15.1-4.14/ocaml-lsp-server/src/m", line 410, characters 17-54
         # | Called from Fiber__Scheduler.exec in file "_dn/fiber/src/fiber/scheduler.ml", line 73, characters 8-11
         # \-----------------------------------------------------------------------
-        cmake_path(GET BUILD_CMAKE_DUNE PARENT_PATH duneBinDir)
-        list(APPEND cmdPrefix ${CMAKE_COMMAND} -E env --modify "PATH=path_list_prepend:${duneBinDir}")
+        set(duneBinDir)
+        if(BUILD_CMAKE_DUNE)
+            cmake_path(GET BUILD_CMAKE_DUNE PARENT_PATH duneBinDir)
+        elseif(IS_DIRECTORY "${duneHome}")
+            set(duneBinDir "${duneHome}")
+        endif()
+        if(duneBinDir)
+            list(APPEND cmdPrefix ${CMAKE_COMMAND} -E env --modify "PATH=path_list_prepend:${duneBinDir}")
+        endif()
 
         # It needs to know where ocamlformat is ...
         # | [Error - 8:45:40 AM] Request textDocument/formatting failed.
