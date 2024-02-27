@@ -168,6 +168,9 @@ function(__dkcoder_install)
         __dkcoder_error_wrong_version("You were using DkCoder version ${V_id}. ")
     endif()
 
+    # Make a work directory
+    set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_dkcoder__${compile_version}")
+
     set(hints ${DKCODER_HOME}/bin)
     set(find_program_ARGS NO_DEFAULT_PATH)
     find_program(DKCODER NAMES dkcoder HINTS ${hints} ${find_program_ARGS})
@@ -229,11 +232,17 @@ function(__dkcoder_install)
         endif()
 
         # Download
-        file(DOWNLOAD "${url}" "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}"
-            ${expected_hash_ARGS})
+        if(url MATCHES "^file://(.*)")
+            set(download_DEST "${CMAKE_MATCH_1}")
+            set(download_REMOVE OFF)
+        else()
+            set(download_DEST "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}")
+            set(download_REMOVE ON)
+            file(DOWNLOAD "${url}" "${download_DEST}" ${expected_hash_ARGS})
+        endif()
         message(${ARG_LOGLEVEL} "Extracting DkCoder")
-        file(ARCHIVE_EXTRACT INPUT "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}"
-            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/_e")
+        file(ARCHIVE_EXTRACT INPUT "${download_DEST}"
+            VERBOSE DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/_e")
 
         # Install prereq: Visual C++ Redistributable
         if(CMAKE_HOST_WIN32)
