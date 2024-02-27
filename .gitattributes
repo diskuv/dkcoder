@@ -42,6 +42,7 @@ dk text eol=lf
 dune text eol=lf
 dune-project text eol=lf
 *.dune text eol=lf
+gradlew text eol=lf
 
 # Declare files that will always have CRLF line endings on checkout.
 *.sln text eol=crlf
