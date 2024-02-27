@@ -242,7 +242,7 @@ function(__dkcoder_install)
         endif()
         message(${ARG_LOGLEVEL} "Extracting DkCoder")
         file(ARCHIVE_EXTRACT INPUT "${download_DEST}"
-            VERBOSE DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/_e")
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/_e")
 
         # Install prereq: Visual C++ Redistributable
         if(CMAKE_HOST_WIN32)
