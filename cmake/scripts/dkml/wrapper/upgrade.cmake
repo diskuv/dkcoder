@@ -153,7 +153,7 @@ Congratulations. Let's get building!
         file(INSTALL "${file_gitattributes}"
           DESTINATION "${dest}"
           FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-        list(paths_ADDED "${path_gitattributes}")
+        list(APPEND paths_ADDED "${path_gitattributes}")
       endif()
 
       # add the four files
