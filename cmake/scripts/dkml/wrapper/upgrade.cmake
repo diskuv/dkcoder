@@ -142,19 +142,23 @@ Congratulations. Let's get building!
     file(INSTALL "${file_dk}"
         DESTINATION "${dest}"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    set(paths_ADDED "${path_dk}" "${path_dkcmd}" "${path_dkfindscriptscmake}")
     
     # Do Git operations automatically
     if(IS_DIRECTORY "${dest}/.git")
       find_package(Git QUIET REQUIRED)
 
       # install .gitattributes
-      file(INSTALL "${file_gitattributes}"
-        DESTINATION "${dest}"
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+      if(NOT EXISTS "${dest}/${path_gitattributes}")
+        file(INSTALL "${file_gitattributes}"
+          DESTINATION "${dest}"
+          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+        list(paths_ADDED "${path_gitattributes}")
+      endif()
 
       # add the four files
       execute_process(WORKING_DIRECTORY "${dest}"
-        COMMAND "${GIT_EXECUTABLE}" add "${path_dk}" "${path_dkcmd}" "${path_dkfindscriptscmake}" "${path_gitattributes}"
+        COMMAND "${GIT_EXECUTABLE}" add ${paths_ADDED}
         COMMAND_ERROR_IS_FATAL ANY)
 
       # for Windows, the *_EXECUTE permissions earlier do nothing. And a subsequent `git add` will not set the
