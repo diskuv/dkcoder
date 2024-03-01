@@ -349,15 +349,19 @@ function(__dkcoder_delegate)
     #   both ocamlc + ocamlrun.
     __dkcoder_prep_environment()
     __dkcoder_add_environment_set("OCAMLLIB=${DKCODER_LIB}/ocaml")
+    #   Assumptions.ocamlfind_configuration_available_to_ocaml_compiler_in_coder_run
     __dkcoder_add_environment_set("OCAMLFIND_CONF=${compile_dir}/findlib.conf")
-    #"CAML_LD_LIBRARY_PATH=${DKCODER_LIB}/ocaml/stublibs;${DKCODER_LIB}/stublibs"
     __dkcoder_add_environment_set("CDI_OUTPUT=${output_abspath}") # This environment variable is communication to `@gen-cdi` rule
-    #   Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
-    #   dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
+    #   Assumptions.stublibs_are_available_to_ocaml_compiler_and_runtime_in_coder_run
+    #       nit: Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
+    #       dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
     __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
     __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
+    #   Assumptions.coder_run_has_environment_for_compiling_bytecode
+    #
+    #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_BIN}")
 
     # Calculate command line arguments
