@@ -20,14 +20,12 @@ function(help)
     [QUIET]
     CMD <PROG> <ARGS>
 
-Sets up the correct PATH and other environment variables so that the following
-<PROG> can be run from the command line, especially in IDEs like Visual Studio Code,
-if they have been built in DkSDK:
-    dune
-    flexlink
-    ocamlc
-    ocamlfind
-    ocamllsp
+Sets up the correct PATH and other environment variables so that the <PROG>
+can be run from the command line or within IDEs like Visual Studio Code.
+
+Only DkSDK CMake projects should use [./dk dksdk.cmd.exec].
+
+DkCoder projects can use [./dk DkCoder_V0_1.Exec] for similar behavior.
 
 Typically you build the DevTools target to ensure all the above binaries are available.
 
@@ -37,10 +35,25 @@ Examples
 ./dk dksdk.cmd.exec CMD ocamllsp
     Run the OCaml Language Server.
 
+Runtime Environment
+===================
+
+The following binaries will be downloaded (DkCoder) or made available (DkSDK CMake):
+    dune
+    flexlink - For DkSDK CMake on Windows only
+    ocamlc
+    ocamlfind - For DkSDK CMake only
+    ocamllsp
+
+The <PROG> gets access through the PATH.
+
+Typically you build the `DevTools` target to ensure all the above binaries have been
+built.
+
 Visual Studio Code
 ==================
 
-1. Build the DevTools target first (or at least the ocamllsp-Build target).
+1. Build the `DevTools` target first (or at least the `ocamllsp-Build` target).
 2. You have two choices to select the *sandbox* (View > Command Palette, and then
    "OCaml: Select a Sandbox for this Workspace").
 
@@ -49,11 +62,7 @@ Visual Studio Code
       Studio Code with `./dk dksdk.cmd.exec CMD code .`
    2. Use "Custom" sandbox with the following command line (change the path):
 
-      # Windows
-      C:\source\DkHelloWorld\dk.cmd dksdk.cmd.exec QUIET CMD $prog $args
-
-      # macOS or Linux
-      /Volumes/Source/DkHelloWorld/dk dksdk.cmd.exec QUIET CMD $prog $args
+      ${firstWorkspaceFolder}/dk dksdk.cmd.exec QUIET CMD $prog $args
 
 Arguments
 =========
