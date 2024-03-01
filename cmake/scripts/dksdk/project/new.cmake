@@ -26,6 +26,13 @@ function(help)
     endif()
     message(${ARG_MODE} [[usage: ./dk dksdk.project.new <ARGS>
 
+                ---------------------
+                WARNING: EXPERIMENTAL 
+                ---------------------
+
+This script has a high likelihood of disappearing or
+drastically changing its behavior.
+
 Arguments
 =========
 
