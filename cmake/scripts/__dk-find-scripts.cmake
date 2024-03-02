@@ -528,6 +528,12 @@ Environment variables:
             __dkcoder_error_wrong_version("")
         endif()
 
+        # Set log level if DkRun_*.ExecQuiet. And then set module from ExecQuiet to Exec.
+        if(package_namespace STREQUAL "Dk" AND package_qualifier STREQUAL "Run" AND module STREQUAL "ExecQuiet")
+            set(__dktool_log_level DEBUG)
+            set(module Exec)
+        endif()
+
         # Do DkCoder install
         __dkcoder_install(LOGLEVEL "${__dktool_log_level}" VERSION "${__dkrun_compile_version}")
 
