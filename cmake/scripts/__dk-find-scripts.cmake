@@ -354,7 +354,7 @@ function(__dkcoder_delegate)
     __dkcoder_prep_environment()
     __dkcoder_add_environment_set("OCAMLLIB=${DKCODER_LIB}/ocaml")
     #   Assumptions.ocamlfind_configuration_available_to_ocaml_compiler_in_coder_run
-    __dkcoder_add_environment_set("OCAMLFIND_CONF=${compile_dir}/findlib.conf")
+    __dkcoder_add_environment_set("OCAMLFIND_CONF=${DKCODER_LIB}/findlib.conf")
     __dkcoder_add_environment_set("CDI_OUTPUT=${output_abspath}") # This environment variable is communication to `@gen-cdi` rule
     #   Assumptions.stublibs_are_available_to_ocaml_compiler_and_runtime_in_coder_run
     #       nit: Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
