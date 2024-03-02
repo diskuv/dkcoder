@@ -408,11 +408,14 @@ function(__parse_if_ocaml_command)
     # Confer: https://diskuv.com/dksdk/run/2024-intro-scripting/
     string(LENGTH "${ARG_COMMAND}" command_LEN)
 
-    if(command MATCHES "^([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)([.][A-Z]([A-Za-z0-9_]*))+$")
+    if(command MATCHES "^([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)(([.][A-Z]([A-Za-z0-9_]*))+)$")
         set(${ARG_PACKAGE_NAMESPACE_VARIABLE} "${CMAKE_MATCH_1}" PARENT_SCOPE)
         set(${ARG_PACKAGE_QUALIFIER_VARIABLE} "${CMAKE_MATCH_2}" PARENT_SCOPE)
         set(${ARG_LIBRARY_VARIABLE} "${CMAKE_MATCH_3}" PARENT_SCOPE)
-        set(${ARG_FULLY_QUALIFIED_MODULE_VARIABLE} "${CMAKE_MATCH_4}" PARENT_SCOPE)
+        #   Change .Run to Run
+        set(fqn "${CMAKE_MATCH_4}")
+        string(REGEX REPLACE "^[.]" "" fqn "${fqn}")
+        set(${ARG_FULLY_QUALIFIED_MODULE_VARIABLE} "${fqn}" PARENT_SCOPE)
         set(${ARG_SUCCESS_VARIABLE} ON PARENT_SCOPE)
         return()
     endif()
