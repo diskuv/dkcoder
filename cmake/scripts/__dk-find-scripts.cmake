@@ -342,7 +342,7 @@ endmacro()
 # Confer: https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
 function(__dkcoder_delegate)
     set(noValues)
-    set(singleValues ARGUMENT_LIST_VARIABLE)
+    set(singleValues PACKAGE_NAMESPACE PACKAGE_QUALIFIER FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -381,20 +381,28 @@ function(__dkcoder_delegate)
             string(APPEND dkcoder_ARGS " '${arg}'")
         endif()
     endforeach()
+
+    # Find out which is the entry bytecode executable. Normally it is DKCODER_RUN.
+    set(entryExec "${DKCODER_RUN}")
+    if(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run AND ARG_FULLY_QUALIFIED_MODULE STREQUAL Compile)
+        set(entryExec "${DKCODER_COMPILE}")
+    elseif(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run AND ARG_FULLY_QUALIFIED_MODULE STREQUAL Exec)
+        set(entryExec "${DKCODER_EXEC}")
+    endif()
     
     # Write postscript launch script
     if(CMAKE_HOST_WIN32)
         cmake_path(NATIVE_PATH CMAKE_COMMAND CMAKE_COMMAND_NATIVE)
         cmake_path(NATIVE_PATH DKCODER_OCAMLRUN DKCODER_OCAMLRUN_NATIVE)
-        cmake_path(NATIVE_PATH DKCODER_RUN DKCODER_RUN_NATIVE)
+        cmake_path(NATIVE_PATH entryExec entryExec_NATIVE)
         file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[REM @ECHO OFF
-"@CMAKE_COMMAND_NATIVE@" -E env @envMods_DOS@ -- "@DKCODER_OCAMLRUN_NATIVE@" "@DKCODER_RUN_NATIVE@" @dkcoder_ARGS@
+"@CMAKE_COMMAND_NATIVE@" -E env @envMods_DOS@ -- "@DKCODER_OCAMLRUN_NATIVE@" "@entryExec_NATIVE@" @dkcoder_ARGS@
 ]]
             @ONLY NEWLINE_STYLE DOS)
     else()
         file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[#!/bin/sh
 set -euf
-exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_DDKCODER_OCAMLRUN@' '@DKCODER_RUN@' @dkcoder_ARGS@
+exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_DDKCODER_OCAMLRUN@' '@entryExec@' @dkcoder_ARGS@
 ]]
             @ONLY NEWLINE_STYLE UNIX)
     endif()
@@ -524,7 +532,11 @@ Environment variables:
         __dkcoder_install(LOGLEVEL "${__dktool_log_level}" VERSION "${__dkrun_compile_version}")
 
         # Do DkCoder delegation
-        __dkcoder_delegate(ARGUMENT_LIST_VARIABLE argument_list)
+        __dkcoder_delegate(
+            PACKAGE_NAMESPACE "${package_namespace}"
+            PACKAGE_QUALIFIER "${package_qualifier}"
+            FULLY_QUALIFIED_MODULE "${module}"
+            ARGUMENT_LIST_VARIABLE argument_list)
         return()
     endif()
 
