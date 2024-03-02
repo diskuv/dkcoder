@@ -117,6 +117,8 @@ endfunction()
 # Outputs:
 # - DKCODER - location of the `dkcoder` executable
 # - DKCODER_RUN - location of the `DkCoder_Edge-Run.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
+# - DKCODER_COMPILE - location of the `DkCoder_Edge-Compile.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
+# - DKCODER_EXEC - location of the `DkCoder_Edge-Exec.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
 # - DKCODER_BIN - location of bin directory
 # - DKCODER_ETC - location of etc/dkcoder directory
 # - DKCODER_LIB - location of lib/ directory containing lib/ocaml/ and other libraries compatible with dkcoder
@@ -282,6 +284,8 @@ function(__dkcoder_install)
     find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_RUN NAMES DkCoder_Edge-Run.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
+    find_program(DKCODER_COMPILE NAMES DkCoder_Edge-Compile.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
+    find_program(DKCODER_EXEC NAMES DkCoder_Edge-Exec.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
 
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${dkcoder_rootdir} and try again.")
 
