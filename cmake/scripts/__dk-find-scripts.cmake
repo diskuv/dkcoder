@@ -251,6 +251,21 @@ function(__dkcoder_install)
             __dkcoder_install_vc_redist(LOGLEVEL ${ARG_LOGLEVEL})
         endif()
 
+        # Configure findlib.conf
+        if(CMAKE_HOST_WIN32)
+            # Windows needs entries like: destdir="C:\\TARBALL\\lib"
+            cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
+            string(REPLACE "\\" "\\\\" DKCODER_HOME_NATIVE_ESCAPED "${DKCODER_HOME_NATIVE}")
+
+            file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_e/lib/findlib.conf"
+                CONTENT [[destdir="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
+path="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"]] @ONLY NEWLINE_STYLE UNIX)
+        else()
+            file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_e/lib/findlib.conf"
+                CONTENT [[destdir="@DKCODER_HOME@/lib"
+path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
+        endif()
+
         # Install
         #   Do file(RENAME) but work across mount volumes (ex. inside containers)
         message(${ARG_LOGLEVEL} "Copying DkCoder to final install location")
