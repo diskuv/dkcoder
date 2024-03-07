@@ -109,6 +109,54 @@ function(__dkcoder_error_wrong_version problem_prefix)
     message(FATAL_ERROR "Problem: ${problem_prefix}The only long-term supported versions accepted by this script are: ${lts_versions}.\n\nSolution: Run `./dk dkml.wrapper.upgrade` in your Terminal without the backticks.")
 endfunction()
 
+function(__dkcoder_abi)
+    set(noValues)
+    set(singleValues ABI_VARIABLE)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # Detect ABI (todo: cache it somewhere)
+    set(solution "Solution: If you are a DkSDK subscriber and need a new platform, contact your DkSDK Support representative.")
+    if(CMAKE_HOST_WIN32)
+        # On Windows CMAKE_HOST_SYSTEM_PROCESSOR = ENV:PROCESSOR_ARCHITECTURE
+        # Values: AMD64, IA64, ARM64, x86
+        # https://docs.microsoft.com/en-us/windows/win32/winprog64/wow64-implementation-details?redirectedfrom=MSDN#environment-variables
+        if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL X86)
+            set(dkml_host_abi windows_x86)
+        else()
+            set(dkml_host_abi windows_x86_64)
+        endif()
+    elseif(CMAKE_HOST_APPLE)
+        execute_process(COMMAND uname -m
+                OUTPUT_VARIABLE host_machine_type
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                COMMAND_ERROR_IS_FATAL ANY)
+        if(host_machine_type STREQUAL x86_64)
+            set(dkml_host_abi darwin_x86_64)
+        elseif(host_machine_type STREQUAL arm64)
+            set(dkml_host_abi darwin_arm64)
+        else()
+            message(FATAL_ERROR "Problem: Unfortunately, your macOS ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+        endif()
+    elseif(CMAKE_HOST_LINUX)
+        execute_process(COMMAND uname -m
+                OUTPUT_VARIABLE host_machine_type
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                COMMAND_ERROR_IS_FATAL ANY)
+        if(host_machine_type STREQUAL x86_64)
+            set(dkml_host_abi linux_x86_64)
+        elseif(host_machine_type STREQUAL i686)
+            set(dkml_host_abi linux_x86)
+        else()
+            message(FATAL_ERROR "Problem: Your Linux ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+        endif()
+    else()
+        message(FATAL_ERROR "Problem: DkCoder is only available on Windows, macOS and Linux. ${solution}")
+    endif()
+
+    set("${ARG_ABI_VARIABLE}" "${dkml_host_abi}" PARENT_SCOPE)
+endfunction()
+
 # Installs DkCoder project.
 #
 # Arguments:
@@ -122,12 +170,13 @@ endfunction()
 # - DKCODER_BIN - location of bin directory
 # - DKCODER_ETC - location of etc/dkcoder directory
 # - DKCODER_LIB - location of lib/ directory containing lib/ocaml/ and other libraries compatible with dkcoder
+# - DKCODER_SHARE - location of share directory
 # - DKCODER_OCAMLC - location of ocamlc compatible with dkcoder
 # - DKCODER_OCAMLRUN - location of ocamlrun compatible with dkcoder
 # - DKCODER_DUNE - location of dune compatible with dkcoder
 function(__dkcoder_install)
     set(noValues)
-    set(singleValues VERSION LOGLEVEL)
+    set(singleValues ABI VERSION LOGLEVEL)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -173,55 +222,23 @@ function(__dkcoder_install)
     # Make a work directory
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_dkcoder__${compile_version}")
 
+    # Get the ABI
+    set(dkml_host_abi "${ARG_ABI}")
+
     set(hints ${DKCODER_HOME}/bin)
     set(find_program_ARGS NO_DEFAULT_PATH)
     find_program(DKCODER NAMES dkcoder HINTS ${hints} ${find_program_ARGS})
 
     if(NOT DKCODER)
-        set(solution "Solution: If you are a DkSDK subscriber and need a new platform, contact your DkSDK Support representative.")
         # Download into ${DKCODER_HOME} (which is one of the HINTS)
         set(downloaded)
-        if(CMAKE_HOST_WIN32)
-            # On Windows CMAKE_HOST_SYSTEM_PROCESSOR = ENV:PROCESSOR_ARCHITECTURE
-            # Values: AMD64, IA64, ARM64, x86
-            # https://docs.microsoft.com/en-us/windows/win32/winprog64/wow64-implementation-details?redirectedfrom=MSDN#environment-variables
-            set(out_exp .zip)
-            if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL X86)
-                set(dkml_host_abi windows_x86)
-            else()
-                set(dkml_host_abi windows_x86_64)
-            endif()
-        elseif(CMAKE_HOST_APPLE)
-            set(out_exp .tar.gz)
-            execute_process(COMMAND uname -m
-                    OUTPUT_VARIABLE host_machine_type
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    COMMAND_ERROR_IS_FATAL ANY)
-            if(host_machine_type STREQUAL x86_64)
-                set(dkml_host_abi darwin_x86_64)
-            elseif(host_machine_type STREQUAL arm64)
-                set(dkml_host_abi darwin_arm64)
-            else()
-                message(FATAL_ERROR "Problem: Unfortunately, your macOS ${host_machine_type} platform is currently not supported by this download script. ${solution}")
-            endif()
-        elseif(CMAKE_HOST_LINUX)
-        set(out_exp .tar.gz)
-        execute_process(COMMAND uname -m
-                    OUTPUT_VARIABLE host_machine_type
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    COMMAND_ERROR_IS_FATAL ANY)
-            if(host_machine_type STREQUAL x86_64)
-                set(dkml_host_abi linux_x86_64)
-            elseif(host_machine_type STREQUAL i686)
-                set(dkml_host_abi linux_x86)
-            else()
-                message(FATAL_ERROR "Problem: Your Linux ${host_machine_type} platform is currently not supported by this download script. ${solution}")
-            endif()
-        else()
-            message(FATAL_ERROR "Problem: DkCoder is only available on Windows, macOS and Linux. ${solution}")
-        endif()
 
         # URL
+        if(dkml_host_abi MATCHES "^windows_.*")
+            set(out_exp .zip)
+        else()
+            set(out_exp .tar.gz)
+        endif()
         set(url "${url_base}/stdexport-${dkml_host_abi}${out_exp}")
 
         # Checksum? Always do it unless we are using the Env version
@@ -294,7 +311,8 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
     cmake_path(GET DKCODER PARENT_PATH dkcoder_bindir)
     cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_rootdir)
 
-    # ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
+    # Export binaries.
+    #   ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
     find_program(DKCODER_OCAMLC NAMES ocamlc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
@@ -304,26 +322,33 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
 
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${dkcoder_rootdir} and try again.")
 
-    # bin
+    # Export bin
     cmake_path(APPEND dkcoder_rootdir bin OUTPUT_VARIABLE dkcoder_bin)
     if(NOT IS_DIRECTORY "${dkcoder_bin}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_BIN "${dkcoder_bin}" PARENT_SCOPE)
 
-    # etc/dkcoder
+    # Export etc/dkcoder
     cmake_path(APPEND dkcoder_rootdir etc dkcoder OUTPUT_VARIABLE dkcoder_etc)
     if(NOT IS_DIRECTORY "${dkcoder_etc}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_ETC "${dkcoder_etc}" PARENT_SCOPE)
 
-    # lib
+    # Export lib
     cmake_path(APPEND dkcoder_rootdir lib OUTPUT_VARIABLE dkcoder_lib)
     if(NOT IS_DIRECTORY "${dkcoder_lib}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_LIB "${dkcoder_lib}" PARENT_SCOPE)
+
+    # Export share
+    cmake_path(APPEND dkcoder_rootdir share OUTPUT_VARIABLE dkcoder_share)
+    if(NOT IS_DIRECTORY "${dkcoder_share}")
+        message(FATAL_ERROR "${problem_solution}")
+    endif()
+    set(DKCODER_SHARE "${dkcoder_share}" PARENT_SCOPE)
 endfunction()
 
 macro(__dkcoder_prep_environment)
@@ -332,7 +357,7 @@ macro(__dkcoder_prep_environment)
     set(envMods_CMAKE)
 endmacro()
 
-macro(__dkcoder_add_environment_mod term)
+function(__dkcoder_add_environment_mod term) # macros can't handle backslashes
     if(envMods_UNIX)
         string(APPEND envMods_UNIX " ")
         string(APPEND envMods_DOS " ")
@@ -340,9 +365,13 @@ macro(__dkcoder_add_environment_mod term)
     string(APPEND envMods_DOS "--modify \"${term}\"")
     string(APPEND envMods_UNIX "--modify '${term}'")
     list(APPEND envMods_CMAKE --modify "${term}")
-endmacro()    
 
-macro(__dkcoder_add_environment_set namevalue)
+    set(envMods_DOS "${envMods_DOS}" PARENT_SCOPE)
+    set(envMods_UNIX "${envMods_UNIX}" PARENT_SCOPE)
+    set(envMods_CMAKE "${envMods_CMAKE}" PARENT_SCOPE)
+endfunction()    
+
+function(__dkcoder_add_environment_set namevalue) # macros can't handle backslashes
     if(envMods_UNIX)
         string(APPEND envMods_UNIX " ")
         string(APPEND envMods_DOS " ")
@@ -350,14 +379,18 @@ macro(__dkcoder_add_environment_set namevalue)
     string(APPEND envMods_DOS "\"${namevalue}\"")
     string(APPEND envMods_UNIX "'${namevalue}'")
     list(APPEND envMods_CMAKE "${namevalue}")
-endmacro()    
+
+    set(envMods_DOS "${envMods_DOS}" PARENT_SCOPE)
+    set(envMods_UNIX "${envMods_UNIX}" PARENT_SCOPE)
+    set(envMods_CMAKE "${envMods_CMAKE}" PARENT_SCOPE)
+endfunction()    
 
 # Delegate to DkCoder. We don't run inside CMake since CMake intercepts signals and (related?) makes
 # Dune watch mode hang on Windows.
 # Confer: https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
 function(__dkcoder_delegate)
     set(noValues)
-    set(singleValues PACKAGE_NAMESPACE PACKAGE_QUALIFIER FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE)
+    set(singleValues ABI PACKAGE_NAMESPACE PACKAGE_QUALIFIER FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -382,6 +415,11 @@ function(__dkcoder_delegate)
     #
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_BIN}")
+
+    # Propagate DKML_HOST_ABI and DKCODER_SHARE
+    __dkcoder_add_environment_set("DKML_HOST_ABI=${ARG_ABI}")
+    cmake_path(NATIVE_PATH DKCODER_SHARE NORMALIZE DKCODER_SHARE_NATIVE)
+    __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
 
     # Calculate command line arguments
     set(dkcoder_ARGS)
@@ -549,11 +587,15 @@ Environment variables:
             set(module Exec)
         endif()
 
+        # Detect ABI
+        __dkcoder_abi(ABI_VARIABLE abi)        
+
         # Do DkCoder install
-        __dkcoder_install(LOGLEVEL "${__dktool_log_level}" VERSION "${__dkrun_compile_version}")
+        __dkcoder_install(ABI "${abi}" LOGLEVEL "${__dktool_log_level}" VERSION "${__dkrun_compile_version}")
 
         # Do DkCoder delegation
         __dkcoder_delegate(
+            ABI "${abi}"
             PACKAGE_NAMESPACE "${package_namespace}"
             PACKAGE_QUALIFIER "${package_qualifier}"
             FULLY_QUALIFIED_MODULE "${module}"
