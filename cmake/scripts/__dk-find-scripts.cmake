@@ -416,11 +416,13 @@ function(__dkcoder_delegate)
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_BIN}")
 
-    # Propagate DKCODER_SHARE.
+    # Propagate DKCODER_SHARE and DKCODER_BIN.
     #   Why not DKML_HOST_ABI? DkRun has a hardcoded default (so ABI hardcoding comes from the downloaded DkRun
     #   which is chosen by ./dk). But we don't change the default since a future DkRun may have a better
     #   detection of ABI (ex. ./dk downloads x86_64 for macOS but ABI is detected as arm64).
+    cmake_path(NATIVE_PATH DKCODER_BIN NORMALIZE DKCODER_BIN_NATIVE)
     cmake_path(NATIVE_PATH DKCODER_SHARE NORMALIZE DKCODER_SHARE_NATIVE)
+    __dkcoder_add_environment_set("DKCODER_BIN=${DKCODER_BIN_NATIVE}")
     __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
 
     # Calculate command line arguments
