@@ -390,7 +390,7 @@ endfunction()
 # Confer: https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
 function(__dkcoder_delegate)
     set(noValues)
-    set(singleValues ABI PACKAGE_NAMESPACE PACKAGE_QUALIFIER FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE)
+    set(singleValues PACKAGE_NAMESPACE PACKAGE_QUALIFIER FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -416,8 +416,10 @@ function(__dkcoder_delegate)
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_BIN}")
 
-    # Propagate DKML_HOST_ABI and DKCODER_SHARE
-    __dkcoder_add_environment_set("DKML_HOST_ABI=${ARG_ABI}")
+    # Propagate DKCODER_SHARE.
+    #   Why not DKML_HOST_ABI? DkRun has a hardcoded default (so ABI hardcoding comes from the downloaded DkRun
+    #   which is chosen by ./dk). But we don't change the default since a future DkRun may have a better
+    #   detection of ABI (ex. ./dk downloads x86_64 for macOS but ABI is detected as arm64).
     cmake_path(NATIVE_PATH DKCODER_SHARE NORMALIZE DKCODER_SHARE_NATIVE)
     __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
 
@@ -628,7 +630,6 @@ Environment variables:
 
         # Do DkCoder delegation
         __dkcoder_delegate(
-            ABI "${abi}"
             PACKAGE_NAMESPACE "${package_namespace}"
             PACKAGE_QUALIFIER "${package_qualifier}"
             FULLY_QUALIFIED_MODULE "${module}"
