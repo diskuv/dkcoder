@@ -369,7 +369,7 @@ function(__dkcoder_add_environment_mod term) # macros can't handle backslashes
     set(envMods_DOS "${envMods_DOS}" PARENT_SCOPE)
     set(envMods_UNIX "${envMods_UNIX}" PARENT_SCOPE)
     set(envMods_CMAKE "${envMods_CMAKE}" PARENT_SCOPE)
-endfunction()    
+endfunction()
 
 function(__dkcoder_add_environment_set namevalue) # macros can't handle backslashes
     if(envMods_UNIX)
@@ -383,7 +383,7 @@ function(__dkcoder_add_environment_set namevalue) # macros can't handle backslas
     set(envMods_DOS "${envMods_DOS}" PARENT_SCOPE)
     set(envMods_UNIX "${envMods_UNIX}" PARENT_SCOPE)
     set(envMods_CMAKE "${envMods_CMAKE}" PARENT_SCOPE)
-endfunction()    
+endfunction()
 
 # Delegate to DkCoder. We don't run inside CMake since CMake intercepts signals and (related?) makes
 # Dune watch mode hang on Windows.
@@ -446,7 +446,7 @@ function(__dkcoder_delegate)
     elseif(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run AND ARG_FULLY_QUALIFIED_MODULE STREQUAL Exec)
         set(entryExec "${DKCODER_EXEC}")
     endif()
-    
+
     # Write postscript launch script.
     if(CMAKE_HOST_WIN32)
         cmake_path(NATIVE_PATH CMAKE_COMMAND CMAKE_COMMAND_NATIVE)
@@ -625,7 +625,7 @@ Environment variables:
         endif()
 
         # Detect ABI
-        __dkcoder_abi(ABI_VARIABLE abi)        
+        __dkcoder_abi(ABI_VARIABLE abi)
 
         # Do DkCoder install
         __dkcoder_install(ABI "${abi}" LOGLEVEL "${__dktool_log_level}" VERSION "${__dkrun_compile_version}")
