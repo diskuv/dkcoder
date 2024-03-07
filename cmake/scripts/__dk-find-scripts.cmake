@@ -443,18 +443,51 @@ function(__dkcoder_delegate)
         set(entryExec "${DKCODER_EXEC}")
     endif()
     
-    # Write postscript launch script
+    # Write postscript launch script.
     if(CMAKE_HOST_WIN32)
         cmake_path(NATIVE_PATH CMAKE_COMMAND CMAKE_COMMAND_NATIVE)
         cmake_path(NATIVE_PATH DKCODER_OCAMLRUN DKCODER_OCAMLRUN_NATIVE)
         cmake_path(NATIVE_PATH entryExec entryExec_NATIVE)
         file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[REM @ECHO OFF
+REM Clear "SET" variables from dk.cmd. They are not part of DkCoder API.
+SET DK_7Z_MAJVER=
+SET DK_7Z_MINVER=
+SET DK_7Z_DOTVER=
+SET DK_7Z_VER=
+SET DK_CMAKE_VER=
+SET DK_NINJA_VER=
+SET DK_BUILD_TYPE=
+SET DK_SHARE=
+SET DK_PROJ_DIR=
+SET DK_PWD=
+SET DK_CKSUM_7ZR=
+SET DK_CKSUM_7ZEXTRA=
+SET DK_CKSUM_CMAKE=
+SET DK_CKSUM_NINJA=
+SET DK_WORKDIR=
+SET DK_NONCE=
+SET DK_NINJA_EXE=
+SET DK_CMDLINE=
+SET DK_CMAKE_EXE=
+
+REM Clear variables that influence __dk-find-scripts.cmake. They are not part of DkCoder API.
+SET DKRUN_ENV_URL_BASE=
+
 "@CMAKE_COMMAND_NATIVE@" -E env @envMods_DOS@ -- "@DKCODER_OCAMLRUN_NATIVE@" "@entryExec_NATIVE@" @dkcoder_ARGS@
 ]]
             @ONLY NEWLINE_STYLE DOS)
     else()
+        #   + Clear "export" variables from dk
         file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[#!/bin/sh
 set -euf
+# Clear "export" variables from ./dk. They are not part of DkCoder API.
+unset DKMLSYS_MV DKMLSYS_CHMOD DKMLSYS_UNAME DKMLSYS_ENV DKMLSYS_AWK DKMLSYS_SED DKMLSYS_COMM DKMLSYS_INSTALL
+unset DKMLSYS_RM DKMLSYS_SORT DKMLSYS_CAT DKMLSYS_STAT DKMLSYS_GREP DKMLSYS_CURL DKMLSYS_WGET DKMLSYS_TR
+unset DK_PROG_INSTALLED_LOCATION
+
+# Clear variables that influence __dk-find-scripts.cmake. They are not part of DkCoder API.
+unset DKRUN_ENV_URL_BASE
+
 exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_DDKCODER_OCAMLRUN@' '@entryExec@' @dkcoder_ARGS@
 ]]
             @ONLY NEWLINE_STYLE UNIX)
