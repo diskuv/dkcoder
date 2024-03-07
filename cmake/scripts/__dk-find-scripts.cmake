@@ -492,7 +492,7 @@ unset DK_PROG_INSTALLED_LOCATION
 # Clear variables that influence __dk-find-scripts.cmake. They are not part of DkCoder API.
 unset DKRUN_ENV_URL_BASE
 
-exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_DDKCODER_OCAMLRUN@' '@entryExec@' @dkcoder_ARGS@
+exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_OCAMLRUN@' '@entryExec@' @dkcoder_ARGS@
 ]]
             @ONLY NEWLINE_STYLE UNIX)
     endif()
