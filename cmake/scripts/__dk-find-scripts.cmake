@@ -434,7 +434,7 @@ function(__dkcoder_delegate)
             string(APPEND dkcoder_ARGS " \"${arg}\"")
         else()
             # replace single quotes with: close string, add escaped single quote, re-open string
-            string(REPLACE "'" "'\''" arg "${arg}")
+            string(REPLACE "'" "'\\''" arg "${arg}")
             string(APPEND dkcoder_ARGS " '${arg}'")
         endif()
     endforeach()
