@@ -316,12 +316,21 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
 
     cmake_path(GET DKCODER PARENT_PATH dkcoder_bindir)
 
+    # macOS requires a code signing separation between executables (including shared libraries)
+    # and non-executables (include bytecode). The latter will be in macOS bundle Resources/.
+    if(CMAKE_HOST_APPLE)
+        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
+        cmake_path(APPEND dkcoder_resourcesdir Resources)
+    else()
+        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
+    endif()
+
     # Export binaries.
     #   ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
     find_program(DKCODER_OCAMLC NAMES ocamlc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
-    find_program(DKCODER_RUN NAMES DkCoder_Edge-Run.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
+    find_program(DKCODER_RUN NAMES DkCoder_Edge-Run.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_resourcesdir}/bytecode)
 
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${DKCODER_HOME} and try again.")
 
@@ -333,14 +342,6 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_BIN "${dkcoder_bindir}" PARENT_SCOPE)
-
-    # Everything else below should be in macOS bundle Resources/ or in the root directory
-    if(CMAKE_HOST_APPLE)
-        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
-        cmake_path(APPEND dkcoder_resourcesdir Resources)
-    else()
-        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
-    endif()
 
     # Export etc/dkcoder/ or macOS bundle Resources/etc/dkcoder
     cmake_path(APPEND dkcoder_resourcesdir etc dkcoder OUTPUT_VARIABLE dkcoder_etc)
