@@ -26,6 +26,11 @@ dktool\dk user.dkml.wrapper.upgrade HERE
 .\dk dkml.wrapper.upgrade DONE
 ```
 
+## Quiet Mode
+
+Any command that ends in `Quiet`, like `./dk DkRun_Env.RunQuiet`, will not print messages while dk initializes itself.
+However, if `sudo` is required for elevation, then commands will be echoed to the terminal.
+
 ## Licenses
 
 `dktool` is available under the Open Software License version 3.0,
