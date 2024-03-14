@@ -163,7 +163,7 @@ endfunction()
 # Arguments:
 #   VERSION
 #   LOGLEVEL
-# Outputs:
+# Read-only Filesystem Outputs: (never modify the files or mutate the directories. On macOS part of a Bundle)
 # - DKCODER - location of the `dkcoder` executable
 # - DKCODER_RUN - location of the `DkCoder_Edge-Run.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
 # - DKCODER_BIN - location of bin directory
@@ -224,7 +224,10 @@ function(__dkcoder_install)
     # Get the ABI
     set(dkml_host_abi "${ARG_ABI}")
 
-    set(hints ${DKCODER_HOME}/bin)
+    # Location where ocamlfind.conf should be
+    set(ocamlfind_conf "${DKCODER_HOME}/findlib.conf")
+
+    set(hints "${DKCODER_HOME}/DkCoder.bundle/Contents/Helpers" "${DKCODER_HOME}/bin")
     set(find_program_ARGS NO_DEFAULT_PATH)
     find_program(DKCODER NAMES dkcoder HINTS ${hints} ${find_program_ARGS})
 
@@ -233,7 +236,7 @@ function(__dkcoder_install)
         set(downloaded)
 
         # URL
-        if(dkml_host_abi MATCHES "^windows_.*")
+        if(dkml_host_abi MATCHES "^windows_.*" OR dkml_host_abi MATCHES "^darwin_.*")
             set(out_exp .zip)
         else()
             set(out_exp .tar.gz)
@@ -267,21 +270,6 @@ function(__dkcoder_install)
             __dkcoder_install_vc_redist(LOGLEVEL ${ARG_LOGLEVEL})
         endif()
 
-        # Configure findlib.conf
-        if(CMAKE_HOST_WIN32)
-            # Windows needs entries like: destdir="C:\\TARBALL\\lib"
-            cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
-            string(REPLACE "\\" "\\\\" DKCODER_HOME_NATIVE_ESCAPED "${DKCODER_HOME_NATIVE}")
-
-            file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_e/lib/findlib.conf"
-                CONTENT [[destdir="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
-path="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"]] @ONLY NEWLINE_STYLE UNIX)
-        else()
-            file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/_e/lib/findlib.conf"
-                CONTENT [[destdir="@DKCODER_HOME@/lib"
-path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
-        endif()
-
         # Install
         #   Do file(RENAME) but work across mount volumes (ex. inside containers)
         message(${ARG_LOGLEVEL} "Copying DkCoder to final install location")
@@ -298,6 +286,25 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
                 USE_SOURCE_PERMISSIONS)
         endforeach()
 
+        # Post-install: Configure findlib.conf to point to macOS bundle or Unix/Win32 extraction
+        if(CMAKE_HOST_WIN32)
+            # Windows needs entries like: destdir="C:\\TARBALL\\lib"
+            cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
+            string(REPLACE "\\" "\\\\" DKCODER_HOME_NATIVE_ESCAPED "${DKCODER_HOME_NATIVE}")
+
+            file(CONFIGURE OUTPUT "${ocamlfind_conf}"
+                CONTENT [[destdir="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
+path="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"]] @ONLY NEWLINE_STYLE UNIX)
+        elseif(CMAKE_HOST_APPLE)
+            file(CONFIGURE OUTPUT "${ocamlfind_conf}"
+                CONTENT [[destdir="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"
+path="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"]] @ONLY NEWLINE_STYLE UNIX)
+        else()
+            file(CONFIGURE OUTPUT "${ocamlfind_conf}"
+                CONTENT [[destdir="@DKCODER_HOME@/lib"
+path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
+        endif()
+
         # Cleanup
         message(${ARG_LOGLEVEL} "Cleaning DkCoder intermediate files")
         file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
@@ -308,7 +315,6 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
     endif()
 
     cmake_path(GET DKCODER PARENT_PATH dkcoder_bindir)
-    cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_rootdir)
 
     # Export binaries.
     #   ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
@@ -317,31 +323,41 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
     find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_RUN NAMES DkCoder_Edge-Run.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
 
-    set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${dkcoder_rootdir} and try again.")
+    set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${DKCODER_HOME} and try again.")
 
-    # Export bin
-    cmake_path(APPEND dkcoder_rootdir bin OUTPUT_VARIABLE dkcoder_bin)
-    if(NOT IS_DIRECTORY "${dkcoder_bin}")
+    # Export ocamlfind.conf
+    set(DKCODER_OCAMLFIND_CONF "${ocamlfind_conf}" PARENT_SCOPE)
+
+    # Export bin/ or macOS bundle Helpers/
+    if(NOT IS_DIRECTORY "${dkcoder_bindir}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
-    set(DKCODER_BIN "${dkcoder_bin}" PARENT_SCOPE)
+    set(DKCODER_BIN "${dkcoder_bindir}" PARENT_SCOPE)
 
-    # Export etc/dkcoder
-    cmake_path(APPEND dkcoder_rootdir etc dkcoder OUTPUT_VARIABLE dkcoder_etc)
+    # Everything else below should be in macOS bundle Resources/ or in the root directory
+    if(CMAKE_HOST_APPLE)
+        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
+        cmake_path(APPEND dkcoder_resourcesdir Resources)
+    else()
+        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
+    endif()
+
+    # Export etc/dkcoder/ or macOS bundle Resources/etc/dkcoder
+    cmake_path(APPEND dkcoder_resourcesdir etc dkcoder OUTPUT_VARIABLE dkcoder_etc)
     if(NOT IS_DIRECTORY "${dkcoder_etc}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_ETC "${dkcoder_etc}" PARENT_SCOPE)
 
     # Export lib
-    cmake_path(APPEND dkcoder_rootdir lib OUTPUT_VARIABLE dkcoder_lib)
+    cmake_path(APPEND dkcoder_resourcesdir lib OUTPUT_VARIABLE dkcoder_lib)
     if(NOT IS_DIRECTORY "${dkcoder_lib}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_LIB "${dkcoder_lib}" PARENT_SCOPE)
 
     # Export share
-    cmake_path(APPEND dkcoder_rootdir share OUTPUT_VARIABLE dkcoder_share)
+    cmake_path(APPEND dkcoder_resourcesdir share OUTPUT_VARIABLE dkcoder_share)
     if(NOT IS_DIRECTORY "${dkcoder_share}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
@@ -399,7 +415,7 @@ function(__dkcoder_delegate)
     __dkcoder_prep_environment()
     __dkcoder_add_environment_set("OCAMLLIB=${DKCODER_LIB}/ocaml")
     #   Assumptions.ocamlfind_configuration_available_to_ocaml_compiler_in_coder_run
-    __dkcoder_add_environment_set("OCAMLFIND_CONF=${DKCODER_LIB}/findlib.conf")
+    __dkcoder_add_environment_set("OCAMLFIND_CONF=${DKCODER_OCAMLFIND_CONF}")
     __dkcoder_add_environment_set("CDI_OUTPUT=${output_abspath}") # This environment variable is communication to `@gen-cdi` rule
     #   Assumptions.stublibs_are_available_to_ocaml_compiler_and_runtime_in_coder_run
     #       nit: Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
