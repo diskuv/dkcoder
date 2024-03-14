@@ -166,8 +166,6 @@ endfunction()
 # Outputs:
 # - DKCODER - location of the `dkcoder` executable
 # - DKCODER_RUN - location of the `DkCoder_Edge-Run.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
-# - DKCODER_COMPILE - location of the `DkCoder_Edge-Compile.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
-# - DKCODER_EXEC - location of the `DkCoder_Edge-Exec.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
 # - DKCODER_BIN - location of bin directory
 # - DKCODER_ETC - location of etc/dkcoder directory
 # - DKCODER_LIB - location of lib/ directory containing lib/ocaml/ and other libraries compatible with dkcoder
@@ -318,8 +316,6 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
     find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
     find_program(DKCODER_RUN NAMES DkCoder_Edge-Run.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
-    find_program(DKCODER_COMPILE NAMES DkCoder_Edge-Compile.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
-    find_program(DKCODER_EXEC NAMES DkCoder_Edge-Exec.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
 
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${dkcoder_rootdir} and try again.")
 
@@ -442,15 +438,11 @@ function(__dkcoder_delegate)
 
     # Find out which is the entry bytecode executable.
     if(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run)
-        if(ARG_FULLY_QUALIFIED_MODULE STREQUAL Compile)
-            set(entryExec "${DKCODER_COMPILE}")
-        elseif(ARG_FULLY_QUALIFIED_MODULE STREQUAL Exec)
-            set(entryExec "${DKCODER_EXEC}")
-        elseif(ARG_FULLY_QUALIFIED_MODULE STREQUAL Run)
+        if(ARG_FULLY_QUALIFIED_MODULE STREQUAL Run)
             set(entryExec "${DKCODER_RUN}")
         else()
             list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
-            message(FATAL_ERROR "Problem: DkCoder only supports the Compile, Exec and Run entrypoints. Solution: Was there a typo? Try DkRun_${__dkrun_v_id}.Run instead.")
+            message(FATAL_ERROR "Problem: DkCoder only supports the Run entrypoint. Solution: Was there a typo? Try DkRun_${__dkrun_v_id}.Run instead.")
         endif()
     else()
         # If not explicitly a built-in DkCoder entry then use the [Run] entry.
