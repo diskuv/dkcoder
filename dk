@@ -535,6 +535,7 @@ cmake_majminpat_ver=3.25.2
 cmake_cksum256_linux_x86_64="783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87f0cf233748d99"
 cmake_cksum256_linux_x86="715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c"
 cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
+cmake_cksum256_darwin_universal="a988e2a69c1d105987f12782ee0fa80d6be941b3e1a68b4bd6a661f0fdb56d75"
 
 ninja_majminpat_ver=1.11.1
 ninja_cksum256_darwin_universal="482ecb23c59ae3d4f158029112de172dd96bb0e97549c4b1ca32d8fad11f873e"
@@ -724,8 +725,13 @@ install -d "$tools_dir/dl"
 download_cmake() {
   case "$BUILDHOST_ARCH" in
     darwin_*)
-      install_macos_prog cmake cmake
-      cmake_bindir=$(dirname "$DK_PROG_INSTALLED_LOCATION")
+      cmake_base="cmake-$cmake_majminpat_ver-macos10.10-universal"
+      printf_maybe_quiet "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for macOS"
+      downloadfile \
+        "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
+        "$tools_dir/dl/cmake.tar.gz" \
+        $cmake_cksum256_darwin_universal
+      cmake_bindir="$cmake_destdir/bin"
       ;;
     linux_x86_64)
       if [ -x /sbin/apk ]; then
@@ -768,12 +774,7 @@ download_cmake() {
 export_cmake_vars() {
   case "$BUILDHOST_ARCH" in
     darwin_*)
-      if command -v brew > /dev/null 2> /dev/null; then
-        cmake_bindir=$(brew --prefix cmake)/bin
-      else
-        cmake_bindir=$(command -v cmake)
-        cmake_bindir=$(dirname "$cmake_bindir")
-      fi
+      cmake_bindir="$cmake_destdir/bin"
       ;;
     linux_x86_64|linux_x86|linux_arm64)
       if [ -x /sbin/apk ]; then
