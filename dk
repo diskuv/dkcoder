@@ -371,7 +371,7 @@ sha256compute() {
         # Confer: https://www.thomas-krenn.com/en/wiki/Perl_warning_Setting_locale_failed_in_Debian
         # Confer: https://stackoverflow.com/a/52004330/21513816
         #   shellcheck disable=SC2016
-        LANG=C.UTF-8 LC_ALL=C.UTF-8 /usr/bin/shasum -a 256 "$sha256compute_FILE" | "$DKMLSYS_AWK" '{print $1}'
+        LANG=C LC_ALL=C /usr/bin/shasum -a 256 "$sha256compute_FILE" | "$DKMLSYS_AWK" '{print $1}'
     elif [ -x /usr/bin/sha256sum ]; then # Linux, MSYS2
         #   shellcheck disable=SC2016
         /usr/bin/sha256sum "$sha256compute_FILE" | "$DKMLSYS_AWK" '{print $1}'
@@ -398,7 +398,7 @@ sha256check() {
         # Confer: https://www.thomas-krenn.com/en/wiki/Perl_warning_Setting_locale_failed_in_Debian
         # Confer: https://stackoverflow.com/a/52004330/21513816
         #   shellcheck disable=SC2016
-        printf "%s  %s" "$sha256check_SUM" "$sha256check_FILE" | LANG=C.UTF-8 LC_ALL=C.UTF-8 /usr/bin/shasum --quiet -a 256 -c >&2
+        printf "%s  %s" "$sha256check_SUM" "$sha256check_FILE" | LANG=C LC_ALL=C /usr/bin/shasum --quiet -a 256 -c >&2
     elif [ -x /usr/bin/sha256sum ]; then # Linux, MSYS2
         printf "%s  %s" "$sha256check_SUM" "$sha256check_FILE" | /usr/bin/sha256sum --quiet -c >&2
     elif [ -x /sbin/sha256 ]; then # FreeBSD
@@ -536,6 +536,9 @@ cmake_cksum256_linux_x86_64="783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87
 cmake_cksum256_linux_x86="715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c"
 cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
 
+ninja_majminpat_ver=1.11.1
+ninja_cksum256_darwin_universal="482ecb23c59ae3d4f158029112de172dd96bb0e97549c4b1ca32d8fad11f873e"
+
 install_linux_prog() {
   install_linux_prog_NAME=$1
   shift
@@ -623,7 +626,7 @@ install_macos_prog() {
   fi
 }
 
-case $BUILDHOST_ARCH in
+case "$BUILDHOST_ARCH" in
   linux_*)
     #   Need either [wget] or [curl] for [downloadfile]
     if [ ! -x /usr/bin/wget ] && [ ! -x /bin/wget ] && [ ! -x /usr/bin/curl ] && [ ! -x /bin/curl ]; then
@@ -638,25 +641,77 @@ esac
 # -----
 #   We need a valid CMAKE_GENERATOR to do FetchContent_Populate() in script mode
 
+# Haven't done extensive testing for direct Ninja download on Linux.
+# Use package manager for now.
 NINJA_EXE=
-case $BUILDHOST_ARCH in
-  darwin_*)
-    install_macos_prog ninja ninja
-    NINJA_EXE=$DK_PROG_INSTALLED_LOCATION;;
+case "$BUILDHOST_ARCH" in
   linux_*)
     install_linux_prog ninja ninja-build ninja
     NINJA_EXE=$DK_PROG_INSTALLED_LOCATION;;
 esac
 
+ninja_destdir=$tools_dir/ninja-$ninja_majminpat_ver
+install -d "$tools_dir/dl"
+download_ninja() {
+  case "$BUILDHOST_ARCH" in
+    darwin_*)
+      printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for macOS"
+      downloadfile \
+        "https://github.com/ninja-build/ninja/releases/download/v$ninja_majminpat_ver/ninja-mac.zip" \
+        "$tools_dir/dl/ninja.zip" \
+        $ninja_cksum256_darwin_universal
+  esac
+}
+export_ninja_vars() {
+  if [ -z "${NINJA_EXE:-}" ]; then
+    case "$BUILDHOST_ARCH" in
+      darwin_*)
+        NINJA_EXE="$ninja_destdir/bin/ninja" ;;
+    esac
+  fi
+}
+have_correct_ninja=0
+if [ -x "$tools_dir/ninja-$ninja_majminpat_ver/bin/ninja" ]; then
+  # shellcheck disable=SC2016
+  have_correct_ninja_VER=$("$tools_dir/ninja-$ninja_majminpat_ver/bin/ninja" --version)
+  if [ "$have_correct_ninja_VER" = "$ninja_majminpat_ver" ]; then
+    have_correct_ninja=1
+  fi
+fi
+if [ $have_correct_ninja -eq 0 ]; then
+  download_ninja
+fi
+#   Handle zip
+if [ -e "$tools_dir/dl/ninja.zip" ]; then
+  rm -rf "$tools_dir/ninja-$ninja_majminpat_ver"
+  cd "$tools_dir/dl"
+  rm -f ninja
+  unzip -q ninja.zip
+  rm -f ninja.zip
+  cd - > /dev/null
+  install -d "$ninja_destdir/bin"
+  mv "$tools_dir/dl/ninja" "$ninja_destdir/bin/"
+fi
+
+# Set NINJA_EXE
+export_ninja_vars
+if [ -z "${NINJA_EXE:-}" ]; then
+  echo "This platform is not supported. No ninja download logic has been added" >&2
+  exit 1
+fi
+
+# Validate
+"$NINJA_EXE" --version > /dev/null
+
 # CMAKE
 # -----
 
-case $BUILDHOST_ARCH in
+case "$BUILDHOST_ARCH" in
   linux_*)
     #   This is for CMake to do FetchContent()
     install_linux_prog git git git ;;
 esac
-case $BUILDHOST_ARCH in
+case "$BUILDHOST_ARCH" in
   linux_x86)
     #   This is for Python wheel extraction
     install_linux_prog unzip unzip unzip ;;
@@ -667,7 +722,7 @@ cmake_bindir=
 cmake_destdir=$tools_dir/cmake-$cmake_majminpat_ver
 install -d "$tools_dir/dl"
 download_cmake() {
-  case $BUILDHOST_ARCH in
+  case "$BUILDHOST_ARCH" in
     darwin_*)
       install_macos_prog cmake cmake
       cmake_bindir=$(dirname "$DK_PROG_INSTALLED_LOCATION")
@@ -711,7 +766,7 @@ download_cmake() {
   esac
 }
 export_cmake_vars() {
-  case $BUILDHOST_ARCH in
+  case "$BUILDHOST_ARCH" in
     darwin_*)
       if command -v brew > /dev/null 2> /dev/null; then
         cmake_bindir=$(brew --prefix cmake)/bin
@@ -766,7 +821,7 @@ if [ -e "$tools_dir/dl/cmake.whl" ]; then
   unzip -q cmake.whl "cmake/data/share/cmake-$cmake_majmin_ver/"'Modules/**'
   unzip -q cmake.whl "cmake/data/share/cmake-$cmake_majmin_ver/"'Templates/**'
   rm -f cmake.whl
-  cd -
+  cd - > /dev/null
   set +f
   install -d "$cmake_destdir/share" "$cmake_destdir/doc" "$cmake_destdir/bin"
   mv "$tools_dir/dl/cmake/data/bin"/* "$cmake_destdir/bin/"
@@ -787,7 +842,7 @@ if [ -e "$tools_dir/dl/cmake.whl" ]; then
   rmdir "$tools_dir/dl/cmake/data"
 fi
 
-# Put tools in PATH
+# Put cmake in PATH
 export_cmake_vars
 if [ ! "$cmake_bindir" = "/usr/bin" ]; then
   true
