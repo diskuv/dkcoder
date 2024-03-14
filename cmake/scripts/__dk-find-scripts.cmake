@@ -37,7 +37,8 @@ if(DEFINED ENV{DKRUN_ENV_URL_BASE})
     string(TIMESTAMP __DkRun_Env_EOL "%Y-%m-%d" UTC)
 endif()
 #   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL.
-#   The last LTS version is what ./dk uses by default, so keep this chronologically sorted.
+#   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
+#   by oldest to newest.
 set(__DkRun_LTS_VERSIONS "V0_1")
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
@@ -439,12 +440,21 @@ function(__dkcoder_delegate)
         endif()
     endforeach()
 
-    # Find out which is the entry bytecode executable. Normally it is DKCODER_RUN.
-    set(entryExec "${DKCODER_RUN}")
-    if(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run AND ARG_FULLY_QUALIFIED_MODULE STREQUAL Compile)
-        set(entryExec "${DKCODER_COMPILE}")
-    elseif(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run AND ARG_FULLY_QUALIFIED_MODULE STREQUAL Exec)
-        set(entryExec "${DKCODER_EXEC}")
+    # Find out which is the entry bytecode executable.
+    if(ARG_PACKAGE_NAMESPACE STREQUAL Dk AND ARG_PACKAGE_QUALIFIER STREQUAL Run)
+        if(ARG_FULLY_QUALIFIED_MODULE STREQUAL Compile)
+            set(entryExec "${DKCODER_COMPILE}")
+        elseif(ARG_FULLY_QUALIFIED_MODULE STREQUAL Exec)
+            set(entryExec "${DKCODER_EXEC}")
+        elseif(ARG_FULLY_QUALIFIED_MODULE STREQUAL Run)
+            set(entryExec "${DKCODER_RUN}")
+        else()
+            list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
+            message(FATAL_ERROR "Problem: DkCoder only supports the Compile, Exec and Run entrypoints. Solution: Was there a typo? Try DkRun_${__dkrun_v_id}.Run instead.")
+        endif()
+    else()
+        # If not explicitly a built-in DkCoder entry then use the [Run] entry.
+        set(entryExec "${DKCODER_RUN}")
     endif()
 
     # Write postscript launch script.
