@@ -1,21 +1,14 @@
 @ECHO OFF
-
 REM ##########################################################################
-REM # File: dktool/dk.cmd                                                    #
+REM # File: dktool\dk.cmd                                                    #
 REM #                                                                        #
 REM # Copyright 2023 Diskuv, Inc.                                            #
 REM #                                                                        #
-REM # Licensed under the Apache License, Version 2.0 (the "License");        #
-REM # you may not use this file except in compliance with the License.       #
-REM # You may obtain a copy of the License at                                #
+REM # Licensed under the Open Software License version 3.0                   #
+REM # (the "License"); you may not use this file except in compliance        #
+REM # with the License. You may obtain a copy of the License at              #
 REM #                                                                        #
-REM #     http://www.apache.org/licenses/LICENSE-2.0                         #
-REM #                                                                        #
-REM # Unless required by applicable law or agreed to in writing, software    #
-REM # distributed under the License is distributed on an "AS IS" BASIS,      #
-REM # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        #
-REM # implied. See the License for the specific language governing           #
-REM # permissions and limitations under the License.                         #
+REM #     https://opensource.org/license/osl-3-0-php/                        #
 REM #                                                                        #
 REM ##########################################################################
 
@@ -32,6 +25,10 @@ REM 1. Microsoft way of getting around PowerShell permissions:
 REM    https://github.com/microsoft/vcpkg/blob/71422c627264daedcbcd46f01f1ed0dcd8460f1b/bootstrap-vcpkg.bat
 REM 2. Write goto downward please so code flow is top to bottom.
 
+REM Invoke-WebRequest guidelines
+REM 1. Use $ProgressPreference = 'SilentlyContinue' always. Terrible slowdown w/o it.
+REM    https://stackoverflow.com/questions/28682642
+
 SET DK_7Z_MAJVER=23
 SET DK_7Z_MINVER=01
 SET DK_7Z_DOTVER=%DK_7Z_MAJVER%.%DK_7Z_MINVER%
@@ -47,6 +44,13 @@ SET DK_CKSUM_7ZR=72c98287b2e8f85ea7bb87834b6ce1ce7ce7f41a8c97a81b307d4d4bf900922
 SET DK_CKSUM_7ZEXTRA=db3a1cbe57a26fac81b65c6a2d23feaecdeede3e4c1fe8fb93a7b91d72d1094c
 SET DK_CKSUM_CMAKE=d129425d569140b729210f3383c246dec19c4183f7d0afae1837044942da3b4b
 SET DK_CKSUM_NINJA=524b344a1a9a55005eaf868d991e090ab8ce07fa109f1820d40e74642e289abc
+
+REM --------- Quiet Detection ---------
+
+SET DK_ARG1=%1
+SET DK_QUIET=0
+IF "%DK_ARG1:~-5%" == "Quiet" SET DK_QUIET=1
+SET DK_ARG1=
 
 REM -------------- CMAKE --------------
 
@@ -69,15 +73,21 @@ IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
 REM Download CMAKE.EXE
 REM     Why not CMAKE.MSI? Because we don't want to mess up the user's existing
 REM     installation. `./dk` is meant to be isolated.
-bitsadmin /transfer dktool-cmake /download /priority FOREGROUND ^
-    "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
-    "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip"
+IF %DK_QUIET% == 0 (
+    bitsadmin /transfer dktool-cmake /download /priority FOREGROUND ^
+        "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
+        "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip"
+) ELSE (
+    bitsadmin /transfer dktool-cmake /download /priority FOREGROUND ^
+        "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
+        "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip" >NUL
+)
 IF %ERRORLEVEL% equ 0 (
     GOTO VerifyCMakeIntegrity
 )
 REM     Try PowerShell 3+ instead
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Invoke-WebRequest https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip -OutFile '%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip'"
+    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip -OutFile '%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip'"
 IF %ERRORLEVEL% neq 0 (
     echo.
     echo.Could not download CMake %DK_CMAKE_VER%. Make sure that PowerShell is installed
@@ -118,15 +128,21 @@ REM     Q: Why redirect stdout to NUL?
 REM     Ans: It reduces the verbosity and errors will still be printed.
 REM          Confer: https://sourceforge.net/p/sevenzip/feature-requests/1623/#0554
 :Download7zr
-bitsadmin /transfer dktool-7zr /download /priority FOREGROUND ^
-    "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
-    "%TEMP%\7zr-%DK_7Z_DOTVER%.exe"
+IF %DK_QUIET% == 0 (
+    bitsadmin /transfer dktool-7zr /download /priority FOREGROUND ^
+        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
+        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe"
+) ELSE (
+    bitsadmin /transfer dktool-7zr /download /priority FOREGROUND ^
+        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
+        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" >NUL
+)
 IF %ERRORLEVEL% equ 0 (
     GOTO Verify7zrIntegrity
 )
 REM     Try PowerShell 3+ instead
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe -OutFile '%TEMP%\7zr-%DK_7Z_DOTVER%.exe'"
+    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe -OutFile '%TEMP%\7zr-%DK_7Z_DOTVER%.exe'"
 IF %ERRORLEVEL% neq 0 (
     echo.
     echo.Could not download 7zr %DK_7Z_DOTVER%. Make sure that PowerShell is installed
@@ -153,15 +169,21 @@ EXIT /b 1
 
 REM Download 7z*-extra.7z to do unzipping.
 :Download7zextra
-bitsadmin /transfer dktool-7zextra /download /priority FOREGROUND ^
-    "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
-    "%TEMP%\7z%DK_7Z_VER%-extra.7z"
+IF %DK_QUIET% == 0 (
+    bitsadmin /transfer dktool-7zextra /download /priority FOREGROUND ^
+        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
+        "%TEMP%\7z%DK_7Z_VER%-extra.7z"
+) ELSE (
+    bitsadmin /transfer dktool-7zextra /download /priority FOREGROUND ^
+        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
+        "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
+)
 IF %ERRORLEVEL% equ 0 (
     GOTO Verify7zextraIntegrity
 )
 REM     Try PowerShell 3+ instead
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z -OutFile '%TEMP%\7z%DK_7Z_VER%-extra.7z'"
+    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z -OutFile '%TEMP%\7z%DK_7Z_VER%-extra.7z'"
 IF %ERRORLEVEL% neq 0 (
     echo.
     echo.Could not download 7z%DK_7Z_VER%-extra.7z. Make sure that PowerShell is installed
@@ -245,15 +267,21 @@ IF EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe (
 )
 
 REM Download NINJA.EXE
-bitsadmin /transfer dktool-ninja /download /priority FOREGROUND ^
-    "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
-    "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip"
+IF %DK_QUIET% == 0 (
+    bitsadmin /transfer dktool-ninja /download /priority FOREGROUND ^
+        "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
+        "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip"
+) ELSE (
+    bitsadmin /transfer dktool-ninja /download /priority FOREGROUND ^
+        "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
+        "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip" >NUL
+)
 IF %ERRORLEVEL% equ 0 (
     GOTO VerifyNinjaIntegrity
 )
 REM     Try PowerShell 3+ instead
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip -OutFile '%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip'"
+    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip -OutFile '%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip'"
 IF %ERRORLEVEL% neq 0 (
     echo.
     echo.Could not download Ninja %DK_NINJA_VER%. Make sure that PowerShell is installed
@@ -341,6 +369,10 @@ IF "%DK_NONCE%" == "%DK_NONCE2%" (
 	exit /b 1
 )
 SET DK_NONCE2=
+
+REM -------------- Clear environment -------
+
+SET DK_QUIET=
 
 REM -------------- Run finder --------------
 
