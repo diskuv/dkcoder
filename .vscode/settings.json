@@ -9,6 +9,7 @@
         "autoHeader": "autoSave",
         "enforceHeader": true,
         "exclude": [
+            "git-commit",
             "ignore",
             "jsonc",
             "json",

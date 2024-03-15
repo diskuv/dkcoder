@@ -166,7 +166,7 @@ endfunction()
 # Read-only Filesystem Outputs: (never modify the files or mutate the directories. On macOS part of a Bundle)
 # - DKCODER - location of the `dkcoder` executable
 # - DKCODER_RUN - location of the `DkCoder_Edge-Run.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
-# - DKCODER_BIN - location of bin directory
+# - DKCODER_HELPERS - location of bin directory or DkCoder.bundle/Contents/Helpers on macOS
 # - DKCODER_ETC - location of etc/dkcoder directory
 # - DKCODER_LIB - location of lib/ directory containing lib/ocaml/ and other libraries compatible with dkcoder
 # - DKCODER_SHARE - location of share directory
@@ -281,8 +281,7 @@ function(__dkcoder_install)
             ${CMAKE_CURRENT_BINARY_DIR}/_e/*)
         foreach(entry IN LISTS entries)
             file(COPY ${CMAKE_CURRENT_BINARY_DIR}/_e/${entry}
-                DESTINATION ${DKCODER_HOME}
-                FOLLOW_SYMLINK_CHAIN
+                DESTINATION ${DKCODER_HOME}                
                 USE_SOURCE_PERMISSIONS)
         endforeach()
 
@@ -314,22 +313,22 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
         message(${ARG_LOGLEVEL} "DkCoder installed.")
     endif()
 
-    cmake_path(GET DKCODER PARENT_PATH dkcoder_bindir)
+    cmake_path(GET DKCODER PARENT_PATH dkcoder_helpers)
 
     # macOS requires a code signing separation between executables (including shared libraries)
     # and non-executables (include bytecode). The latter will be in macOS bundle Resources/.
     if(CMAKE_HOST_APPLE)
-        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
+        cmake_path(GET dkcoder_helpers PARENT_PATH dkcoder_resourcesdir)
         cmake_path(APPEND dkcoder_resourcesdir Resources)
     else()
-        cmake_path(GET dkcoder_bindir PARENT_PATH dkcoder_resourcesdir)
+        cmake_path(GET dkcoder_helpers PARENT_PATH dkcoder_resourcesdir)
     endif()
 
     # Export binaries.
     #   ocamlc, ocamlrun and dune must be in the same directory as dkcoder.
-    find_program(DKCODER_OCAMLC NAMES ocamlc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
-    find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
-    find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_bindir})
+    find_program(DKCODER_OCAMLC NAMES ocamlc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_helpers})
+    find_program(DKCODER_OCAMLRUN NAMES ocamlrun REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_helpers})
+    find_program(DKCODER_DUNE NAMES dune REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_helpers})
     find_program(DKCODER_RUN NAMES DkCoder_Edge-Run.bc REQUIRED NO_DEFAULT_PATH HINTS ${dkcoder_resourcesdir}/bytecode)
 
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${DKCODER_HOME} and try again.")
@@ -338,10 +337,10 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
     set(DKCODER_OCAMLFIND_CONF "${ocamlfind_conf}" PARENT_SCOPE)
 
     # Export bin/ or macOS bundle Helpers/
-    if(NOT IS_DIRECTORY "${dkcoder_bindir}")
+    if(NOT IS_DIRECTORY "${dkcoder_helpers}")
         message(FATAL_ERROR "${problem_solution}")
     endif()
-    set(DKCODER_BIN "${dkcoder_bindir}" PARENT_SCOPE)
+    set(DKCODER_HELPERS "${dkcoder_helpers}" PARENT_SCOPE)
 
     # Export etc/dkcoder/ or macOS bundle Resources/etc/dkcoder
     cmake_path(APPEND dkcoder_resourcesdir etc dkcoder OUTPUT_VARIABLE dkcoder_etc)
@@ -421,22 +420,27 @@ function(__dkcoder_delegate)
     #   Assumptions.stublibs_are_available_to_ocaml_compiler_and_runtime_in_coder_run
     #       nit: Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
     #       dllunix.dll (etc.), but it is. That is fine; we can do both PATH and CAML_LD_LIBRARY_PATH.
-    __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
-    __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
-    __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
-    __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
+    if(CMAKE_HOST_APPLE)
+        __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_HELPERS}/stublibs")
+        __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_HELPERS}/stublibs")
+    else()
+        __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
+        __dkcoder_add_environment_mod("CAML_LD_LIBRARY_PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
+        __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/stublibs")
+        __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_LIB}/ocaml/stublibs")
+    endif()
     #   Assumptions.coder_run_has_environment_for_compiling_bytecode
     #
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
-    __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_BIN}")
+    __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_HELPERS}")
 
-    # Propagate DKCODER_SHARE and DKCODER_BIN.
+    # Propagate DKCODER_SHARE and DKCODER_HELPERS.
     #   Why not DKML_HOST_ABI? DkRun has a hardcoded default (so ABI hardcoding comes from the downloaded DkRun
     #   which is chosen by ./dk). But we don't change the default since a future DkRun may have a better
     #   detection of ABI (ex. ./dk downloads x86_64 for macOS but ABI is detected as arm64).
-    cmake_path(NATIVE_PATH DKCODER_BIN NORMALIZE DKCODER_BIN_NATIVE)
+    cmake_path(NATIVE_PATH DKCODER_HELPERS NORMALIZE DKCODER_HELPERS_NATIVE)
     cmake_path(NATIVE_PATH DKCODER_SHARE NORMALIZE DKCODER_SHARE_NATIVE)
-    __dkcoder_add_environment_set("DKCODER_BIN=${DKCODER_BIN_NATIVE}")
+    __dkcoder_add_environment_set("DKCODER_HELPERS=${DKCODER_HELPERS_NATIVE}")
     __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
 
     # Calculate command line arguments
