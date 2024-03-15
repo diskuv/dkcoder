@@ -281,7 +281,7 @@ function(__dkcoder_install)
             ${CMAKE_CURRENT_BINARY_DIR}/_e/*)
         foreach(entry IN LISTS entries)
             file(COPY ${CMAKE_CURRENT_BINARY_DIR}/_e/${entry}
-                DESTINATION ${DKCODER_HOME}                
+                DESTINATION ${DKCODER_HOME}
                 USE_SOURCE_PERMISSIONS)
         endforeach()
 
