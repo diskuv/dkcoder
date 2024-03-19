@@ -45,6 +45,9 @@ dune-project text eol=lf
 gradlew text eol=lf
 
 # Declare files that will always have CRLF line endings on checkout.
+#   Confer: https://stackoverflow.com/questions/232651/why-the-system-cannot-find-the-batch-label-specified-is-thrown-even-if-label-e
+*.bat text eol=crlf
+*.cmd text eol=crlf
 *.sln text eol=crlf
 
 # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_character_encoding?view=powershell-7.1
