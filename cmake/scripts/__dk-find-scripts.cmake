@@ -30,7 +30,7 @@ set(__DkRun_V0_1_SHA256_darwin_x86_64  5ffd147bb4131c86dcffe9e186cc3459d4f73e0c1
 set(__DkRun_V0_1_SHA256_darwin_arm64   159826b6977a2ff9e70dd20abd71ca7b92d9753840a2b88fa40bab71b2c5ea00)
 set(__DkRun_V0_1_EOL "2024-09-30")
 set(__DkRun_V0_2_COMPILE_VERSION 0.2.0-1)
-set(__DkRun_V0_2_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_1_COMPILE_VERSION})
+set(__DkRun_V0_2_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_2_COMPILE_VERSION})
 set(__DkRun_V0_2_SHA256_windows_x86_64 7b44fe5634ca9fec27065667a12e1c6be14f7aaa3ee957c20c6c43a31365ff6b)
 set(__DkRun_V0_2_SHA256_windows_x86    0c3ca8e2df09c05cc28d16d1672cfbd4d2337d4116be8fe07a2667db624f7d14)
 set(__DkRun_V0_2_SHA256_linux_x86_64   todo_v0_1_release)
