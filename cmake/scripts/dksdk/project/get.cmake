@@ -128,6 +128,8 @@ function(dksdk_project_get)
     set(tstamp_EPOCHSECS 0)
     if(EXISTS "${access_subbuild_dir}/build.ninja")
         file(TIMESTAMP "${access_subbuild_dir}/build.ninja" tstamp_EPOCHSECS "%s")
+    elseif(EXISTS "${access_subbuild_dir}/Makefile")
+        file(TIMESTAMP "${access_subbuild_dir}/Makefile" tstamp_EPOCHSECS "%s")
     endif()
     if(NOT tstamp_EPOCHSECS OR tstamp_EPOCHSECS LESS_EQUAL min_valid_EPOCHSECS)
         # Cache miss. Time to update dksdk-access.
