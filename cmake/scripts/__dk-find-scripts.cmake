@@ -178,6 +178,7 @@ endfunction()
 #   LOGLEVEL
 # Read-only Filesystem Outputs: (never modify the files or mutate the directories. On macOS part of a Bundle)
 # - DKCODER - location of the `dkcoder` executable
+# - DKCODER_VERSION - dotted form of DkCoder like 0.2.0.1
 # - DKCODER_RUN - location of the `DkCoder_Edge-Run.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
 # - DKCODER_HELPERS - location of bin directory or DkCoder.bundle/Contents/Helpers on macOS
 # - DKCODER_ETC - location of etc/dkcoder directory
@@ -375,6 +376,10 @@ path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
         message(FATAL_ERROR "${problem_solution}")
     endif()
     set(DKCODER_SHARE "${dkcoder_share}" PARENT_SCOPE)
+
+    # Export version
+    string(REPLACE "-" "." compile_version_dotted "${compile_version}") # 0.2.0-1 -> 0.2.0.1
+    set(DKCODER_VERSION "${compile_version_dotted}" PARENT_SCOPE)
 endfunction()
 
 macro(__dkcoder_prep_environment)
@@ -446,6 +451,10 @@ function(__dkcoder_delegate)
     #
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_HELPERS}")
+    if(DKCODER_VERSION VERSION_GREATER 0.2.0.1 OR DKCOVER_VERSION STREQUAL Env)
+        __dkcoder_add_environment_set("DKCODER_CMAKE_EXE=${CMAKE_COMMAND}")
+        __dkcoder_add_environment_set("DKCODER_NINJA_EXE=${CMAKE_MAKE_PROGRAM}")
+    endif()
 
     # Propagate DKCODER_SHARE and DKCODER_HELPERS.
     #   Why not DKML_HOST_ABI? DkRun has a hardcoded default (so ABI hardcoding comes from the downloaded DkRun
