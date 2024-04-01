@@ -889,5 +889,8 @@ cmake_path(NORMAL_PATH DKTOOL_POST_SCRIPT)
 # Escape any escape characters before EVAL CODE
 string(REPLACE "\\" "\\\\" DKTOOL_CMDLINE "${DKTOOL_CMDLINE}")
 
+# Escape any hash symbols (#) characters before EVAL CODE
+string(REPLACE "#" "\\#" DKTOOL_CMDLINE "${DKTOOL_CMDLINE}")
+
 # Splat DKTOOL_CMDLINE
 cmake_language(EVAL CODE "__parse_dktool_command_line(${DKTOOL_CMDLINE})")
