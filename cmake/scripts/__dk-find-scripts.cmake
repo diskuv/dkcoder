@@ -307,15 +307,18 @@ function(__dkcoder_install)
 
             file(CONFIGURE OUTPUT "${ocamlfind_conf}"
                 CONTENT [[destdir="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
-path="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"]] @ONLY NEWLINE_STYLE UNIX)
+path="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
+stdlib="@DKCODER_HOME_NATIVE_ESCAPED@\\lib\\ocaml"]] @ONLY NEWLINE_STYLE UNIX)
         elseif(CMAKE_HOST_APPLE)
             file(CONFIGURE OUTPUT "${ocamlfind_conf}"
                 CONTENT [[destdir="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"
-path="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"]] @ONLY NEWLINE_STYLE UNIX)
+path="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"
+stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWLINE_STYLE UNIX)
         else()
             file(CONFIGURE OUTPUT "${ocamlfind_conf}"
                 CONTENT [[destdir="@DKCODER_HOME@/lib"
-path="@DKCODER_HOME@/lib"]] @ONLY NEWLINE_STYLE UNIX)
+path="@DKCODER_HOME@/lib"
+stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWLINE_STYLE UNIX)
         endif()
 
         # Cleanup
