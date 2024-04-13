@@ -454,7 +454,7 @@ function(__dkcoder_delegate)
     #
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_HELPERS}")
-    if(DKCODER_VERSION VERSION_GREATER 0.2.0.1 OR DKCOVER_VERSION STREQUAL Env)
+    if(DKCODER_VERSION VERSION_GREATER 0.2.0.1 OR DKCODER_VERSION STREQUAL Env)
         __dkcoder_add_environment_set("DKCODER_CMAKE_EXE=${CMAKE_COMMAND}")
         __dkcoder_add_environment_set("DKCODER_NINJA_EXE=${CMAKE_MAKE_PROGRAM}")
     endif()
