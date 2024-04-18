@@ -666,12 +666,6 @@ Environment variables:
             __dkcoder_error_wrong_version("")
         endif()
 
-        # (Deprecated) Set log level if DkRun_*.ExecQuiet. And then set module from ExecQuiet to Exec.
-        if(package_namespace STREQUAL "Dk" AND package_qualifier STREQUAL "Run" AND module STREQUAL "ExecQuiet")
-            set(__dktool_log_level DEBUG)
-            set(module Exec)
-        endif()
-
         # Set log level if DkRun_*.RunQuiet. And then rename module from RunQuiet to Run.
         if(package_namespace STREQUAL "Dk" AND package_qualifier STREQUAL "Run" AND module STREQUAL "RunQuiet")
             set(__dktool_log_level DEBUG)
