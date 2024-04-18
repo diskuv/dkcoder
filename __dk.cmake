@@ -472,6 +472,7 @@ function(__dkcoder_delegate)
     __dkcoder_add_environment_set("DKCODER_HELPERS=${DKCODER_HELPERS_NATIVE}")
     __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
     __dkcoder_add_environment_set("DKCODER_RUN_VERSION=${DKCODER_RUN_VERSION}")
+    __dkcoder_add_environment_set("DKCODER_RUN_ENV_URL_BASE=${__DkRun_Env_URL_BASE}")
 
     # Calculate command line arguments
     set(dkcoder_ARGS)
