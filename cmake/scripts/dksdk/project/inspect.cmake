@@ -28,9 +28,7 @@ Directory Structure
 The project folder is expected to contain at least:
 
 ./
-├── cmake
-│   └── scripts
-│       └── __dk-find-scripts
+├── __dk.cmake
 ├── dk
 ├── dk.cmd
 └── dkproject.jsonc

@@ -28,9 +28,7 @@ Directory Structure
 The dependencies will be placed into the `fetch/` directory.
 
 ./
-├── cmake
-│   └── scripts
-│       └── __dk-find-scripts
+├── __dk.cmake
 ├── dk
 ├── dk.cmd
 ├── dkproject.jsonc

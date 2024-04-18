@@ -885,7 +885,7 @@ cd "$PROJ_DIR"
   -D "DKTOOL_WORKDIR:FILEPATH=$dk_work" \
   -D "DKTOOL_NONCE:STRING=$dk_nonce" \
   -D "DKTOOL_CMDLINE:STRING=$*" \
-  -P cmake/scripts/__dk-find-scripts.cmake
+  -P __dk.cmake
 
 # --------------- Execute post-command outside of CMake --------------
 # Sometimes a command wants to own the terminal or the command line arguments.

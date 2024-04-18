@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/__dk-find-scripts.cmake                     #
+# File: dktool/__dk.cmake                                                #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #
@@ -522,7 +522,7 @@ SET DK_NINJA_EXE=
 SET DK_CMDLINE=
 SET DK_CMAKE_EXE=
 
-REM Clear variables that influence __dk-find-scripts.cmake. They are not part of DkCoder API.
+REM Clear variables that influence __dk.cmake. They are not part of DkCoder API.
 SET DKRUN_ENV_URL_BASE=
 
 "@CMAKE_COMMAND_NATIVE@" -E env @envMods_DOS@ -- "@DKCODER_OCAMLRUN_NATIVE@" "@entryExec_NATIVE@" @dkcoder_ARGS@
@@ -537,7 +537,7 @@ unset DKMLSYS_MV DKMLSYS_CHMOD DKMLSYS_UNAME DKMLSYS_ENV DKMLSYS_AWK DKMLSYS_SED
 unset DKMLSYS_RM DKMLSYS_SORT DKMLSYS_CAT DKMLSYS_STAT DKMLSYS_GREP DKMLSYS_CURL DKMLSYS_WGET DKMLSYS_TR
 unset DK_PROG_INSTALLED_LOCATION
 
-# Clear variables that influence __dk-find-scripts.cmake. They are not part of DkCoder API.
+# Clear variables that influence __dk.cmake. They are not part of DkCoder API.
 unset DKRUN_ENV_URL_BASE
 
 exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_OCAMLRUN@' '@entryExec@' @dkcoder_ARGS@

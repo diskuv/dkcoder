@@ -2,7 +2,7 @@
 
 ## Rebasing
 
-Do **not rebase**. `cmake/scripts/__dk-find-scripts.cmake` relies on `FetchContent`,
+Do **not rebase**. `__dk.cmake` relies on `FetchContent`,
 which in turn relies on `git` fast forward pulls. You will **break everybody**
 if you rebase and then push.
 
