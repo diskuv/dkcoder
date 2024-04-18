@@ -142,6 +142,21 @@ Congratulations. Let's get building!
         DESTINATION "${dest}"
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     set(paths_ADDED "${path_dk}" "${path_dkcmd}" "${path_dkfindscriptscmake}")
+
+    # deletions
+    set(paths_DELETED)
+    if(EXISTS "${dest}/cmake/scripts/__dk-find-scripts.cmake")
+      file(SHA256 "${dest}/cmake/scripts/__dk-find-scripts.cmake" dkfindscriptscmake_cksum256)
+      set(delete OFF)
+      if(dkfindscriptscmake_cksum256 STREQUAL "58664f2c49ce71a5443e6a14954d93d44ffb27553142691a0270109aa84f772f") # Unix
+        set(delete ON)
+      endif()
+      if(delete)
+        file(REMOVE "${dest}/cmake/scripts/__dk-find-scripts.cmake")
+        list(APPEND paths_DELETED "cmake/scripts/__dk-find-scripts.cmake")
+      endif()
+      unset(delete)
+    endif()
     
     # Do Git operations automatically
     if(IS_DIRECTORY "${dest}/.git")
@@ -159,6 +174,13 @@ Congratulations. Let's get building!
       execute_process(WORKING_DIRECTORY "${dest}"
         COMMAND "${GIT_EXECUTABLE}" add ${paths_ADDED}
         COMMAND_ERROR_IS_FATAL ANY)
+      
+      # deletions
+      if(paths_DELETED)
+          execute_process(WORKING_DIRECTORY "${dest}"
+            COMMAND "${GIT_EXECUTABLE}" rm -f ${paths_DELETED}
+            COMMAND_ERROR_IS_FATAL ANY)
+      endif()
 
       # for Windows, the *_EXECUTE permissions earlier do nothing. And a subsequent `git add` will not set the
       # git chmod +x bit. So we force it.
