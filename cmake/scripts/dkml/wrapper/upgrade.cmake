@@ -119,6 +119,9 @@ set(old_dk_find_scripts_UNIX_CKSUM256
   "fba565f53cdd73692ed2313003eff746f2386e1accf0b471db808cc6a0ff1563")
 
 function(run)
+    # Support new IN_LIST if() operator
+    cmake_policy(SET CMP0057 NEW)
+
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
