@@ -499,6 +499,16 @@ function(__dkcoder_delegate)
     else()
         # If not explicitly a built-in DkCoder entry then use the [Run] entry.
         set(entryExec "${DKCODER_RUN}")
+        # We also know that no options will be supplied to the [Run] entry
+        # so we can simplify the user experience slightly by adding in the [--]
+        # on their behalf.
+        # So `./dk MyLibrary_Std.Blah --help` should print help.
+        # In contrast, using versioned run requires:
+        #   `./dk DkRun_Vm_n.Run -- MyLibrary_Std.Blah --help`
+        # but you can also do:
+        #   `./dk DkRun_Vm_n.Run --help`
+        #   `./dk DkRun_Vm_n.Run --log-level INFO -- MyLibrary_Std.Blah`
+        string(PREPEND dkcoder_ARGS "-- ")
     endif()
 
     # Write postscript launch script.
