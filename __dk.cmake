@@ -29,15 +29,15 @@ set(__DkRun_V0_1_SHA256_linux_x86      todo_v0_1_release)
 set(__DkRun_V0_1_SHA256_darwin_x86_64  5ffd147bb4131c86dcffe9e186cc3459d4f73e0c1c1f19460dd053f21d49f5d0)
 set(__DkRun_V0_1_SHA256_darwin_arm64   159826b6977a2ff9e70dd20abd71ca7b92d9753840a2b88fa40bab71b2c5ea00)
 set(__DkRun_V0_1_EOL "2024-09-30")
-set(__DkRun_V0_2_COMPILE_VERSION 0.2.0-1)
+set(__DkRun_V0_2_COMPILE_VERSION 0.2.0-2)
 set(__DkRun_V0_2_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_2_COMPILE_VERSION})
-set(__DkRun_V0_2_SHA256_windows_x86_64 7b44fe5634ca9fec27065667a12e1c6be14f7aaa3ee957c20c6c43a31365ff6b)
-set(__DkRun_V0_2_SHA256_windows_x86    0c3ca8e2df09c05cc28d16d1672cfbd4d2337d4116be8fe07a2667db624f7d14)
-set(__DkRun_V0_2_SHA256_linux_x86_64   todo_v0_1_release)
-set(__DkRun_V0_2_SHA256_linux_x86      todo_v0_1_release)
-set(__DkRun_V0_2_SHA256_darwin_x86_64  todo_v0_1_release)
-set(__DkRun_V0_2_SHA256_darwin_arm64   todo_v0_1_release)
-set(__DkRun_V0_2_EOL "2024-09-30")
+set(__DkRun_V0_2_SHA256_windows_x86_64 be5a88a93c6f5c8cdbc5afd52bc7d2d35d101f471d2c0b70b865f0903c50789b)
+set(__DkRun_V0_2_SHA256_windows_x86    33abc4f598eafa3e88d1f138da62fe4d6a1196223f18c5bbfce5d2a2128a2ca7)
+set(__DkRun_V0_2_SHA256_linux_x86_64   558f366089fc44804d892af1fab8fe8800df871f4476bdf6ae9a52e03effce7a)
+set(__DkRun_V0_2_SHA256_linux_x86      todo_v0_2_release)
+set(__DkRun_V0_2_SHA256_darwin_x86_64  todo_v0_2_release) # e8c2757b8101baf397b47b2486843a48dff9520b573d3dbb093e5fb221082b68) #tosign
+set(__DkRun_V0_2_SHA256_darwin_arm64   todo_v0_2_release) # acaa42512d4eee756d76a56df666c8ffd9171ca3706aad68128dd6a3a75000fa) #tosign
+set(__DkRun_V0_2_EOL "2024-11-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
 set(__DkRun_Env_URL_BASE)
 if(DEFINED ENV{DKRUN_ENV_URL_BASE})
@@ -48,11 +48,7 @@ endif()
 #   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL.
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
-if(CMAKE_HOST_WIN32)
-    set(__DkRun_LTS_VERSIONS V0_1 V0_2)
-else()
-    set(__DkRun_LTS_VERSIONS V0_1)
-endif()
+set(__DkRun_LTS_VERSIONS V0_1 V0_2)
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
 # Visual Studio on Windows. That means they need the redistributable installed.
