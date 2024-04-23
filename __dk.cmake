@@ -35,8 +35,8 @@ set(__DkRun_V0_2_SHA256_windows_x86_64 be5a88a93c6f5c8cdbc5afd52bc7d2d35d101f471
 set(__DkRun_V0_2_SHA256_windows_x86    33abc4f598eafa3e88d1f138da62fe4d6a1196223f18c5bbfce5d2a2128a2ca7)
 set(__DkRun_V0_2_SHA256_linux_x86_64   558f366089fc44804d892af1fab8fe8800df871f4476bdf6ae9a52e03effce7a)
 set(__DkRun_V0_2_SHA256_linux_x86      todo_v0_2_release)
-set(__DkRun_V0_2_SHA256_darwin_x86_64  todo_v0_2_release) # e8c2757b8101baf397b47b2486843a48dff9520b573d3dbb093e5fb221082b68) #tosign
-set(__DkRun_V0_2_SHA256_darwin_arm64   todo_v0_2_release) # acaa42512d4eee756d76a56df666c8ffd9171ca3706aad68128dd6a3a75000fa) #tosign
+set(__DkRun_V0_2_SHA256_darwin_x86_64  1387e15b7e10bcf970db393d38c84baf7eda118478c71b1fe178de2d3a1cab7a)
+set(__DkRun_V0_2_SHA256_darwin_arm64   8f05bc8e6a37d36479da09bf338e0194e37b6ea99b5917daf6bbe403581b98c2)
 set(__DkRun_V0_2_EOL "2024-11-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
 set(__DkRun_Env_URL_BASE)
