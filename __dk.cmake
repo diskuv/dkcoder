@@ -283,9 +283,10 @@ function(__dkcoder_install)
 
         # Install
         #   Do file(RENAME) but work across mount volumes (ex. inside containers)
-        message(${ARG_LOGLEVEL} "Copying DkCoder to final install location")
+        message(${ARG_LOGLEVEL} "Cleaning final install location")
         file(REMOVE_RECURSE "${DKCODER_HOME}")
         file(MAKE_DIRECTORY "${DKCODER_HOME}")
+        message(${ARG_LOGLEVEL} "Copying DkCoder to final install location")
         file(GLOB entries
             LIST_DIRECTORIES true
             RELATIVE ${CMAKE_CURRENT_BINARY_DIR}/_e
