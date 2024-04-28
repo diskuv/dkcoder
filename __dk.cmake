@@ -16,10 +16,18 @@
 
 include(FetchContent)
 
+# What is the current YYYY-MM-DD? Do bother any dynamic calculation of EOL
+# like __DkRun_Env_EOL_YYYY_MM_DD.
+string(TIMESTAMP now_YYYY_MM_DD "%Y-%m-%d" UTC)
+
 # Map of DkCoder versions.
 #   The SHA256 checksums are all available from
 #   https://gitlab.com/diskuv/distributions/1.0/dksdk-coder/-/packages/21844308 (select
 #   the right <COMPILE_VERSION> version of course)
+#
+#   EOL = End of Life
+#   EOG = End of Grace Period (6 months past EOL usually)
+#   EOL > EOG. EOL starts the warning to upgrade but continues. EOG errors out.
 set(__DkRun_V0_1_COMPILE_VERSION 0.1.0-4)
 set(__DkRun_V0_1_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_1_COMPILE_VERSION})
 set(__DkRun_V0_1_SHA256_windows_x86_64 ef49d016468db34d39f6f0a90231d9ff15bb482ec3ba91d329646185d6ae9002)
@@ -28,27 +36,30 @@ set(__DkRun_V0_1_SHA256_linux_x86_64   1573e460ea4805da255ecd981aa505881968b1ffc
 set(__DkRun_V0_1_SHA256_linux_x86      todo_v0_1_release)
 set(__DkRun_V0_1_SHA256_darwin_x86_64  5ffd147bb4131c86dcffe9e186cc3459d4f73e0c1c1f19460dd053f21d49f5d0)
 set(__DkRun_V0_1_SHA256_darwin_arm64   159826b6977a2ff9e70dd20abd71ca7b92d9753840a2b88fa40bab71b2c5ea00)
-set(__DkRun_V0_1_EOL "2024-09-30")
-set(__DkRun_V0_2_COMPILE_VERSION 0.2.0-2)
+set(__DkRun_V0_1_EOL_YYYY_MM_DD "2024-03-30")
+set(__DkRun_V0_1_EOG_YYYY_MM_DD "2024-09-30")
+set(__DkRun_V0_2_COMPILE_VERSION 0.2.0-3)
 set(__DkRun_V0_2_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_2_COMPILE_VERSION})
-set(__DkRun_V0_2_SHA256_windows_x86_64 019d8c4cf91bcca62103af817318dd7841f8d9924eb93bc2004ca2a0deae0b08)
-set(__DkRun_V0_2_SHA256_windows_x86    09e7eab4fa5ea78680a6a3f11bc1e0aea4281a1ce4733a198bcec24e763279c2)
-set(__DkRun_V0_2_SHA256_linux_x86_64   558f366089fc44804d892af1fab8fe8800df871f4476bdf6ae9a52e03effce7a)
+set(__DkRun_V0_2_SHA256_linux_x86_64   b66a7f1409ede57ff22ca5c9946d288e9eae0784a7dc9eede25833ed64ea8553)
 set(__DkRun_V0_2_SHA256_linux_x86      todo_v0_2_release)
-set(__DkRun_V0_2_SHA256_darwin_x86_64  1387e15b7e10bcf970db393d38c84baf7eda118478c71b1fe178de2d3a1cab7a)
-set(__DkRun_V0_2_SHA256_darwin_arm64   8f05bc8e6a37d36479da09bf338e0194e37b6ea99b5917daf6bbe403581b98c2)
-set(__DkRun_V0_2_EOL "2024-11-30")
+set(__DkRun_V0_2_SHA256_darwin_x86_64  f84140b717fbf5619d9f4eb4b0386b7af2c9c661b395e922ec76a082061bb150)
+set(__DkRun_V0_2_SHA256_darwin_arm64   501797d9970d8170593e71545c10f72cde546c8a0b38090779ce7fbb8634f995)
+set(__DkRun_V0_2_SHA256_windows_x86_64 a3b70a77106c9d7430d802f14ae77ee9a9d2e0ed153df2ce6ae7faeb264b5937)
+set(__DkRun_V0_2_SHA256_windows_x86    db3201e1881128ab9fdc9bd0678be8f36276165012bafbb348aee253b97bdf1c)
+set(__DkRun_V0_2_EOL_YYYY_MM_DD "2024-11-30")
+set(__DkRun_V0_2_EOG_YYYY_MM_DD "2025-05-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
 set(__DkRun_Env_URL_BASE)
 if(DEFINED ENV{DKRUN_ENV_URL_BASE})
     set(__DkRun_Env_COMPILE_VERSION Env)
     set(__DkRun_Env_URL_BASE "$ENV{DKRUN_ENV_URL_BASE}")
-    string(TIMESTAMP __DkRun_Env_EOL "%Y-%m-%d" UTC)
+    set(__DkRun_Env_EOL_YYYY_MM_DD "9999-06-30")
+    set(__DkRun_Env_EOG_YYYY_MM_DD "9999-12-31")
 endif()
-#   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL.
+#   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL_YYYY_MM_DD.
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
-set(__DkRun_LTS_VERSIONS V0_1 V0_2)
+set(__DkRun_LTS_VERSIONS V0_1)
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
 # Visual Studio on Windows. That means they need the redistributable installed.
@@ -167,9 +178,87 @@ function(__dkcoder_abi)
     set("${ARG_ABI_VARIABLE}" "${dkml_host_abi}" PARENT_SCOPE)
 endfunction()
 
+# Testing? Set SOURCE_DATE_EPOCH environment variable to a future epoch time in seconds.
+function(__dkcoder_check_end_of_life)
+    set(noValues)
+    set(singleValues LOGLEVEL EOL EOG QUIET)
+    set(multiValues)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    set(project_dir "${CMAKE_SOURCE_DIR}")
+    cmake_path(NATIVE_PATH project_dir project_dir_NATIVE)
+
+    list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
+
+    if(${ARG_EOG} STRLESS now_YYYY_MM_DD)
+        message(FATAL_ERROR "
+Problem: The `./dk` wrapper version is ${__dkrun_v_id} but the final
+date to upgrade (${ARG_EOG}) has past.
+
+DIDN'T WRITE THIS PROJECT? Ask the project author how to upgrade!
+    Often a convenient way to upgrade is:
+
+    cd ${project_dir_NATIVE}
+    git stash
+    git switch main
+    git pull --ff-only
+    git stash pop
+
+ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
+    your scripts, and then give it out to your users:
+
+    cd ${project_dir_NATIVE}
+    ./dk dkml.wrapper.upgrade
+    ./dk dkml.wrapper.upgrade
+    ... test ...
+    git commit
+")
+    endif()
+    if(NOT QUIET AND ${ARG_EOL} STRLESS now_YYYY_MM_DD)
+        # Pause no more than once a day!
+        set(prompted "${CMAKE_CURRENT_BINARY_DIR}/eol/${now_YYYY_MM_DD}")
+        set(pause_message "working")
+        if(NOT EXISTS "${prompted}")
+            set(pause_message "after a 1-min pause")
+        endif()
+        message(${ARG_LOGLEVEL} "
+Problem: The `./dk` wrapper version ${__dkrun_v_id} past its end-of-life on
+${ARG_EOL}. The scripts will continue ${pause_message} but
+you must upgrade by ${ARG_EOG} or the scripts will stop working.
+
+DIDN'T WRITE THIS PROJECT? Ask the project author how to upgrade!
+    Often a convenient way to upgrade is:
+
+    cd ${project_dir_NATIVE}
+    git stash
+    git switch main
+    git pull --ff-only
+    git stash pop
+
+ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
+    your scripts, and then give a new branch to your users:
+
+    cd ${project_dir_NATIVE}
+    git switch --create name_of_your_new_branch
+    ./dk dkml.wrapper.upgrade
+    ./dk dkml.wrapper.upgrade
+    ... test ...
+    git commit
+")
+        # Pause no more than once a day!
+        set(prompted "${CMAKE_CURRENT_BINARY_DIR}/eol/${now_YYYY_MM_DD}")
+        if(NOT EXISTS "${prompted}")
+            file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/eol")
+            execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 60)
+            file(TOUCH "${prompted}")
+        endif()
+    endif()
+endfunction()
+
 # Installs DkCoder project.
 #
 # Arguments:
+#   QUIET
 #   VERSION
 #   LOGLEVEL
 # Read-only Filesystem Outputs: (never modify the files or mutate the directories. On macOS part of a Bundle)
@@ -186,7 +275,7 @@ endfunction()
 # - DKCODER_DUNE - location of dune compatible with dkcoder
 function(__dkcoder_install)
     set(noValues)
-    set(singleValues ABI VERSION LOGLEVEL)
+    set(singleValues ABI VERSION LOGLEVEL QUIET)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -209,6 +298,15 @@ function(__dkcoder_install)
         # alert: do not expose unsanitized user-supplied data
         message(FATAL_ERROR "Problem: We expected a full DkCoder version like 0.1.0-2.\n\nSolution: DkSDK subscribers should contact their DkSDK Support representative.")
     endif()
+
+    # Check for EOL
+    set(eol "${__DkRun_${V_id}_EOL_YYYY_MM_DD}")
+    set(eog "${__DkRun_${V_id}_EOG_YYYY_MM_DD}")
+    __dkcoder_check_end_of_life(
+        LOGLEVEL "${ARG_LOGLEVEL}"
+        EOL "${eol}"
+        EOG "${eog}"
+        QUIET "${ARG_QUIET}")
 
     # Get from DkCoder version map
     set(url_base "${__DkRun_${V_id}_URL_BASE}")
@@ -680,16 +778,22 @@ Environment variables:
         endif()
 
         # Set log level if DkRun_*.RunQuiet. And then rename module from RunQuiet to Run.
+        set(quiet OFF)
         if(package_namespace STREQUAL "Dk" AND package_qualifier STREQUAL "Run" AND module STREQUAL "RunQuiet")
             set(__dktool_log_level DEBUG)
             set(module Run)
+            set(quiet ON)
         endif()
 
         # Detect ABI
         __dkcoder_abi(ABI_VARIABLE abi)
 
         # Do DkCoder install
-        __dkcoder_install(ABI "${abi}" LOGLEVEL "${__dktool_log_level}" VERSION "${__dkrun_compile_version}")
+        __dkcoder_install(
+            ABI "${abi}"
+            LOGLEVEL "${__dktool_log_level}"
+            VERSION "${__dkrun_compile_version}"
+            QUIET "${quiet}")
 
         # Do DkCoder delegation
         __dkcoder_delegate(
