@@ -14,7 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-# Last Updated: 2023-02-11
+# Last Updated: 2024-05-09
 
 # Set the default behavior, in case people don't have core.autocrlf set.
 # This is critical for Windows and UNIX interoperability.
@@ -29,6 +29,7 @@
 *.md text
 
 # Declare files that will always have LF line endings on checkout.
+configure text eol=lf
 *.patch text eol=lf
 *.sexp text eol=lf
 *.sh text eol=lf
