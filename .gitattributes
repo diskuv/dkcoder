@@ -29,7 +29,13 @@
 *.md text
 
 # Declare files that will always have LF line endings on checkout.
+*.capnp text eol=lf
 configure text eol=lf
+dk text eol=lf
+dune text eol=lf
+dune-project text eol=lf
+*.dune text eol=lf
+gradlew text eol=lf
 *.patch text eol=lf
 *.sexp text eol=lf
 *.sh text eol=lf
@@ -39,11 +45,6 @@ Makefile text eol=lf
 opam text eol=lf
 *.opam text eol=lf
 *.opam.template text eol=lf
-dk text eol=lf
-dune text eol=lf
-dune-project text eol=lf
-*.dune text eol=lf
-gradlew text eol=lf
 
 # Declare files that will always have CRLF line endings on checkout.
 #   Confer: https://stackoverflow.com/questions/232651/why-the-system-cannot-find-the-batch-label-specified-is-thrown-even-if-label-e
