@@ -1,12 +1,20 @@
-# ./dk
+# DkCoder
 
-The recommended way to execute DkML, DkSDK and Second OCaml build scripts is with the help of the `./dk` tool.
-The `./dk` tool runs the build script you specify, downloading it beforehand if necessary.
+The main documentation is at <https://diskuv.com/dksdk/coder/2024-intro-scripting/>. On that site you'll find:
+
+> Unlike most scripting frameworks, DkCoder solves the problem of scale: you start with small scripts that do immediately useful things for you and your team, and when inevitably you need to expand, distribute or embed those scripts to make full-featured applications, you don't need to throw out what you have already written. DkCoder is a re-imagining of the scripting experience that re-uses the best historical ideas:
+>
+> 1. You don't write build files. *If that sounds like Unix /bin/sh or the Windows Command Prompt, that is intentional.*
+> 1. Most files you write can be immediately run. *If that sounds like how Python scripts are almost indistinguishable from Python modules, or like JavaScript modules, that is intentional.*
+> 1. Most files you write can be referenced with a fully-qualified name. *If that sounds like Java packages and how that has been proven to scale to large code bases, that is intentional.*
+> 1. Your scripts play well together and don't bit rot. *It is conventional to add static typing (Typescript, mypy) when scripting projects get large. DkCoder has type-safety from Day One that is safer and easier to use.*
+
+The recommended way to execute DkCoder scripts is with the help of the `./dk` tool.
+The `./dk` tool runs the build script you specify, downloading support files beforehand if necessary.
 As a result, you can get up and running quickly without having to follow manual installation steps.
-*Gradle users: If that sounds like the easy-to-use Gradle Wrapper, that is on purpose!*
+*Gradle users: If that sounds like the easy-to-use Gradle Wrapper, that is intentional.*
 
-The `./dk` tool is compatible with Windows PowerShell, macOS and desktop Linux.
-> It can also run on Windows Command Prompt if you invoke it with `.\dk` rather than `./dk`.
+The `./dk` tool is compatible with Windows PowerShell, macOS and desktop Linux. It can also run on Windows Command Prompt if you invoke it with `.\dk` rather than `./dk`.
 
 ## Installing
 
