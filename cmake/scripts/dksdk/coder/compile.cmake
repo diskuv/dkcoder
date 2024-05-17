@@ -372,12 +372,12 @@ function(dkcoder_compile)
         list(JOIN build_args " " build_args_SPACES)
         if(CMAKE_HOST_WIN32)
             cmake_path(NATIVE_PATH CMAKE_COMMAND CMAKE_COMMAND_NATIVE)
-            file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[REM @ECHO OFF
+            file(CONFIGURE OUTPUT "${DKCODER_POST_SCRIPT}" CONTENT [[REM @ECHO OFF
 "@CMAKE_COMMAND_NATIVE@" -E env @envMods_DOS@ -- "@DKCODER_DUNE@" build --root "@compile_dir@" --display=short --no-buffer --no-print-directory --no-config @dune_args_DQUOTE_SPACES@ @build_args_SPACES@ "@gen-cdi"
 ]]
                 @ONLY NEWLINE_STYLE DOS)
         else()
-            file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[#!/bin/sh
+            file(CONFIGURE OUTPUT "${DKCODER_POST_SCRIPT}" CONTENT [[#!/bin/sh
 set -euf
 exec '@CMAKE_COMMAND@' -E env @envMods_DOS@ -- '@DKCODER_DUNE@' build --root '@compile_dir@' --display=short --no-buffer --no-print-directory --no-config @dune_args_SQUOTE_SPACES@ @build_args_SPACES@ @gen-cdi
 ]]

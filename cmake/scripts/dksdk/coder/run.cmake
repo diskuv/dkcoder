@@ -121,13 +121,13 @@ function(run)
     # command line arguments given to dkcoder.exe.
     if(CMAKE_HOST_WIN32)
         cmake_path(NATIVE_PATH DKCODER DKCODER_NATIVE)
-        file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[@ECHO OFF
+        file(CONFIGURE OUTPUT "${DKCODER_POST_SCRIPT}" CONTENT [[@ECHO OFF
 SET DKCODER_PROGRAM=./dk dksdk.coder.run
 "@DKCODER_NATIVE@" %*
 ]]
             @ONLY NEWLINE_STYLE DOS)
     else()
-        file(CONFIGURE OUTPUT "${DKTOOL_POST_SCRIPT}" CONTENT [[#!/bin/sh
+        file(CONFIGURE OUTPUT "${DKCODER_POST_SCRIPT}" CONTENT [[#!/bin/sh
 set -euf
 export DKCODER_PROGRAM='./dk dksdk.coder.run'
 exec "@DKCODER@" "$@"

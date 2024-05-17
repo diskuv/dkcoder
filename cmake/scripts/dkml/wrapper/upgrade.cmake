@@ -286,7 +286,7 @@ Congratulations. Let's get building!
     # destination
     set(dest "${CMAKE_SOURCE_DIR}")
     if(ARG_HERE)
-      set(dest "${DKTOOL_PWD}")
+      set(dest "${DKCODER_PWD}")
     endif()
 
     # install
