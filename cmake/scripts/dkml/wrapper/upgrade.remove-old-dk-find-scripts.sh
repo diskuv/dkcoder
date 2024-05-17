@@ -1,6 +1,6 @@
 #!/bin/sh
 ##########################################################################
-# File: dktool\cmake\scripts\dkml\wrapper\upgrade.remove-old-dk-find-scripts.sh#
+# File: dkcoder\cmake\scripts\dkml\wrapper\upgrade.remove-old-dk-find-scripts.sh#
 #                                                                        #
 # Copyright 2024 Diskuv, Inc.                                            #
 #                                                                        #

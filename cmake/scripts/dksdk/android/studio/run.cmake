@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/android/studio/run.cmake              #
+# File: dkcoder/cmake/scripts/dksdk/android/studio/run.cmake              #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

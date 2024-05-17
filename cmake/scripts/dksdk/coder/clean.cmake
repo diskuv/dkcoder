@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool\cmake\scripts\dksdk\coder\clean.cmake                     #
+# File: dkcoder\cmake\scripts\dksdk\coder\clean.cmake                     #
 #                                                                        #
 # Copyright 2024 Diskuv, Inc.                                            #
 #                                                                        #

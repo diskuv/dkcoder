@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/vscode/ocaml/configure.cmake          #
+# File: dkcoder/cmake/scripts/dksdk/vscode/ocaml/configure.cmake          #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

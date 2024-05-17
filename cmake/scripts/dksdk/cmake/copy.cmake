@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/cmake/copy.cmake                      #
+# File: dkcoder/cmake/scripts/dksdk/cmake/copy.cmake                      #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

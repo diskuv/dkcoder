@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/project/new.cmake                     #
+# File: dkcoder/cmake/scripts/dksdk/project/new.cmake                     #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #
@@ -242,7 +242,7 @@ function(run)
         DESTINATION ${OUTPUT_DIR}
         FILES_MATCHING
         # dkml/ and dksdk/ are system scripts that are automatically
-        # downloaded by [dktool]
+        # downloaded by [dkcoder]
         REGEX "scripts/dkml" EXCLUDE
         REGEX "scripts/dksdk" EXCLUDE
         PATTERN "*.cmake")

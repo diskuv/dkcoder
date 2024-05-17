@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool\cmake\scripts\dksdk\coder\run.cmake                       #
+# File: dkcoder\cmake\scripts\dksdk\coder\run.cmake                       #
 #                                                                        #
 # Copyright 2024 Diskuv, Inc.                                            #
 #                                                                        #

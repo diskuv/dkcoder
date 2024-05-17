@@ -1,6 +1,6 @@
 #!/bin/sh
 ##########################################################################
-# File: dktool/cmake/scripts/dkml/workflow/compilers-build-test.in.sh    #
+# File: dkcoder/cmake/scripts/dkml/workflow/compilers-build-test.in.sh    #
 #                                                                        #
 # Copyright 2022 Diskuv, Inc.                                            #
 #                                                                        #

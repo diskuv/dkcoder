@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/cmake/link.cmake                      #
+# File: dkcoder/cmake/scripts/dksdk/cmake/link.cmake                      #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

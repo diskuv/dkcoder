@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/cmd/exec.cmake                        #
+# File: dkcoder/cmake/scripts/dksdk/cmd/exec.cmake                        #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

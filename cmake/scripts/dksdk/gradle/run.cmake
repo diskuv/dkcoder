@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/gradle/run.cmake                      #
+# File: dkcoder/cmake/scripts/dksdk/gradle/run.cmake                      #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

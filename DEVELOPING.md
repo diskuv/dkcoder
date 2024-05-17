@@ -10,9 +10,9 @@ if you rebase and then push.
 
 ## Local `user.` prefix
 
-When running dktool scripts inside a git clone of `dktool`, the
+When running dkcoder scripts inside a git clone of `dkcoder`, the
 commands will be prefixed with `user.`.
 
-For example, run `./dk user.dksdk.cmake.link` within a git clone of 'dktool'
+For example, run `./dk user.dksdk.cmake.link` within a git clone of 'dkcoder'
 to test it. Then, after your change is committed and push, other projects
 will see that command as `./dk dksdk.cmake.link`.

@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/ninja/copy.cmake                      #
+# File: dkcoder/cmake/scripts/dksdk/ninja/copy.cmake                      #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/java/jdk/download.cmake               #
+# File: dkcoder/cmake/scripts/dksdk/java/jdk/download.cmake               #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

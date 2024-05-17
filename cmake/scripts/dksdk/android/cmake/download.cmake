@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool\cmake\scripts\dksdk\android\cmake\download.cmake          #
+# File: dkcoder\cmake\scripts\dksdk\android\cmake\download.cmake          #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

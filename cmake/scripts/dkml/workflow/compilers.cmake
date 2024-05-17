@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dkml/workflow/compilers.cmake               #
+# File: dkcoder/cmake/scripts/dkml/workflow/compilers.cmake               #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

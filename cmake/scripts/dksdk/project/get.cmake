@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool\cmake\scripts\dksdk\project\get.cmake                     #
+# File: dkcoder\cmake\scripts\dksdk\project\get.cmake                     #
 #                                                                        #
 # Copyright 2024 Diskuv, Inc.                                            #
 #                                                                        #
@@ -139,7 +139,7 @@ function(dksdk_project_get)
                 GIT_TAG main
                 # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
                 # has still not been fixed. That means empty strings get removed.
-                # ExternalProject_Add(GIT_SUBMODULES) in dktool-subbuild/CMakeLists.txt
+                # ExternalProject_Add(GIT_SUBMODULES) in dkcoder-subbuild/CMakeLists.txt
                 # means fetch all submodules.
                 # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
                 # has a workaround.

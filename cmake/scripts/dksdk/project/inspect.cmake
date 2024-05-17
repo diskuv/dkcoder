@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool\cmake\scripts\dksdk\project\inspect.cmake                 #
+# File: dkcoder\cmake\scripts\dksdk\project\inspect.cmake                 #
 #                                                                        #
 # Copyright 2024 Diskuv, Inc.                                            #
 #                                                                        #

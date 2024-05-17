@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/build/open.cmake                      #
+# File: dkcoder/cmake/scripts/dksdk/build/open.cmake                      #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #

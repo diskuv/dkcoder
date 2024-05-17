@@ -13,16 +13,16 @@ The `./dk` tool is compatible with Windows PowerShell, macOS and desktop Linux.
 In Windows PowerShell, macOS and desktop Linux:
 
 ```sh
-git clone https://gitlab.com/diskuv/dktool.git
-dktool/dk user.dkml.wrapper.upgrade HERE
+git clone https://github.com/diskuv/dkcoder.git
+dkcoder/dk user.dkml.wrapper.upgrade HERE
 ./dk dkml.wrapper.upgrade DONE
 ```
 
 In Windows Command Prompt:
 
 ```dosbatch
-git clone https://gitlab.com/diskuv/dktool.git
-dktool\dk user.dkml.wrapper.upgrade HERE
+git clone https://github.com/diskuv/dkcoder.git
+dkcoder\dk user.dkml.wrapper.upgrade HERE
 .\dk dkml.wrapper.upgrade DONE
 ```
 
@@ -33,9 +33,30 @@ However, if `sudo` is required for elevation, then commands will be echoed to th
 
 ## Licenses
 
-`dktool` is available under the Open Software License version 3.0,
-<https://opensource.org/license/osl-3-0-php/>. A guide to the Open Software License version 3.0 is available at
+Copyright 2023 Diskuv, Inc.
+
+Full source code and other platforms are available with a
+"DkSDK SOFTWARE DEVELOPMENT KIT LICENSE AGREEMENT" from
+<https://diskuv.com/pricing>, and is free for security engineers,
+educators and related-field researchers (ex. programming language theory,
+memory and thread modeling) on request.
+
+`DkSDKCoder_Std` documentation and the `./dk`, `./dk.cmd` and `__dk.cmake` build scripts are also
+available under the Open Software License version 3.0,
+<https://opensource.org/license/osl-3-0-php/>, **at your option**. A guide to the Open Software License version 3.0 is available at
 <https://rosenlaw.com/OSL3.0-explained.htm>.
+
+The "DkSDK Coder Runtime Binaries" is the set of `.tar` and `.zip`
+archives distributed by Diskuv, Inc. and downloaded by the `./dk`, `./dk.cmd` and `__dk.cmake` build scripts.
+DkSDK Coder Runtime Binaries © 2023 by Diskuv, Inc. is
+licensed under Attribution-NoDerivatives 4.0 International. To view a copy
+of this license, visit <http://creativecommons.org/licenses/by-nd/4.0/>.
+
+The `ocaml*` executables within the DkSDK Coder Runtime Binaries have their own [LPGL2.1 license with Static Linking Exceptions](./LICENSE-LGPL21-ocaml).
+The `codept-lib-dkcodersig` executable within the DkSDK Coder Runtime Binaries has a similar [LPGL2.1 license with Static Linking Exceptions](./LICENSE-LGPL21-octachron).
+You are free to replace both the `codept-lib-dkcodersig` executable and the `ocaml*` executables with your own compiled binaries.
+
+`DkSDKCoder_Gen` and all other `DkSDKCoder_*` and `DkCoder_*` libraries and executables are licensed under the [DkSDK SOFTWARE DEVELOPMENT KIT LICENSE AGREEMENT](./LICENSE-DKSDK).
 
 ### 7-Zip
 

@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dksdk/android/gradle/configure.cmake        #
+# File: dkcoder/cmake/scripts/dksdk/android/gradle/configure.cmake        #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #
@@ -57,7 +57,7 @@ endfunction()
 # Mimic the escaping done by Android Studio itself.
 # Example:
 #   sdk.dir=Y\:\\source\\dksdk-ffi-java\\.ci\\local\\share\\android-sdk
-#   cmake.dir=C\:/Users/beckf/AppData/Local/Programs/DkSDK/dktool/cmake-3.25.3-windows-x86_64
+#   cmake.dir=C\:/Users/beckf/AppData/Local/Programs/DkSDK/dkcoder/cmake-3.25.3-windows-x86_64
 # So backslashes and colons are escaped.
 macro(android_local_properties_escape varname)
     string(REPLACE "\\" "\\\\" ${varname} "${${varname}}")

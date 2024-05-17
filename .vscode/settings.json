@@ -89,7 +89,7 @@
     "psi-header.variables": [
         [
             "project",
-            "dktool"
+            "dkcoder"
         ]
     ],
     "psi-header.templates": [
@@ -109,9 +109,5 @@
             ]
         }
     ],
-    "ocaml.sandbox": {
-        "kind": "opam",
-        "switch": "Y:\\source\\dksdk-type"
-    },
     "editor.wordWrapColumn": 78
 }

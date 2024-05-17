@@ -1,5 +1,5 @@
 ##########################################################################
-# File: dktool/cmake/scripts/dkml/wrapper/upgrade.cmake                  #
+# File: dkcoder/cmake/scripts/dkml/wrapper/upgrade.cmake                  #
 #                                                                        #
 # Copyright 2023 Diskuv, Inc.                                            #
 #                                                                        #
@@ -54,12 +54,12 @@ HERE
   directory that ./dk lives.
   This is useful as the first step in adding ./dk to a
   new project:
-    git clone https://gitlab.com/diskuv/dktool.git
-    dktool/dk user.dkml.wrapper.upgrade HERE
+    git clone https://github.com/diskuv/dkcoder.git
+    dkcoder/dk user.dkml.wrapper.upgrade HERE
 
 DONE
-  Remove the dktool/ created by a prior invocation of:
-    git clone https://gitlab.com/diskuv/dktool.git
+  Remove the dkcoder/ created by a prior invocation of:
+    git clone https://github.com/diskuv/dkcoder.git
   This is useful as the final step in adding ./dk to a
   new project.
 ]])
@@ -240,7 +240,7 @@ function(run)
       return()
     endif()
 
-    # <dktool>/cmake/scripts/dkml/wrapper/upgrade.cmake -> <dktool>
+    # <dkcoder>/cmake/scripts/dkml/wrapper/upgrade.cmake -> <dkcoder>
     cmake_path(GET CMAKE_CURRENT_FUNCTION_LIST_DIR PARENT_PATH d)
     cmake_path(GET d PARENT_PATH d)
     cmake_path(GET d PARENT_PATH d)
@@ -268,8 +268,8 @@ function(run)
     # DONE?
     if(ARG_DONE)
       # we already checked that no [HERE] argument
-      if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/dktool" AND IS_DIRECTORY "${CMAKE_SOURCE_DIR}/dktool/.git")
-        file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/dktool")
+      if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/dkcoder" AND IS_DIRECTORY "${CMAKE_SOURCE_DIR}/dkcoder/.git")
+        file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/dkcoder")
       endif()
       message(NOTICE [[
 
