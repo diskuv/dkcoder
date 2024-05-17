@@ -48,6 +48,16 @@ set(__DkRun_V0_2_SHA256_windows_x86_64 a3b70a77106c9d7430d802f14ae77ee9a9d2e0ed1
 set(__DkRun_V0_2_SHA256_windows_x86    db3201e1881128ab9fdc9bd0678be8f36276165012bafbb348aee253b97bdf1c)
 set(__DkRun_V0_2_EOL_YYYY_MM_DD "2024-11-30")
 set(__DkRun_V0_2_EOG_YYYY_MM_DD "2025-05-30")
+set(__DkRun_V0_3_COMPILE_VERSION 0.3.0-2)
+set(__DkRun_V0_3_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_3_COMPILE_VERSION})
+set(__DkRun_V0_3_SHA256_linux_x86_64   04d27d923256637a3cb64e3161336f4db5e70d07cccce05f90764c43156cce1f)
+set(__DkRun_V0_3_SHA256_linux_x86      todo_v0_3_release)
+set(__DkRun_V0_3_SHA256_darwin_x86_64  8d34848f656fd58d21dfdee79ec3d14c6f581e1551f996ea5c3a4e2ff612517e)
+set(__DkRun_V0_3_SHA256_darwin_arm64   664e927f0ca32fe92fce0ef734b0643979cf2ac89666ff57acfa2b94b7f6bf30)
+set(__DkRun_V0_3_SHA256_windows_x86_64 d9154a8d63104caac5bc6a6fc527d57548723357e154b506195a9f338b83dde9)
+set(__DkRun_V0_3_SHA256_windows_x86    ddae39b6c1519c71f1bdad6ea5b5eba46ddf4ae86580676ef450d0c94dbb44e8)
+set(__DkRun_V0_3_EOL_YYYY_MM_DD "2024-12-30")
+set(__DkRun_V0_3_EOG_YYYY_MM_DD "2025-05-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
 set(__DkRun_Env_URL_BASE)
 if(DEFINED ENV{DKRUN_ENV_URL_BASE})
@@ -59,7 +69,7 @@ endif()
 #   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL_YYYY_MM_DD.
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
-set(__DkRun_LTS_VERSIONS V0_1 V0_2)
+set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3)
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
 # Visual Studio on Windows. That means they need the redistributable installed.
