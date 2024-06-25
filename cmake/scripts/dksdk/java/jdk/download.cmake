@@ -76,8 +76,6 @@ function(get_jdk_home)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
-    set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/bin)
-
     set(JDK_VERSION 8)
     if(ARG_JDK_VERSION)
         set(JDK_VERSION ${ARG_JDK_VERSION})
@@ -89,8 +87,13 @@ function(get_jdk_home)
         return()
     endif()
 
-    # Apple has a standard to locate JDKs
+    # Apple has a standard to locate JDKs. But we'll prefer the local JDK if present.
     if(CMAKE_HOST_APPLE)
+        set(JAVA_HOME "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/Contents/Home")
+        if(EXISTS "${JAVA_HOME}/bin/javac")
+            set(JAVA_HOME "${JAVA_HOME}" PARENT_SCOPE)
+            return()
+        endif()
         execute_process(
             COMMAND /usr/libexec/java_home -v "${JDK_VERSION}"
             OUTPUT_VARIABLE JAVA_HOME
@@ -99,6 +102,8 @@ function(get_jdk_home)
         set(JAVA_HOME "${JAVA_HOME}" PARENT_SCOPE)
         return()
     endif()
+
+    set(hints "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/bin")
 
     # Search for [javac] which is part of the JDK but not the JRE
     find_program(JAVAC NAMES javac REQUIRED HINTS ${hints})
