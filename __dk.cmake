@@ -158,16 +158,25 @@ function(__dkcoder_abi)
             set(dkml_host_abi windows_x86_64)
         endif()
     elseif(CMAKE_HOST_APPLE)
-        execute_process(COMMAND uname -m
-                OUTPUT_VARIABLE host_machine_type
+        # https://stackoverflow.com/a/69853058 for true ABI, not Rosetta
+        execute_process(COMMAND /usr/sbin/sysctl -n machdep.cpu.brand_string
+                OUTPUT_VARIABLE brand_string
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 COMMAND_ERROR_IS_FATAL ANY)
-        if(host_machine_type STREQUAL x86_64)
-            set(dkml_host_abi darwin_x86_64)
-        elseif(host_machine_type STREQUAL arm64)
+        if(brand_string MATCHES "Apple M")
             set(dkml_host_abi darwin_arm64)
         else()
-            message(FATAL_ERROR "Problem: Unfortunately, your macOS ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+            execute_process(COMMAND /usr/bin/uname -m
+                    OUTPUT_VARIABLE brand_string
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    COMMAND_ERROR_IS_FATAL ANY)
+            if(host_machine_type STREQUAL x86_64)
+                set(dkml_host_abi darwin_x86_64)
+            elseif(host_machine_type STREQUAL arm64)
+                set(dkml_host_abi darwin_arm64)
+            else()
+                message(FATAL_ERROR "Problem: Unfortunately, your macOS ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+            endif()
         endif()
     elseif(CMAKE_HOST_LINUX)
         execute_process(COMMAND uname -m
