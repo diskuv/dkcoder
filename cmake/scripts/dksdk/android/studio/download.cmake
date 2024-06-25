@@ -134,12 +134,14 @@ function(install_android_studio)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
-    set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/android-studio/bin)
+    set(hints
+        "${CMAKE_SOURCE_DIR}/.ci/local/share/android-studio/bin"
+        "${CMAKE_SOURCE_DIR}/.ci/local/share/Android Studio.app/Contents/MacOS")
     set(find_program_INITIAL)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND find_program_INITIAL NO_DEFAULT_PATH)
     endif()
-    find_program(ANDROID_STUDIO NAMES studio.sh studio.bat HINTS ${hints} ${find_program_INITIAL})
+    find_program(ANDROID_STUDIO NAMES studio.sh studio.bat studio HINTS ${hints} ${find_program_INITIAL})
 
     if(NOT ANDROID_STUDIO)
         # Download into .ci/local/share/android-studio (which is one of the HINTS)
@@ -163,7 +165,7 @@ function(install_android_studio)
             DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share)
     endif()
 
-    find_program(ANDROID_STUDIO NAMES studio.sh studio.bat REQUIRED HINTS ${hints})
+    find_program(ANDROID_STUDIO NAMES studio.sh studio.bat studio REQUIRED HINTS ${hints})
 endfunction()
 
 function(run)
