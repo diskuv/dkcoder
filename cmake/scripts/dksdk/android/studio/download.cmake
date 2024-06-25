@@ -105,6 +105,29 @@ macro(_install_android_studio_helper ARCHIVE_NAME TYPE)
         EXPECTED_HASH SHA256=${android_studio_256_${TYPE}})
 endmacro()
 
+# Clone of internal section in __dk.cmake:__dkcoder_abi
+function(find_macos_host_abi)
+    execute_process(COMMAND /usr/sbin/sysctl -n machdep.cpu.brand_string
+            OUTPUT_VARIABLE brand_string
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            COMMAND_ERROR_IS_FATAL ANY)
+    if(brand_string MATCHES "Apple M")
+        set(dkml_host_abi darwin_arm64 PARENT_SCOPE)
+    else()
+        execute_process(COMMAND /usr/bin/uname -m
+                OUTPUT_VARIABLE brand_string
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                COMMAND_ERROR_IS_FATAL ANY)
+        if(host_machine_type STREQUAL x86_64)
+            set(dkml_host_abi darwin_x86_64 PARENT_SCOPE)
+        elseif(host_machine_type STREQUAL arm64)
+            set(dkml_host_abi darwin_arm64 PARENT_SCOPE)
+        else()
+            message(FATAL_ERROR "Problem: Unfortunately, your macOS ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+        endif()
+    endif()
+endfunction()
+
 function(install_android_studio)
     set(noValues NO_SYSTEM_PATH)
     set(singleValues)
@@ -122,10 +145,13 @@ function(install_android_studio)
         # Download into .ci/local/share/android-studio (which is one of the HINTS)
         if(CMAKE_HOST_WIN32)
             _install_android_studio_helper(studio.zip WINDOWS)
-        elseif(CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL arm64)
-            _install_android_studio_helper(studio.zip MAC_ARM64)
-        elseif(CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86_64)
-            _install_android_studio_helper(studio.zip MAC)
+        elseif(CMAKE_HOST_APPLE)
+            find_macos_host_abi()
+            if(dkml_host_abi STREQUAL darwin_arm64)
+                _install_android_studio_helper(studio.zip MAC_ARM64)
+            else()
+                _install_android_studio_helper(studio.zip MAC)
+            endif()
         elseif(CMAKE_HOST_UNIX)
             _install_android_studio_helper(studio.tar.gz LINUX)
         else()
