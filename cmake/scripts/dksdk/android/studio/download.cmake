@@ -194,9 +194,9 @@ function(run)
 
     # gitignore
     if(CMAKE_HOST_APPLE)
-        set(extractdir "${CMAKE_SOURCE_DIR}/.ci/local/share/android-studio")
-    else()
         set(extractdir "${CMAKE_SOURCE_DIR}/.ci/local/share/Android Studio.app")
+    else()
+        set(extractdir "${CMAKE_SOURCE_DIR}/.ci/local/share/android-studio")
     endif()
     file(MAKE_DIRECTORY "${extractdir}")
     file(COPY_FILE
