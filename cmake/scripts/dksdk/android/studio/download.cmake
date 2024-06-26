@@ -192,17 +192,16 @@ function(run)
         list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
     endif()
 
-    # gitignore
-    if(CMAKE_HOST_APPLE)
-        set(extractdir "${CMAKE_SOURCE_DIR}/.ci/local/share/Android Studio.app")
-    else()
+    # gitignore. But not on Apple since "Android Studio.app" folder often
+    # has macOS security to not write into the folder.
+    if(NOT CMAKE_HOST_APPLE)
         set(extractdir "${CMAKE_SOURCE_DIR}/.ci/local/share/android-studio")
+        file(MAKE_DIRECTORY "${extractdir}")
+        file(COPY_FILE
+            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../__dk-tmpl/all.gitignore"
+            "${extractdir}/.gitignore"
+            ONLY_IF_DIFFERENT)
     endif()
-    file(MAKE_DIRECTORY "${extractdir}")
-    file(COPY_FILE
-        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../__dk-tmpl/all.gitignore"
-        "${extractdir}/.gitignore"
-        ONLY_IF_DIFFERENT)
 
     install_android_studio(${expand_NO_SYSTEM_PATH})
     message(STATUS "Android Studio: ${ANDROID_STUDIO}")
