@@ -238,10 +238,12 @@ function(run)
         ONLY_IF_DIFFERENT)
 
     # Download the full project
+    cmake_policy(SET CMP0097 NEW) # ``ExternalProject_Add()`` with ``GIT_SUBMODULES ""`` initializes no submodules.
     FetchContent_Populate(dkml-workflows
         QUIET
         GIT_REPOSITORY ${git_repository}
         GIT_TAG v1
+        GIT_SUBMODULES ""
     )
 
     # Only populate in .ci/dkml-compilers/ what was asked for
