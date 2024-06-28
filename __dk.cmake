@@ -63,8 +63,8 @@ set(__DkRun_V0_4_COMPILE_VERSION 0.4.0-1)
 set(__DkRun_V0_4_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_4_COMPILE_VERSION})
 set(__DkRun_V0_4_SHA256_linux_x86_64   ead5b40174e151924dbacc7a3f847623b96852af542ad44e05e7586f9655e9f9)
 set(__DkRun_V0_4_SHA256_linux_x86      todo_v0_4_release)
-set(__DkRun_V0_4_SHA256_darwin_x86_64  3e66f16fe39239be25f14ac9c51b1d0709ed89341fb7c6f2879968f784f3abd1) # unsigned
-set(__DkRun_V0_4_SHA256_darwin_arm64   6f82222b863815886f24a94e218cf86afb0238bb0a985300a88a52154fbf67e6) # unsigned
+set(__DkRun_V0_4_SHA256_darwin_x86_64  deac47ab9b2c46ff27c509a0c170937cd048d911fc66a247d55087655599ffa1)
+set(__DkRun_V0_4_SHA256_darwin_arm64   d4536422d0f290ebf5b3a498a69778ab68c44259050a1d4cbb59ff281ca7df2f)
 set(__DkRun_V0_4_SHA256_windows_x86_64 9bc128331a248f2e6b9d6ad7ea0d31833445fa10709e16dc39db15ac8f8d975c)
 set(__DkRun_V0_4_SHA256_windows_x86    cb49a3c04bcea7d08c18212df9b4378fdb2a7d71b00e937fa8ac5634af6e2455)
 set(__DkRun_V0_4_EOL_YYYY_MM_DD "2025-01-30")
