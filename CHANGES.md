@@ -1,5 +1,31 @@
 # Changes
 
+## 0.4.0
+
+- Run using a file path in addition to module id
+- Add Tr1Tar
+- Expose Logs.Src and Logs.Tag for codept
+- bugfix: Do not search for nephews of implicit or optimistic modules
+- Upgrade merlin from 4.12-414 to 4.14-414
+- bugfix: `[%sample]` was not dedenting when there was a blank line
+- Add Tr1String_Ext
+- Add `./dk DkStdRestApis_Gen.StripeGen`
+- Upgrade to Tezt 4.1.0 which has upstreamed Windows fixes from DkCoder 0.3.0
+- Add `Tr1HostMachine` implicit with a ``abi : [`android_arm64v8a|`android_arm32v7a|`android_x86|`android_x86_64|`darwin_arm64|`darwin_x86_64|`linux_arm64|`linux_arm32v6|`linux_arm32v7|`linux_x86_64|`linux_x86|`windows_x86_64|`windows_x86|`windows_arm64|`windows_arm32|`dragonfly_x86_64|`freebsd_x86_64|`netbsd_x86_64|`openbsd_x86_64|`unknown_unknown|`darwin_ppc64|`linux_ppc64|`linux_s390x]`` value
+
+## 0.3.0
+
+- Add cohttp-curl
+- Do not distribute .pdb in non-debug builds
+- Add Tr1Logs_Std, Tr1Logs_Clap and Tr1Logs_Lwt and Tr1Http_Std and Tr1Uri_Std
+- Export base64, ezjsonm, resto and json-data-encoding and uri and cohttp-server-lwt-unix and cohttp-curl-lwt
+- bugfix: Stitched modules were not being created if nephews already existed
+- bugfix: implicit modules check if known to solver
+- bugfix: setting solver state should fully set state
+- bugfix: modified aliases means must expand to solve harder
+- bugfix: Fix bug with duplicated pending module
+- Add simultaneity invariant check of pending and resolved solver states
+
 ## 0.2.0
 
 - Support `.mli` interface files
