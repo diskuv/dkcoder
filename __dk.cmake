@@ -81,6 +81,7 @@ endif()
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
 set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3 V0_4)
+list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
 # Visual Studio on Windows. That means they need the redistributable installed.
@@ -217,8 +218,6 @@ function(__dkcoder_check_end_of_life)
 
     set(project_dir "${CMAKE_SOURCE_DIR}")
     cmake_path(NATIVE_PATH project_dir project_dir_NATIVE)
-
-    list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
 
     if(${ARG_EOG} STRLESS now_YYYY_MM_DD)
         message(FATAL_ERROR "
@@ -619,7 +618,6 @@ function(__dkcoder_delegate)
         if(ARG_FULLY_QUALIFIED_MODULE STREQUAL Run)
             set(entryExec "${DKCODER_RUN}")
         else()
-            list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
             message(FATAL_ERROR "Problem: DkCoder only supports the Run entrypoint. Solution: Was there a typo? Try DkRun_${__dkrun_v_id}.Run instead.")
         endif()
     else()
@@ -691,7 +689,8 @@ endfunction()
 function(__parse_if_ocaml_command)
     set(noValues)
     set(singleValues COMMAND SUCCESS_VARIABLE
-        PACKAGE_NAMESPACE_VARIABLE PACKAGE_QUALIFIER_VARIABLE LIBRARY_VARIABLE FULLY_QUALIFIED_MODULE_VARIABLE)
+        PACKAGE_NAMESPACE_VARIABLE PACKAGE_QUALIFIER_VARIABLE LIBRARY_VARIABLE
+        FULLY_QUALIFIED_MODULE_VARIABLE PRE_ARGUMENTS_VARIABLE)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -701,6 +700,7 @@ function(__parse_if_ocaml_command)
     string(LENGTH "${ARG_COMMAND}" command_LEN)
 
     if(command MATCHES "^([A-Z][a-z][a-z0-9]*)([A-Z][A-Za-z0-9]*)_([A-Z][A-Za-z0-9_]*)(([.][A-Z]([A-Za-z0-9_]*))+)$")
+        # 1. Fully qualfied mode
         set(${ARG_PACKAGE_NAMESPACE_VARIABLE} "${CMAKE_MATCH_1}" PARENT_SCOPE)
         set(${ARG_PACKAGE_QUALIFIER_VARIABLE} "${CMAKE_MATCH_2}" PARENT_SCOPE)
         set(${ARG_LIBRARY_VARIABLE} "${CMAKE_MATCH_3}" PARENT_SCOPE)
@@ -709,7 +709,30 @@ function(__parse_if_ocaml_command)
         string(REGEX REPLACE "^[.]" "" fqn "${fqn}")
         set(${ARG_FULLY_QUALIFIED_MODULE_VARIABLE} "${fqn}" PARENT_SCOPE)
         set(${ARG_SUCCESS_VARIABLE} ON PARENT_SCOPE)
+        set(${ARG_PRE_ARGUMENTS_VARIABLE} "" PARENT_SCOPE)
         return()
+    elseif(EXISTS "${command}" AND command MATCHES "[.]ml$")
+        # 2. Command-as-path mode
+        # If the command is a .ml file located _under_ the ./dk directory (for safety), then it can be run.
+        # Symlinks are not allowed to escape beyond the ./dk folder ... we are in a convenience mode that
+        # has a canonical alternative, so we can and should make this mode more restrictive.
+        file(REAL_PATH "${CMAKE_SOURCE_DIR}" baseReal)
+        file(REAL_PATH "${command}" commandReal)
+        cmake_path(IS_PREFIX baseReal "${commandReal}" isPrefix)
+        if(isPrefix)
+            set(${ARG_PACKAGE_NAMESPACE_VARIABLE} "Dk" PARENT_SCOPE)
+            set(${ARG_PACKAGE_QUALIFIER_VARIABLE} "Run" PARENT_SCOPE)
+            set(${ARG_LIBRARY_VARIABLE} "${__dkrun_v_id}" PARENT_SCOPE)
+            set(${ARG_FULLY_QUALIFIED_MODULE_VARIABLE} "Run" PARENT_SCOPE)
+            set(${ARG_SUCCESS_VARIABLE} ON PARENT_SCOPE)
+            set(${ARG_PRE_ARGUMENTS_VARIABLE} "--" "${command}" PARENT_SCOPE)
+            return()
+        else()
+            # Usability improvement when move to OCaml-based logic ... calculate what the fully-qualified module identifier
+            # would be, and then say what that fully-qualfiied module id resolves to on the filesystem. It will likely
+            # be different, so give options on how to add paths.
+            message(FATAL_ERROR "You can only use paths to OCaml scripts that are within the directory tree ${baseReal}. Consider using the fully-qualified module identifier of the script rather than its path.")
+        endif()
     endif()
 
     set(${ARG_SUCCESS_VARIABLE} OFF PARENT_SCOPE)
@@ -777,7 +800,8 @@ Environment variables:
         PACKAGE_NAMESPACE_VARIABLE package_namespace
         PACKAGE_QUALIFIER_VARIABLE package_qualifier
         LIBRARY_VARIABLE library
-        FULLY_QUALIFIED_MODULE_VARIABLE module)
+        FULLY_QUALIFIED_MODULE_VARIABLE module
+        PRE_ARGUMENTS_VARIABLE pre_arguments)
     if(is_ocaml)
         # Get COMPILE_VERSION. Simultaneously recreate the argument list.
         # Argument list:
@@ -785,9 +809,11 @@ Environment variables:
         #       ==> [DkHelloScript_Std.Example001 1 2 3]
         #   ./dk DkHelloScript_Std.Example001 1 2 3
         #       ==> [DkHelloScript_Std.Example001 1 2 3]
+        #   ./dk somewhere/DkHelloScript_Std/Example001 1 2 3
+        #       ==> [somewhere/DkHelloScript_Std/Example001 1 2 3]
         #
         #   Is the explicit version specified? That is, DkRun_V0_1.Run (etc.)?
-        set(argument_list ${FWD_UNPARSED_ARGUMENTS})
+        set(argument_list ${pre_arguments} ${FWD_UNPARSED_ARGUMENTS})
         if(package_namespace STREQUAL "Dk" AND package_qualifier STREQUAL "Run")
             set(__dkrun_v_id "${library}") # ex. V0_1
         else()
