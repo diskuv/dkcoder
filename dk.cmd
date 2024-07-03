@@ -374,12 +374,24 @@ REM -------------- Clear environment -------
 
 SET DK_QUIET=
 
+REM --------------- Console ----------------
+REM Until https://github.com/ocaml/ocaml/pull/1408 fixed
+REM Confer: https://stackoverflow.com/a/52139735
+2>NUL >NUL timeout /t 0 && (
+  REM stdin not redirected or piped
+  CHCP 65001 >NUL
+  SET DK_TTY=1
+) || (
+  REM stdin has been redirected or is receiving piped input
+  SET DK_TTY=0
+)
+
 REM -------------- Run finder --------------
 
 SET DK_WORKDIR=%DK_SHARE%\work
 
 cd /d %DK_PROJ_DIR%
-"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKCODER_PWD:FILEPATH=%DK_PWD%" -D "DKCODER_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKCODER_NONCE:STRING=%DK_NONCE%" -D "DKCODER_CMDLINE:STRING=%DK_CMDLINE%" -P __dk.cmake
+"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKCODER_PWD:FILEPATH=%DK_PWD%" -D "DKCODER_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKCODER_NONCE:STRING=%DK_NONCE%" -D "DKCODER_TTY:STRING=%DK_TTY%" -D "DKCODER_CMDLINE:STRING=%DK_CMDLINE%" -P __dk.cmake
 IF %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
 REM --------------- Execute post-command outside of CMake --------------

@@ -874,6 +874,14 @@ else
   dk_nonce=$$
 fi
 
+# --- Console ---
+
+if [ -t 0 ]; then
+  dk_tty=1
+else
+  dk_tty=0
+fi
+
 # --- Run finder script ---
 
 dk_work=$tools_dir/work
@@ -884,6 +892,7 @@ cd "$PROJ_DIR"
   -D "DKCODER_PWD:FILEPATH=$dk_pwd" \
   -D "DKCODER_WORKDIR:FILEPATH=$dk_work" \
   -D "DKCODER_NONCE:STRING=$dk_nonce" \
+  -D "DKCODER_TTY:STRING=$dk_tty" \
   -D "DKCODER_CMDLINE:STRING=$*" \
   -P __dk.cmake
 

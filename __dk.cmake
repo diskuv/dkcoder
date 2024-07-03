@@ -588,6 +588,9 @@ function(__dkcoder_delegate)
     __dkcoder_add_environment_set("DKCODER_RUN_ENV_URL_BASE=${__DkRun_Env_URL_BASE}")
     __dkcoder_add_environment_set("DKCODER_PWD=${DKCODER_PWD}")
 
+    # Console
+    __dkcoder_add_environment_set("DKCODER_TTY=${DKCODER_TTY}")
+
     # Calculate command line arguments
     set(dkcoder_ARGS)
     foreach(arg IN LISTS "${ARG_ARGUMENT_LIST_VARIABLE}")
@@ -650,6 +653,7 @@ SET DK_NONCE=
 SET DK_NINJA_EXE=
 SET DK_CMDLINE=
 SET DK_CMAKE_EXE=
+SET DK_TTY=
 
 REM Clear variables that influence __dk.cmake. They are not part of DkCoder API.
 SET DKRUN_ENV_URL_BASE=
