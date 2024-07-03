@@ -399,30 +399,20 @@ function(__dkcoder_install)
             set(download_REMOVE ON)
             file(DOWNLOAD "${url}" "${download_DEST}" ${expected_hash_ARGS})
         endif()
+
+        # Clean
+        message(${ARG_LOGLEVEL} "Cleaning install location")
+        file(REMOVE_RECURSE "${DKCODER_HOME}")
+        file(MAKE_DIRECTORY "${DKCODER_HOME}")
+
+        # Extract
         message(${ARG_LOGLEVEL} "Extracting DkCoder")
-        file(ARCHIVE_EXTRACT INPUT "${download_DEST}"
-            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/_e")
+        file(ARCHIVE_EXTRACT INPUT "${download_DEST}" DESTINATION "${DKCODER_HOME}")
 
         # Install prereq: Visual C++ Redistributable
         if(CMAKE_HOST_WIN32)
             __dkcoder_install_vc_redist(LOGLEVEL ${ARG_LOGLEVEL})
         endif()
-
-        # Install
-        #   Do file(RENAME) but work across mount volumes (ex. inside containers)
-        message(${ARG_LOGLEVEL} "Cleaning final install location")
-        file(REMOVE_RECURSE "${DKCODER_HOME}")
-        file(MAKE_DIRECTORY "${DKCODER_HOME}")
-        message(${ARG_LOGLEVEL} "Copying DkCoder to final install location")
-        file(GLOB entries
-            LIST_DIRECTORIES true
-            RELATIVE ${CMAKE_CURRENT_BINARY_DIR}/_e
-            ${CMAKE_CURRENT_BINARY_DIR}/_e/*)
-        foreach(entry IN LISTS entries)
-            file(COPY ${CMAKE_CURRENT_BINARY_DIR}/_e/${entry}
-                DESTINATION ${DKCODER_HOME}
-                USE_SOURCE_PERMISSIONS)
-        endforeach()
 
         # Post-install: Configure findlib.conf to point to macOS bundle or Unix/Win32 extraction
         if(CMAKE_HOST_WIN32)
@@ -449,7 +439,6 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
         # Cleanup
         message(${ARG_LOGLEVEL} "Cleaning DkCoder intermediate files")
         file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
-        file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/_e")
 
         find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints} ${find_program_ARGS})
         message(${ARG_LOGLEVEL} "DkCoder installed.")
