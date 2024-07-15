@@ -363,7 +363,9 @@ function(__dkcoder_install)
     set(dkml_host_abi "${ARG_ABI}")
 
     # Location where ocamlfind.conf should be
-    set(ocamlfind_conf "${DKCODER_HOME}/findlib.conf")
+    if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+        set(ocamlfind_conf "${DKCODER_HOME}/findlib.conf")
+    endif()
 
     set(hints "${DKCODER_HOME}/DkCoder.bundle/Contents/Helpers" "${DKCODER_HOME}/bin")
     set(find_program_ARGS NO_DEFAULT_PATH)
@@ -415,33 +417,35 @@ function(__dkcoder_install)
         endif()
 
         # Post-install: Configure findlib.conf to point to macOS bundle or Unix/Win32 extraction
-        if(CMAKE_HOST_WIN32)
-            # Windows needs entries like: destdir="C:\\TARBALL\\lib"
-            cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
-            string(REPLACE "\\" "\\\\" DKCODER_HOME_NATIVE_ESCAPED "${DKCODER_HOME_NATIVE}")
+        if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+            if(CMAKE_HOST_WIN32)
+                # Windows needs entries like: destdir="C:\\TARBALL\\lib"
+                cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
+                string(REPLACE "\\" "\\\\" DKCODER_HOME_NATIVE_ESCAPED "${DKCODER_HOME_NATIVE}")
 
-            file(CONFIGURE OUTPUT "${ocamlfind_conf}"
-                CONTENT [[destdir="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
+                file(CONFIGURE OUTPUT "${ocamlfind_conf}"
+                    CONTENT [[destdir="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
 path="@DKCODER_HOME_NATIVE_ESCAPED@\\lib"
 stdlib="@DKCODER_HOME_NATIVE_ESCAPED@\\lib\\ocaml"]] @ONLY NEWLINE_STYLE UNIX)
-        elseif(CMAKE_HOST_APPLE)
-            file(CONFIGURE OUTPUT "${ocamlfind_conf}"
-                CONTENT [[destdir="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"
+            elseif(CMAKE_HOST_APPLE)
+                file(CONFIGURE OUTPUT "${ocamlfind_conf}"
+                    CONTENT [[destdir="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"
 path="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib"
 stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWLINE_STYLE UNIX)
-        else()
-            file(CONFIGURE OUTPUT "${ocamlfind_conf}"
-                CONTENT [[destdir="@DKCODER_HOME@/lib"
+            else()
+                file(CONFIGURE OUTPUT "${ocamlfind_conf}"
+                    CONTENT [[destdir="@DKCODER_HOME@/lib"
 path="@DKCODER_HOME@/lib"
 stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWLINE_STYLE UNIX)
+            endif()
+
+            # Cleanup
+            message(${ARG_LOGLEVEL} "Cleaning DkCoder intermediate files")
+            file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
+
+            find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints} ${find_program_ARGS})
+            message(${ARG_LOGLEVEL} "DkCoder installed.")
         endif()
-
-        # Cleanup
-        message(${ARG_LOGLEVEL} "Cleaning DkCoder intermediate files")
-        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
-
-        find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints} ${find_program_ARGS})
-        message(${ARG_LOGLEVEL} "DkCoder installed.")
     endif()
 
     cmake_path(GET DKCODER PARENT_PATH dkcoder_helpers)
@@ -465,7 +469,9 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${DKCODER_HOME} and try again.")
 
     # Export ocamlfind.conf
-    set(DKCODER_OCAMLFIND_CONF "${ocamlfind_conf}" PARENT_SCOPE)
+    if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+        set(DKCODER_OCAMLFIND_CONF "${ocamlfind_conf}" PARENT_SCOPE)
+    endif()
 
     # Export bin/ or macOS bundle Helpers/
     if(NOT IS_DIRECTORY "${dkcoder_helpers}")
@@ -552,8 +558,10 @@ function(__dkcoder_delegate)
     #   both ocamlc + ocamlrun.
     __dkcoder_prep_environment()
     __dkcoder_add_environment_set("OCAMLLIB=${DKCODER_LIB}/ocaml")
-    #   Assumptions.ocamlfind_configuration_available_to_ocaml_compiler_in_coder_run
-    __dkcoder_add_environment_set("OCAMLFIND_CONF=${DKCODER_OCAMLFIND_CONF}")
+    if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+        #   Assumptions.ocamlfind_configuration_available_to_ocaml_compiler_in_coder_run
+        __dkcoder_add_environment_set("OCAMLFIND_CONF=${DKCODER_OCAMLFIND_CONF}")
+    endif()
     __dkcoder_add_environment_set("CDI_OUTPUT=${output_abspath}") # This environment variable is communication to `@gen-cdi` rule
     #   Assumptions.stublibs_are_available_to_ocaml_compiler_and_runtime_in_coder_run
     #       nit: Unclear why CAML_LD_LIBRARY_PATH is needed by Dune 3.12.1 when invoking [ocamlc] on Windows to get
@@ -582,8 +590,12 @@ function(__dkcoder_delegate)
     #   detection of ABI (ex. ./dk downloads x86_64 for macOS but ABI is detected as arm64).
     cmake_path(NATIVE_PATH DKCODER_HELPERS NORMALIZE DKCODER_HELPERS_NATIVE)
     cmake_path(NATIVE_PATH DKCODER_SHARE NORMALIZE DKCODER_SHARE_NATIVE)
+    cmake_path(NATIVE_PATH DKCODER_LIB NORMALIZE DKCODER_LIB_NATIVE)
     __dkcoder_add_environment_set("DKCODER_HELPERS=${DKCODER_HELPERS_NATIVE}")
     __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
+    if(DKCODER_VERSION VERSION_GREATER 0.4.0.1 OR DKCODER_VERSION STREQUAL Env)
+        __dkcoder_add_environment_set("DKCODER_LIB=${DKCODER_LIB_NATIVE}")
+    endif()
     __dkcoder_add_environment_set("DKCODER_RUN_VERSION=${DKCODER_RUN_VERSION}")
     __dkcoder_add_environment_set("DKCODER_RUN_ENV_URL_BASE=${__DkRun_Env_URL_BASE}")
     __dkcoder_add_environment_set("DKCODER_PWD=${DKCODER_PWD}")

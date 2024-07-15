@@ -1,6 +1,10 @@
 # Changes
 
-## 0.4.0
+## 0.4.0.2
+
+- findlib.conf generated at analysis time rather than __dk.cmake install time
+
+## 0.4.0.1
 
 - Run using a file path in addition to module id
 - Add Tr1Tar
