@@ -585,7 +585,7 @@ function(__dkcoder_delegate)
     endif()
 
     # Propagate DKCODER_SHARE and DKCODER_HELPERS and DKCODER_RUN_VERSION.
-    #   Why not DKML_HOST_ABI? DkRun has a hardcoded default (so ABI hardcoding comes from the downloaded DkRun
+    #   Why not DKCODER_HOST_ABI? DkRun has a hardcoded default (so ABI hardcoding comes from the downloaded DkRun
     #   which is chosen by ./dk). But we don't change the default since a future DkRun may have a better
     #   detection of ABI (ex. ./dk downloads x86_64 for macOS but ABI is detected as arm64).
     cmake_path(NATIVE_PATH DKCODER_HELPERS NORMALIZE DKCODER_HELPERS_NATIVE)
