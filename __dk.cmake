@@ -59,16 +59,16 @@ set(__DkRun_V0_3_SHA256_windows_x86    ddae39b6c1519c71f1bdad6ea5b5eba46ddf4ae86
 set(__DkRun_V0_3_EOL_YYYY_MM_DD "2024-12-30")
 set(__DkRun_V0_3_EOG_YYYY_MM_DD "2025-05-30")
 
-set(__DkRun_V0_4_COMPILE_VERSION 0.4.0-1)
+set(__DkRun_V0_4_COMPILE_VERSION 0.4.0-2)
 set(__DkRun_V0_4_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_4_COMPILE_VERSION})
-set(__DkRun_V0_4_SHA256_linux_x86_64   ead5b40174e151924dbacc7a3f847623b96852af542ad44e05e7586f9655e9f9)
-set(__DkRun_V0_4_SHA256_linux_x86      todo_v0_4_release)
-set(__DkRun_V0_4_SHA256_darwin_x86_64  deac47ab9b2c46ff27c509a0c170937cd048d911fc66a247d55087655599ffa1)
-set(__DkRun_V0_4_SHA256_darwin_arm64   d4536422d0f290ebf5b3a498a69778ab68c44259050a1d4cbb59ff281ca7df2f)
-set(__DkRun_V0_4_SHA256_windows_x86_64 9bc128331a248f2e6b9d6ad7ea0d31833445fa10709e16dc39db15ac8f8d975c)
-set(__DkRun_V0_4_SHA256_windows_x86    cb49a3c04bcea7d08c18212df9b4378fdb2a7d71b00e937fa8ac5634af6e2455)
-set(__DkRun_V0_4_EOL_YYYY_MM_DD "2025-01-30")
-set(__DkRun_V0_4_EOG_YYYY_MM_DD "2025-07-30")
+set(__DkRun_V0_4_SHA256_linux_x86_64   ec7964fc69963b18eefd9e47e154c69e19464ebac3f3e3df5a9e1e69e29acabe)
+set(__DkRun_V0_4_SHA256_linux_x86      todo_v0_5_release)
+set(__DkRun_V0_4_SHA256_darwin_x86_64  9314bab638e32d00ef45db42ea9f95427bc31cc233b55a373fc23ef10dfd9600)#unsigned
+set(__DkRun_V0_4_SHA256_darwin_arm64   9b412798fd8c9f83e016022e1eb5cbd815e36b2b91a57bc4e17b381617008e07)#unsigned
+set(__DkRun_V0_4_SHA256_windows_x86_64 394f897d7cfc791f115e5bf427c7f56e054b510cbc96e79bb3ecf8f669b0ecc0)
+set(__DkRun_V0_4_SHA256_windows_x86    d0561ee1b49728b05e008df16146bd6e282199d40fd9e67c21f059eee3aa3469)
+set(__DkRun_V0_4_EOL_YYYY_MM_DD "2025-06-30")
+set(__DkRun_V0_4_EOG_YYYY_MM_DD "2025-12-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
 set(__DkRun_Env_URL_BASE)
 if(DEFINED ENV{DKRUN_ENV_URL_BASE})

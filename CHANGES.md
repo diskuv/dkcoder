@@ -2,7 +2,43 @@
 
 ## 0.4.0.2
 
+- Path-based commands can be given to `./dk`. That means `./dk somewhere/DkHello_Std/Hi.ml` will add `somewhere/` to the You directories and run the module `DkHello_Std.Hi`.
+  This feature simplifies the 0.4.0 feature which had required `./dk DkRun_V0_4.Run somewhere/DkHello_Std/Hi.ml`.
+- **Breaking change**:
+  - Default generator is dune (not dune-ide) if non-DkCoder dune-project. That avoids a conflict with existing dune-project based projects.
+  - If you have an old checkout of DkHelloScript, DkSubscribeWebhook or SanetteBogue, remove the `dune-project` from that checkout so that DkCoder can regenerate a dune-project annotated for 0.5.0.
+- Add `./dk DkFs_C99.Dir [mkdir|rm]` script
+- bugfix: Some module ids were not compilable (ex. `SonicScout_Setup.Q`) since they had dots in their first or last two characters.
+- bugfix: The squished module ids (ex. `SonicScout_Setup.Qt`) were using the second and third last characters rather than the correct last and second last characters.
+- performance: Optimize initial `./dk` install by not copying files. On Windows install time (neglecting download time) dropped from 75 seconds to 6 seconds.
+- usability: Detect if terminal attached on Windows, and use ANSI color when terminal attached (except when NO_COLOR or in CI).
+- Add DkCoder_Std package that has module and module types that DkCoder scripts implement.
+- Rename `DkDev_Std.ExtractSignatures` to `DkDev_Std.Export`. Include writing .cma alongside updated dkproject.jsonc. Pushdown log level from `DkDev_Std.Export` to `codept-lib-dkcodersig`
+- Add type equations for `Tr1Logs_Std` so `Logs.level` (etc.) is equivalent to `Tr1Logs_Std.Logs.level`
+- Us scripts are now part of a findlib site-lib and can be referenced from other scripts, not just run as standalone scripts.
+- `__dkcoder_register` has been renamed `__init` which means it initializes the module, similar to have Python's `__init__` initializes a class.
+- Let `__init` be overridable. WARNING: Although today `__init` is only called for the entry script, future DkCoder will call `__init` for all `You` scripts in dependency order. So defining your own `let __init () = ...` as an alternative to `if Tr1EntryName.module_id = __MODULE_ID__ then ...` will eventually break for `You` scripts.
+- Add --force option to `DkFs_C99.Dir rm`
+- Add `DkFs_C99.Path` and `DkFs_C99.File`.
+- Add `os` to `Tr1HostMachine`.
+- Add `--kill` to `DkFs_C99.Path rm`
 - findlib.conf generated at analysis time rather than __dk.cmake install time
+
+Important Notes
+
+- `open__.ml` is not transitive at compile-time. That means other libraries that use your library may get:
+
+  ```text
+  Error: This expression has type Uri.t but an expression was expected of type
+          DkCurl_StdO__.Open__.Uri.t
+        DkCurl_StdO__.Open__.Uri.t is abstract because no corresponding cmi file was found in path.
+  ```
+
+  Use fully-qualified module ids if other libraries will use your scripts.
+  A future version of DkCoder may change the error message but won't mandate that you fully qualify
+  every module reference (that defeats the purpose for the vast majority of scripts which aren't shared).
+  Alternatives include requiring fully qualifing module ids in `.mli` files (but not `.ml`),
+  or having an `exports__.ml` that functions as the public compile-transitive version of `open__.ml`.
 
 ## 0.4.0.1
 
