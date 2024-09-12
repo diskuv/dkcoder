@@ -3,7 +3,7 @@
 ## Pending (2.1.3)
 
 - Standard error is used consistently for logging in `./dk`
-- Use quiet `-q` option for `yum install` in `./dk` for Linux
+- Use quiet `-q` option for `yum install` in `./dk` for Linux, and `--quiet --no-progress` for `apk add`
 
 ## 0.4.0.2
 

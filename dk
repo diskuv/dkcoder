@@ -554,10 +554,10 @@ install_linux_prog() {
   else
     if [ -x /sbin/apk ]; then
       if [ "$(id -u)" -eq 0 ]; then
-        run_maybe_quiet /sbin/apk add "$install_linux_prog_ALPINE_PKG"
+        run_maybe_quiet /sbin/apk add --quiet --no-progress "$install_linux_prog_ALPINE_PKG"
       else
-        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG" >&2
-        sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG"
+        echo "Running: sudo /sbin/apk add --quiet --no-progress  $install_linux_prog_ALPINE_PKG" >&2
+        sudo /sbin/apk add --quiet --no-progress "$install_linux_prog_ALPINE_PKG"
       fi
     elif command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
