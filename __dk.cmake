@@ -80,7 +80,7 @@ endif()
 #   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL_YYYY_MM_DD.
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
-set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3 V0_4)
+set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3 V0_4) # do not erase: this can be parsed externally to discover project version. must be on single line!
 list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
@@ -321,6 +321,9 @@ function(__dkcoder_install)
         set(version_major "${CMAKE_MATCH_1}")
         set(version_minor "${CMAKE_MATCH_2}")
         set(V_id "V${version_major}_${version_minor}")
+    elseif(ARG_VERSION STREQUAL "Project")
+        # ex. VProject -> V0_1
+        set(V_id "${__dkrun_v_id}")
     elseif(ARG_VERSION STREQUAL "Env")
         set(V_id "Env")
     else()

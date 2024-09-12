@@ -5,6 +5,7 @@
 - Standard error is used consistently for logging in `./dk`
 - Use quiet `-q` option for `yum install` in `./dk` for Linux, and `--quiet --no-progress` for `apk add`
 - bugfix: Consistently use `-qq install --no-install-suggests` for apt-get install
+- Support `DkRun_VProject` in addition to `DkRun_VEnv` and `DkRun_V<n>_<m>`. The project version is whatever version is embedded in `__dk.cmake`. Among other things, this simplifies vscode settings.json.
 
 ## 0.4.0.2
 
