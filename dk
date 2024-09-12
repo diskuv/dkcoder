@@ -561,10 +561,10 @@ install_linux_prog() {
       fi
     elif command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
-        run_maybe_quiet yum install -y "$install_linux_prog_PKG"
+        run_maybe_quiet yum install -q -y "$install_linux_prog_PKG"
       else
-        echo "Running: sudo yum install -y $install_linux_prog_PKG" >&2
-        sudo yum install -y "$install_linux_prog_PKG"
+        echo "Running: sudo yum install -q -y $install_linux_prog_PKG" >&2
+        sudo yum install -q -y "$install_linux_prog_PKG"
       fi
     else
       if [ "$(id -u)" -eq 0 ]; then

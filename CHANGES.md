@@ -3,6 +3,7 @@
 ## Pending (2.1.3)
 
 - Standard error is used consistently for logging in `./dk`
+- Use quiet `-q` option for `yum install` in `./dk` for Linux
 
 ## 0.4.0.2
 
