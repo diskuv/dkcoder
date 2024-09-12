@@ -1,5 +1,9 @@
 # Changes
 
+## Pending (2.1.3)
+
+- Standard error is used consistently for logging in `./dk`
+
 ## 0.4.0.2
 
 - Path-based commands can be given to `./dk`. That means `./dk somewhere/DkHello_Std/Hi.ml` will add `somewhere/` to the You directories and run the module `DkHello_Std.Hi`.

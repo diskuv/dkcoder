@@ -556,21 +556,21 @@ install_linux_prog() {
       if [ "$(id -u)" -eq 0 ]; then
         run_maybe_quiet /sbin/apk add "$install_linux_prog_ALPINE_PKG"
       else
-        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG"
+        echo "Running: sudo /sbin/apk add $install_linux_prog_ALPINE_PKG" >&2
         sudo /sbin/apk add "$install_linux_prog_ALPINE_PKG"
       fi
     elif command -v yum > /dev/null 2> /dev/null; then
       if [ "$(id -u)" -eq 0 ]; then
         run_maybe_quiet yum install -y "$install_linux_prog_PKG"
       else
-        echo "Running: sudo yum install -y $install_linux_prog_PKG"
+        echo "Running: sudo yum install -y $install_linux_prog_PKG" >&2
         sudo yum install -y "$install_linux_prog_PKG"
       fi
     else
       if [ "$(id -u)" -eq 0 ]; then
         run_maybe_quiet apt-get -q install -y "$install_linux_prog_PKG"
       else
-        echo "Running: sudo -q apt-get -qq install -y --no-install-suggests $install_linux_prog_PKG"
+        echo "Running: sudo -q apt-get -qq install -y --no-install-suggests $install_linux_prog_PKG" >&2
         sudo apt-get -qq install -y --no-install-suggests "$install_linux_prog_PKG"
       fi
     fi
@@ -615,7 +615,7 @@ install_macos_prog() {
       if [ "$(id -u)" -eq 0 ]; then
         run_maybe_quiet port install "$install_macos_prog_PKG"
       else
-        echo "Running: sudo port install $install_macos_prog_PKG"
+        echo "Running: sudo port install $install_macos_prog_PKG" >&2
         sudo port install "$install_macos_prog_PKG"
       fi
       DK_PROG_INSTALLED_LOCATION=$(command -v "$install_macos_prog_NAME")
