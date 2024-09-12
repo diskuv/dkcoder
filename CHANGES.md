@@ -4,6 +4,7 @@
 
 - Standard error is used consistently for logging in `./dk`
 - Use quiet `-q` option for `yum install` in `./dk` for Linux, and `--quiet --no-progress` for `apk add`
+- bugfix: Consistently use `-qq install --no-install-suggests` for apt-get install
 
 ## 0.4.0.2
 

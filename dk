@@ -568,9 +568,9 @@ install_linux_prog() {
       fi
     else
       if [ "$(id -u)" -eq 0 ]; then
-        run_maybe_quiet apt-get -q install -y "$install_linux_prog_PKG"
+        run_maybe_quiet apt-get -qq install -y --no-install-suggests "$install_linux_prog_PKG"
       else
-        echo "Running: sudo -q apt-get -qq install -y --no-install-suggests $install_linux_prog_PKG" >&2
+        echo "Running: sudo apt-get -qq install -y --no-install-suggests $install_linux_prog_PKG" >&2
         sudo apt-get -qq install -y --no-install-suggests "$install_linux_prog_PKG"
       fi
     fi
