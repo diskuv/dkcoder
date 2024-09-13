@@ -80,8 +80,9 @@ endif()
 #   Once a version is supported in [__DkRun_LTS_VERSIONS] it should be supported until _EOL_YYYY_MM_DD.
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
+#   The last LTS version _is_ the project version.
 set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3 V0_4) # do not erase: this can be parsed externally to discover project version. must be on single line!
-list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
+list(GET __DkRun_LTS_VERSIONS -1 __DkRun_LTS_VERSION) # ie. the latest Vx_y
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with
 # Visual Studio on Windows. That means they need the redistributable installed.
@@ -212,7 +213,7 @@ endfunction()
 # Testing? Set SOURCE_DATE_EPOCH environment variable to a future epoch time in seconds.
 function(__dkcoder_check_end_of_life)
     set(noValues)
-    set(singleValues LOGLEVEL EOL EOG QUIET)
+    set(singleValues LOGLEVEL VERSION EOL EOG QUIET)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -221,11 +222,11 @@ function(__dkcoder_check_end_of_life)
 
     if(${ARG_EOG} STRLESS now_YYYY_MM_DD)
         message(FATAL_ERROR "
-Problem: The `./dk` wrapper version is ${__dkrun_v_id} but the final
+Problem: The `./dk` version is ${ARG_VERSION} but the final
 date to upgrade (${ARG_EOG}) has past.
 
 DIDN'T WRITE THIS PROJECT? Ask the project author how to upgrade!
-    Often a convenient way to upgrade is:
+    Often a convenient way to try their latest code is:
 
     cd ${project_dir_NATIVE}
     git stash
@@ -234,7 +235,8 @@ DIDN'T WRITE THIS PROJECT? Ask the project author how to upgrade!
     git stash pop
 
 ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
-    your scripts, and then give it out to your users:
+    your scripts using a version greater than ${ARG_VERSION}, and
+    then give a new branch to your users:
 
     cd ${project_dir_NATIVE}
     ./dk dkml.wrapper.upgrade
@@ -251,12 +253,12 @@ ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
             set(pause_message "after a 1-min pause")
         endif()
         message(${ARG_LOGLEVEL} "
-Problem: The `./dk` wrapper version ${__dkrun_v_id} past its end-of-life on
+Problem: Support for `./dk` version ${ARG_VERSION} expired on
 ${ARG_EOL}. The scripts will continue ${pause_message} but
 you must upgrade by ${ARG_EOG} or the scripts will stop working.
 
 DIDN'T WRITE THIS PROJECT? Ask the project author how to upgrade!
-    Often a convenient way to upgrade is:
+    Often a convenient way to try their latest code is:
 
     cd ${project_dir_NATIVE}
     git stash
@@ -265,7 +267,8 @@ DIDN'T WRITE THIS PROJECT? Ask the project author how to upgrade!
     git stash pop
 
 ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
-    your scripts, and then give a new branch to your users:
+    your scripts using a version greater than ${ARG_VERSION}, and
+    then give a new branch to your users:
 
     cd ${project_dir_NATIVE}
     git switch --create name_of_your_new_branch
@@ -288,13 +291,13 @@ endfunction()
 #
 # Arguments:
 #   QUIET
-#   VERSION
+#   VERSION - `Env` or `V0_2`. `Project` is not valid.
 #   LOGLEVEL
 # Read-only Filesystem Outputs: (never modify the files or mutate the directories. On macOS part of a Bundle)
 # - DKCODER - location of the `dkcoder` executable
 # - DKCODER_VERSION - dotted form of DkCoder like 0.2.0.1
 # - DKCODER_RUN - location of the `DkCoder_Edge-Run.bc` bytecode executable (here "Edge" means the latest version for the VERSION; aka. the VERSION itself)
-# - DKCODER_RUN_VERSION - Env or V0_2. Whatever was used to launch in `./dk DkRun_V0_2.Run` (etc.)
+# - DKCODER_RUN_VERSION - `Env` or `V0_2`. Whatever was used to launch in `./dk DkRun_V0_2.Run` (etc.)
 # - DKCODER_HELPERS - location of bin directory or DkCoder.bundle/Contents/Helpers on macOS
 # - DKCODER_ETC - location of etc/dkcoder directory
 # - DKCODER_SITELIB - location of lib/ directory containing lib/ocaml/ and other libraries compatible with dkcoder
@@ -321,9 +324,6 @@ function(__dkcoder_install)
         set(version_major "${CMAKE_MATCH_1}")
         set(version_minor "${CMAKE_MATCH_2}")
         set(V_id "V${version_major}_${version_minor}")
-    elseif(ARG_VERSION STREQUAL "Project")
-        # ex. VProject -> V0_1
-        set(V_id "${__dkrun_v_id}")
     elseif(ARG_VERSION STREQUAL "Env")
         set(V_id "Env")
     else()
@@ -336,6 +336,7 @@ function(__dkcoder_install)
     set(eog "${__DkRun_${V_id}_EOG_YYYY_MM_DD}")
     __dkcoder_check_end_of_life(
         LOGLEVEL "${ARG_LOGLEVEL}"
+        VERSION "${V_id}"
         EOL "${eol}"
         EOG "${eog}"
         QUIET "${ARG_QUIET}")
@@ -625,7 +626,7 @@ function(__dkcoder_delegate)
         if(ARG_FULLY_QUALIFIED_MODULE STREQUAL Run)
             set(entryExec "${DKCODER_RUN}")
         else()
-            message(FATAL_ERROR "Problem: DkCoder only supports the Run entrypoint. Solution: Was there a typo? Try DkRun_${__dkrun_v_id}.Run instead.")
+            message(FATAL_ERROR "Problem: DkCoder only supports the Run entrypoint. Solution: Was there a typo? Try DkRun_${__DkRun_LTS_VERSION}.Run instead.")
         endif()
     else()
         # If not explicitly a built-in DkCoder entry then use the [Run] entry.
@@ -730,7 +731,7 @@ function(__parse_if_ocaml_command)
         if(isPrefix)
             set(${ARG_PACKAGE_NAMESPACE_VARIABLE} "Dk" PARENT_SCOPE)
             set(${ARG_PACKAGE_QUALIFIER_VARIABLE} "Run" PARENT_SCOPE)
-            set(${ARG_LIBRARY_VARIABLE} "${__dkrun_v_id}" PARENT_SCOPE)
+            set(${ARG_LIBRARY_VARIABLE} "${__DkRun_LTS_VERSION}" PARENT_SCOPE)
             set(${ARG_FULLY_QUALIFIED_MODULE_VARIABLE} "Run" PARENT_SCOPE)
             set(${ARG_SUCCESS_VARIABLE} ON PARENT_SCOPE)
             set(${ARG_PRE_ARGUMENTS_VARIABLE} "--" "${command}" PARENT_SCOPE)
@@ -823,12 +824,17 @@ Environment variables:
         #   Is the explicit version specified? That is, DkRun_V0_1.Run (etc.)?
         set(argument_list ${pre_arguments} ${FWD_UNPARSED_ARGUMENTS})
         if(package_namespace STREQUAL "Dk" AND package_qualifier STREQUAL "Run")
-            set(__dkrun_v_id "${library}") # ex. V0_1
+            # library: V0_1, Env, Project
+            if(library STREQUAL "Project")
+                set(__dkrun_v_id "${__DkRun_LTS_VERSION}")
+            else()
+                set(__dkrun_v_id "${library}")
+            endif()
         else()
             # No it is not DkRun_<Verson>.*. So use the latest LTS version available to this ./dk invocation.
             # The user can upgrade with `./dk dkml.wrapper.upgrade` to get newer versions when they
             # become available.
-            list(GET __DkRun_LTS_VERSIONS -1 __dkrun_v_id) # ie. the latest Vx_y
+            set(__dkrun_v_id "${__DkRun_LTS_VERSION}")
             # Add back in the <command>
             list(PREPEND argument_list ${command})
         endif()
