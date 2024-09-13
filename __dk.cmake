@@ -126,9 +126,9 @@ function(__dkcoder_install_vc_redist)
         endif()
     endif()
 
-    set(url "https://aka.ms/vs/17/release/vc_redist.${vcarch}.exe")
-    message(${ARG_LOGLEVEL} "Downloading Visual C++ Redistributable from ${url}")
-    file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe)
+    set(redist_URL "https://aka.ms/vs/17/release/vc_redist.${vcarch}.exe")
+    message(${ARG_LOGLEVEL} "Downloading Visual C++ Redistributable from ${redist_URL}")
+    file(DOWNLOAD ${redist_URL} ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe)
     execute_process(
         # https://github.com/aaronparker/vcredist/blob/main/VcRedist/VisualCRedistributables.json
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe /install /passive /norestart
@@ -371,39 +371,64 @@ function(__dkcoder_install)
         set(ocamlfind_conf "${DKCODER_HOME}/findlib.conf")
     endif()
 
+    # URL to download DkCoder if not installed
+    if(dkml_host_abi MATCHES "^windows_.*" OR dkml_host_abi MATCHES "^darwin_.*")
+        set(out_exp .zip)
+    else()
+        set(out_exp .tar.gz)
+    endif()
+    set(download_URL "${url_base}/stdexport-${dkml_host_abi}${out_exp}")
+
+    # Specs for downloading
+    if(download_URL MATCHES "^file://(.*)")
+        # local file. Nothing to download
+        set(download_DEST "${CMAKE_MATCH_1}")
+        set(download_REMOVE OFF)
+        set(download_LOCAL ON)
+        message(${ARG_LOGLEVEL} "Checksumming local DkCoder tarball")
+        file(SHA256 "${download_DEST}" download_SHA256)
+    else()
+        set(download_DEST "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}")
+        set(download_REMOVE ON)
+        set(download_LOCAL OFF)
+        set(download_SHA256)
+    endif()
+
+    # Find if DkCoder already installed
     set(hints "${DKCODER_HOME}/DkCoder.bundle/Contents/Helpers" "${DKCODER_HOME}/bin")
     set(find_program_ARGS NO_DEFAULT_PATH)
     find_program(DKCODER NAMES dkcoder HINTS ${hints} ${find_program_ARGS})
 
-    if(NOT DKCODER)
+    # Re-install if the file:// tarball has changed.
+    set(reinstall)
+    if(compile_version STREQUAL "Env")
+        if(EXISTS "${DKCODER_HOME}/.download.sha256")
+            file(STRINGS "${DKCODER_HOME}/.download.sha256" priordownload_SHA256 LIMIT_COUNT 1)
+            if(NOT priordownload_SHA256 STREQUAL "${download_SHA256}")
+                message(${ARG_LOGLEVEL} "Local DkCoder tarball checksum changed. Triggering re-installation")
+                set(reinstall ON)
+            endif()
+        else()
+            set(reinstall ON)
+        endif()
+    endif()
+
+    if(NOT DKCODER OR reinstall)
         # Download into ${DKCODER_HOME} (which is one of the HINTS)
         set(downloaded)
-
-        # URL
-        if(dkml_host_abi MATCHES "^windows_.*" OR dkml_host_abi MATCHES "^darwin_.*")
-            set(out_exp .zip)
-        else()
-            set(out_exp .tar.gz)
-        endif()
-        set(url "${url_base}/stdexport-${dkml_host_abi}${out_exp}")
 
         # Checksum? Always do it unless we are using the Env version
         set(expected_hash_ARGS)
         if(compile_version STREQUAL "Env")
-            message(${ARG_LOGLEVEL} "Downloading DkCoder locally from ${url}")
+            message(${ARG_LOGLEVEL} "Downloading DkCoder locally from ${download_URL}")
         else()
             set(expected_hash_ARGS EXPECTED_HASH "SHA256=${sha256_${dkml_host_abi}}")
-            message(${ARG_LOGLEVEL} "Downloading and sha256 validating DkCoder from ${url}")
+            message(${ARG_LOGLEVEL} "Downloading and sha256 validating DkCoder from ${download_URL}")
         endif()
 
         # Download
-        if(url MATCHES "^file://(.*)")
-            set(download_DEST "${CMAKE_MATCH_1}")
-            set(download_REMOVE OFF)
-        else()
-            set(download_DEST "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}")
-            set(download_REMOVE ON)
-            file(DOWNLOAD "${url}" "${download_DEST}" ${expected_hash_ARGS})
+        if(NOT download_LOCAL)
+            file(DOWNLOAD "${download_URL}" "${download_DEST}" ${expected_hash_ARGS})
         endif()
 
         # Clean
@@ -413,6 +438,10 @@ function(__dkcoder_install)
 
         # Extract
         message(${ARG_LOGLEVEL} "Extracting DkCoder")
+        #   Record file:// checksum so we know if it changes
+        if(download_SHA256)
+            file(CONFIGURE OUTPUT "${DKCODER_HOME}/.download.sha256" CONTENT "${download_SHA256}" @ONLY NEWLINE_STYLE UNIX)
+        endif()
         file(ARCHIVE_EXTRACT INPUT "${download_DEST}" DESTINATION "${DKCODER_HOME}")
 
         # Install prereq: Visual C++ Redistributable

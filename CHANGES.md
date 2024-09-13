@@ -6,6 +6,7 @@
 - Use quiet `-q` option for `yum install` in `./dk` for Linux, and `--quiet --no-progress` for `apk add`
 - bugfix: Consistently use `-qq install --no-install-suggests` for apt-get install
 - Support `DkRun_Project` in addition to `DkRun_Env` and `DkRun_V<n>_<m>`. The *project version* is whatever long-term supported version is embedded in `__dk.cmake`. Among other things, this simplifies vscode settings.json.
+- *For DkSDK subscribers.* Automatic re-install if the checksum on a `DKRUN_ENV_URL_BASE` locally-built DkCoder tarball has changed.
 
 ## 0.4.0.2
 
