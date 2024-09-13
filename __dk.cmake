@@ -245,7 +245,7 @@ ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
     git commit
 ")
     endif()
-    if(NOT QUIET AND ${ARG_EOL} STRLESS now_YYYY_MM_DD)
+    if(NOT ARG_QUIET AND ${ARG_EOL} STRLESS now_YYYY_MM_DD)
         # Pause no more than once a day!
         set(prompted "${CMAKE_CURRENT_BINARY_DIR}/eol/${now_YYYY_MM_DD}")
         set(pause_message "working")
