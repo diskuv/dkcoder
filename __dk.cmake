@@ -192,7 +192,7 @@ function(__dkcoder_abi)
             endif()
         endif()
     elseif(CMAKE_HOST_LINUX)
-        execute_process(COMMAND uname -m
+        execute_process(COMMAND /usr/bin/uname -m
                 OUTPUT_VARIABLE host_machine_type
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 COMMAND_ERROR_IS_FATAL ANY)
