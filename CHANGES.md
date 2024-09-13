@@ -7,6 +7,7 @@
 - bugfix: Consistently use `-qq install --no-install-suggests` for apt-get install
 - Support `DkRun_Project` in addition to `DkRun_Env` and `DkRun_V<n>_<m>`. The *project version* is whatever long-term supported version is embedded in `__dk.cmake`. Among other things, this simplifies vscode settings.json.
 - *For DkSDK subscribers.* Automatic re-install if the checksum on a `DKRUN_ENV_URL_BASE` locally-built DkCoder tarball has changed.
+- Allow `DKML_HOST_ABI` environment variable to influence which ABI is downloaded in `./dk`.
 
 ## 0.4.0.2
 

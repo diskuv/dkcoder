@@ -155,56 +155,92 @@ endfunction()
 
 function(__dkcoder_abi)
     set(noValues)
-    set(singleValues ABI_VARIABLE)
+    set(singleValues ABI_VARIABLE LOGLEVEL QUIET)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
+
+    # Default LOGLEVEL
+    if(NOT ARG_LOGLEVEL)
+        set(ARG_LOGLEVEL "STATUS")
+    endif()
 
     # Detect ABI (todo: cache it somewhere)
     set(solution "Solution: If you are a DkSDK subscriber and need a new platform, contact your DkSDK Support representative.")
     if(CMAKE_HOST_WIN32)
-        # On Windows CMAKE_HOST_SYSTEM_PROCESSOR = ENV:PROCESSOR_ARCHITECTURE
-        # Values: AMD64, IA64, ARM64, x86
-        # https://docs.microsoft.com/en-us/windows/win32/winprog64/wow64-implementation-details?redirectedfrom=MSDN#environment-variables
-        if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL X86)
+        if("$ENV{DKML_HOST_ABI}" STREQUAL windows_x86)
             set(dkml_host_abi windows_x86)
-        else()
+        elseif("$ENV{DKML_HOST_ABI}" STREQUAL windows_x86_64)
             set(dkml_host_abi windows_x86_64)
+        elseif("$ENV{DKML_HOST_ABI}" STREQUAL windows_arm64)
+            set(dkml_host_abi windows_arm64)
+        else()
+            if(NOT ARG_QUIET AND DEFINED ENV{DKML_HOST_ABI})
+                message(${ARG_LOGLEVEL} "WARNING: On Windows machines the environment variable DKML_HOST_ABI must be `windows_x86`, `windows_x86_64` or `windows_arm64`. It was ignored because it was: `$ENV{DKML_HOST_ABI}`")
+            endif()
+            # On Windows CMAKE_HOST_SYSTEM_PROCESSOR = ENV:PROCESSOR_ARCHITECTURE
+            # Values: AMD64, IA64, ARM64, x86
+            # https://docs.microsoft.com/en-us/windows/win32/winprog64/wow64-implementation-details?redirectedfrom=MSDN#environment-variables
+            if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL X86)
+                set(dkml_host_abi windows_x86)
+            else()
+                set(dkml_host_abi windows_x86_64)
+            endif()
         endif()
     elseif(CMAKE_HOST_APPLE)
-        # https://stackoverflow.com/a/69853058 for true ABI, not Rosetta
-        execute_process(COMMAND /usr/sbin/sysctl -n machdep.cpu.brand_string
-                OUTPUT_VARIABLE brand_string
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                COMMAND_ERROR_IS_FATAL ANY)
-        if(brand_string MATCHES "Apple M")
+        if("$ENV{DKML_HOST_ABI}" STREQUAL darwin_x86_64)
+            set(dkml_host_abi darwin_x86_64)
+        elseif("$ENV{DKML_HOST_ABI}" STREQUAL darwin_arm64)
             set(dkml_host_abi darwin_arm64)
         else()
-            execute_process(COMMAND /usr/bin/uname -m
+            if(NOT ARG_QUIET AND DEFINED ENV{DKML_HOST_ABI})
+                message(${ARG_LOGLEVEL} "WARNING: On Apple machines and devices the environment variable DKML_HOST_ABI must be `darwin_x86_64` or `darwin_arm64`. It was ignored because it was: `$ENV{DKML_HOST_ABI}`")
+            endif()
+            # https://stackoverflow.com/a/69853058 for true ABI, not Rosetta
+            execute_process(COMMAND /usr/sbin/sysctl -n machdep.cpu.brand_string
                     OUTPUT_VARIABLE brand_string
                     OUTPUT_STRIP_TRAILING_WHITESPACE
                     COMMAND_ERROR_IS_FATAL ANY)
-            if(host_machine_type STREQUAL x86_64)
-                set(dkml_host_abi darwin_x86_64)
-            elseif(host_machine_type STREQUAL arm64)
+            if(brand_string MATCHES "Apple M")
                 set(dkml_host_abi darwin_arm64)
             else()
-                message(FATAL_ERROR "Problem: Unfortunately, your macOS ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+                execute_process(COMMAND /usr/bin/uname -m
+                        OUTPUT_VARIABLE brand_string
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        COMMAND_ERROR_IS_FATAL ANY)
+                if(host_machine_type STREQUAL x86_64)
+                    set(dkml_host_abi darwin_x86_64)
+                elseif(host_machine_type STREQUAL arm64)
+                    set(dkml_host_abi darwin_arm64)
+                else()
+                    message(FATAL_ERROR "Problem: Unfortunately, your macOS/iOS ${host_machine_type} machine or device is currently not supported by this download script. ${solution}")
+                endif()
             endif()
         endif()
     elseif(CMAKE_HOST_LINUX)
-        execute_process(COMMAND /usr/bin/uname -m
-                OUTPUT_VARIABLE host_machine_type
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                COMMAND_ERROR_IS_FATAL ANY)
-        if(host_machine_type STREQUAL x86_64)
-            set(dkml_host_abi linux_x86_64)
-        elseif(host_machine_type STREQUAL i686)
+        if("$ENV{DKML_HOST_ABI}" STREQUAL linux_x86)
             set(dkml_host_abi linux_x86)
+        elseif("$ENV{DKML_HOST_ABI}" STREQUAL linux_x86_64)
+            set(dkml_host_abi linux_x86_64)
+        elseif("$ENV{DKML_HOST_ABI}" STREQUAL linux_arm64)
+            set(dkml_host_abi linux_arm64)
         else()
-            message(FATAL_ERROR "Problem: Your Linux ${host_machine_type} platform is currently not supported by this download script. ${solution}")
+            if(NOT ARG_QUIET AND DEFINED ENV{DKML_HOST_ABI})
+                message(${ARG_LOGLEVEL} "WARNING: On Linux machines and devices the environment variable DKML_HOST_ABI must be `linux_x86`, `linux_x86_64` or `linux_arm64`. It was ignored because it was: `$ENV{DKML_HOST_ABI}`")
+            endif()
+            execute_process(COMMAND /usr/bin/uname -m
+                    OUTPUT_VARIABLE host_machine_type
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    COMMAND_ERROR_IS_FATAL ANY)
+            if(host_machine_type STREQUAL x86_64)
+                set(dkml_host_abi linux_x86_64)
+            elseif(host_machine_type STREQUAL i686)
+                set(dkml_host_abi linux_x86)
+            else()
+                message(FATAL_ERROR "Problem: Your Linux ${host_machine_type} machine or device is currently not supported by this download script. ${solution}")
+            endif()
         endif()
     else()
-        message(FATAL_ERROR "Problem: DkCoder is only available on Windows, macOS and Linux. ${solution}")
+        message(FATAL_ERROR "Problem: DkCoder is only available on Windows, macOS/iOS and Linux. ${solution}")
     endif()
 
     set("${ARG_ABI_VARIABLE}" "${dkml_host_abi}" PARENT_SCOPE)
@@ -886,7 +922,10 @@ Environment variables:
         endif()
 
         # Detect ABI
-        __dkcoder_abi(ABI_VARIABLE abi)
+        __dkcoder_abi(
+            ABI_VARIABLE abi
+            LOGLEVEL "${__dkcoder_log_level}"
+            QUIET "${quiet}")
 
         # Do DkCoder install
         __dkcoder_install(
