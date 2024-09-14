@@ -24,6 +24,8 @@ REM 1. Microsoft way of getting around PowerShell permissions:
 REM    https://github.com/microsoft/vcpkg/blob/71422c627264daedcbcd46f01f1ed0dcd8460f1b/bootstrap-vcpkg.bat
 REM 2. Hygiene: Capitalize keywords, variables, commands, operators and options
 REM 3. Detect errors with `%ERRORLEVEL% EQU` (etc). https://ss64.com/nt/errorlevel.html
+REM 4. Use functions:
+REM    https://learn.openwaterfoundation.org/owf-learn-windows-shell/best-practices/best-practices/#use-functions-to-create-reusable-blocks-of-code
 
 REM Invoke-WebRequest guidelines
 REM 1. Use $ProgressPreference = 'SilentlyContinue' always. Terrible slowdown w/o it.
@@ -54,53 +56,19 @@ SET DK_ARG1=
 
 REM -------------- CMAKE --------------
 
-REM Check if present at <data>/cmake-VER/bin/cmake.exe
-IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
-    SET "DK_CMAKE_EXE=%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe"
-    GOTO ValidateCMake
-)
-
 REM Download CMAKE.EXE
 REM     Why not CMAKE.MSI? Because we don't want to mess up the user's existing
 REM     installation. `./dk` is meant to be isolated.
-IF %DK_QUIET% EQU 0 (
-    bitsadmin /transfer dkcoder-cmake /download /priority FOREGROUND ^
+IF NOT EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
+    CALL :downloadFile ^
+        cmake ^
+        "CMake %DK_CMAKE_VER%" ^
         "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
-        "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip"
-) ELSE (
-    bitsadmin /transfer dkcoder-cmake /download /priority FOREGROUND ^
-        "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
-        "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip" >NUL
+        cmake-%DK_CMAKE_VER%-windows-x86_64.zip ^
+        %DK_CKSUM_CMAKE%
+    REM On error the error message is already displayed.
+    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
 )
-IF %ERRORLEVEL% EQU 0 (
-    GOTO VerifyCMakeIntegrity
-)
-REM     Try PowerShell 3+ instead
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip -OutFile '%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip'"
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not download CMake %DK_CMAKE_VER%. Make sure that PowerShell is installed
-    ECHO.and has not been disabled by a corporate policy.
-    ECHO.
-    EXIT /B 1
-)
-REM     Integrity check
-:VerifyCMakeIntegrity
-FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip" sha256 ^| findstr /v hash`) DO (
-    SET "DK_CKSUM_ACTUAL=%%F"
-)
-IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_CMAKE%" (
-    GOTO Download7zr
-)
-ECHO.
-ECHO.Could not verify the integrity of CMake %DK_CMAKE_VER%.
-ECHO.Expected SHA-256 %DK_CKSUM_CMAKE%
-ECHO.but received %DK_CKSUM_ACTUAL%.
-ECHO.Make sure that you can access the Internet, and there is nothing
-ECHO.intercepting network traffic.
-ECHO.
-EXIT /B 1
 
 REM Download 7zr.exe (and then 7z*-extra.7z) to do unzipping.
 REM     Q: Why don't we use PowerShell `Expand-Archive`?
@@ -117,86 +85,28 @@ REM          from public download sites.
 REM     Q: Why redirect stdout to NUL?
 REM     Ans: It reduces the verbosity and errors will still be printed.
 REM          Confer: https://sourceforge.net/p/sevenzip/feature-requests/1623/#0554
-:Download7zr
-IF %DK_QUIET% EQU 0 (
-    bitsadmin /transfer dkcoder-7zr /download /priority FOREGROUND ^
+IF NOT EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
+    CALL :downloadFile ^
+        7zr ^
+        "7zr %DK_7Z_DOTVER%" ^
         "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
-        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe"
-) ELSE (
-    bitsadmin /transfer dkcoder-7zr /download /priority FOREGROUND ^
-        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
-        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" >NUL
+        7zr-%DK_7Z_DOTVER%.exe ^
+        %DK_CKSUM_7ZR%
+    REM On error the error message is already displayed.
+    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
 )
-IF %ERRORLEVEL% EQU 0 (
-    GOTO Verify7zrIntegrity
-)
-REM     Try PowerShell 3+ instead
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe -OutFile '%TEMP%\7zr-%DK_7Z_DOTVER%.exe'"
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not download 7zr %DK_7Z_DOTVER%. Make sure that PowerShell is installed
-    ECHO.and has not been disabled by a corporate policy.
-    ECHO.
-    EXIT /B 1
-)
-REM     Integrity check
-:Verify7zrIntegrity
-FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" sha256 ^| findstr /v hash`) DO (
-    SET "DK_CKSUM_ACTUAL=%%F"
-)
-IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_7ZR%" (
-    GOTO Download7zextra
-)
-ECHO.
-ECHO.Could not verify the integrity of 7zr %DK_7Z_DOTVER%.
-ECHO.Expected SHA-256 %DK_CKSUM_7ZR%
-ECHO.but received %DK_CKSUM_ACTUAL%.
-ECHO.Make sure that you can access the Internet, and there is nothing
-ECHO.intercepting network traffic.
-ECHO.
-EXIT /B 1
 
 REM Download 7z*-extra.7z to do unzipping.
-:Download7zextra
-IF %DK_QUIET% EQU 0 (
-    bitsadmin /transfer dkcoder-7zextra /download /priority FOREGROUND ^
+IF NOT EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
+    CALL :downloadFile ^
+        7zextra ^
+        "7z%DK_7Z_VER%-extra.7z" ^
         "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
-        "%TEMP%\7z%DK_7Z_VER%-extra.7z"
-) ELSE (
-    bitsadmin /transfer dkcoder-7zextra /download /priority FOREGROUND ^
-        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
-        "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
+        7z%DK_7Z_VER%-extra.7z ^
+        %DK_CKSUM_7ZEXTRA%
+    REM On error the error message is already displayed.
+    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
 )
-IF %ERRORLEVEL% EQU 0 (
-    GOTO Verify7zextraIntegrity
-)
-REM     Try PowerShell 3+ instead
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z -OutFile '%TEMP%\7z%DK_7Z_VER%-extra.7z'"
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not download 7z%DK_7Z_VER%-extra.7z. Make sure that PowerShell is installed
-    ECHO.and has not been disabled by a corporate policy.
-    ECHO.
-    EXIT /B 1
-)
-REM     Integrity check
-:Verify7zextraIntegrity
-FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\7z%DK_7Z_VER%-extra.7z" sha256 ^| findstr /v hash`) DO (
-    SET "DK_CKSUM_ACTUAL=%%F"
-)
-IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_7ZEXTRA%" (
-    GOTO Extract7zextra
-)
-ECHO.
-ECHO.Could not verify the integrity of 7z%DK_7Z_VER%-extra.7z.
-ECHO.Expected SHA-256 %DK_CKSUM_7ZEXTRA%
-ECHO.but received %DK_CKSUM_ACTUAL%.
-ECHO.Make sure that you can access the Internet, and there is nothing
-ECHO.intercepting network traffic.
-ECHO.
-EXIT /B 1
 
 REM Extract 7z*-extra.7z
 :Extract7zextra
@@ -240,51 +150,17 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM -------------- NINJA --------------
 
-REM Check if present at <data>/ninja-VER/bin/ninja.exe
-IF EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe (
-    SET "DK_NINJA_EXE=%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe"
-    GOTO ValidateNinja
-)
-
 REM Download NINJA.EXE
-IF %DK_QUIET% EQU 0 (
-    bitsadmin /transfer dkcoder-ninja /download /priority FOREGROUND ^
+IF NOT EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe (
+    CALL :downloadFile ^
+        ninja ^
+        "Ninja %DK_NINJA_VER%" ^
         "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
-        "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip"
-) ELSE (
-    bitsadmin /transfer dkcoder-ninja /download /priority FOREGROUND ^
-        "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
-        "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip" >NUL
+        ninja-%DK_NINJA_VER%-windows-x86_64.zip ^
+        %DK_CKSUM_NINJA%
+    REM On error the error message is already displayed.
+    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
 )
-IF %ERRORLEVEL% EQU 0 (
-    GOTO VerifyNinjaIntegrity
-)
-REM     Try PowerShell 3+ instead
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip -OutFile '%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip'"
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not download Ninja %DK_NINJA_VER%. Make sure that PowerShell is installed
-    ECHO.and has not been disabled by a corporate policy.
-    ECHO.
-    EXIT /B 1
-)
-REM     Integrity check
-:VerifyNinjaIntegrity
-FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip" sha256 ^| findstr /v hash`) DO (
-    SET "DK_CKSUM_ACTUAL=%%F"
-)
-IF "%DK_CKSUM_ACTUAL%" == "%DK_CKSUM_NINJA%" (
-    GOTO UnzipNinjaZip
-)
-ECHO.
-ECHO.Could not verify the integrity of Ninja %DK_NINJA_VER%.
-ECHO.Expected SHA-256 %DK_CKSUM_NINJA%
-ECHO.but received %DK_CKSUM_ACTUAL%.
-ECHO.Make sure that you can access the Internet, and there is nothing
-ECHO.intercepting network traffic.
-ECHO.
-EXIT /B 1
 
 REM Unzip NINJA.EXE (use PowerShell; could download unzip.exe and sha256sum.exe as well in case corporate policy)
 :UnzipNinjaZip
@@ -386,3 +262,58 @@ IF EXIST "%DK_WORKDIR%\%DK_NONCE%.cmd" CALL "%DK_WORKDIR%\%DK_NONCE%.cmd" %*
 SET CALLERROR=%ERRORLEVEL%
 IF EXIST "%DK_WORKDIR%\%DK_NONCE%.cmd" DEL /Q /F "%DK_WORKDIR%\%DK_NONCE%.cmd"
 IF %CALLERROR% NEQ 0 EXIT /B %CALLERROR%
+
+REM ------ FUNCTION [downloadFile]
+REM Usage: downloadFile ID "FILE DESCRIPTION" "URL" FILENAME SHA256
+REM
+REM Procedure:
+REM   1. Download from <quoted> URL ARG3 (example: "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip")
+REM      to the temp directory with filename ARG4 (example: something-x64.zip)
+REM   2. SHA-256 integrity check from ARG5 (example: 524b344a1a9a55005eaf868d991e090ab8ce07fa109f1820d40e74642e289abc)
+REM
+REM Error codes:
+REM   1 - Can't download from the URL.
+REM   2 - SHA-256 verification failed.
+
+:downloadFile
+
+REM 1. Download from <quoted> URL ARG3 (example: "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip")
+REM    to the temp directory with filename ARG4 (example: something-x64.zip)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest %3 -OutFile '%TEMP%\%4'"
+IF %ERRORLEVEL% NEQ 0 (
+    REM Fallback to BITSADMIN because sometimes corporate policy does not allow executing PowerShell.
+    REM BITSADMIN overwhelms the console so user-friendly to do PowerShell then BITSADMIN.
+    IF %DK_QUIET% EQU 0 (
+        BITSADMIN /TRANSFER dkcoder-%1 /DOWNLOAD /PRIORITY FOREGROUND ^
+            %3 "%TEMP%\%4"
+    ) ELSE (
+        BITSADMIN /TRANSFER dkcoder-%1 /DOWNLOAD /PRIORITY FOREGROUND ^
+            %3 "%TEMP%\%4" >NUL
+    )
+    REM Short-circuit return with error code from function if can't download.
+    IF %ERRORLEVEL% NEQ 0 (
+        ECHO.
+        ECHO.Could not download %2.
+        ECHO.
+        EXIT /B 1
+    )
+)
+
+REM 2. SHA-256 integrity check from ARG5 (example: 524b344a1a9a55005eaf868d991e090ab8ce07fa109f1820d40e74642e289abc)
+FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\%4" sha256 ^| findstr /v hash`) DO (
+    SET "DK_CKSUM_ACTUAL=%%F"
+)
+IF /I NOT "%DK_CKSUM_ACTUAL%" == "%5" (
+    ECHO.
+    ECHO.Could not verify the integrity of %2.
+    ECHO.Expected SHA-256 %5
+    ECHO.but received %DK_CKSUM_ACTUAL%.
+    ECHO.Make sure that you can access the Internet, and there is nothing
+    ECHO.intercepting network traffic.
+    ECHO.
+    EXIT /B 2
+)
+
+REM Return from [downloadFile]
+EXIT /B 0
