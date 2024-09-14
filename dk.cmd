@@ -54,17 +54,7 @@ SET DK_ARG1=
 
 REM -------------- CMAKE --------------
 
-REM Find CMAKE.EXE
-where.exe /q cmake.exe >NUL 2>NUL
-IF %ERRORLEVEL% NEQ 0 (
-    goto FindDownloadedCMake
-)
-FOR /F "tokens=* usebackq" %%F IN (`where.exe cmake.exe`) DO (
-    SET "DK_CMAKE_EXE=%%F"
-)
-
 REM Check if present at <data>/cmake-VER/bin/cmake.exe
-:FindDownloadedCMake
 IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
     SET "DK_CMAKE_EXE=%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe"
     GOTO ValidateCMake
@@ -250,17 +240,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM -------------- NINJA --------------
 
-REM Find NINJA.EXE
-where.exe /q ninja.exe >NUL 2>NUL
-IF %ERRORLEVEL% NEQ 0 (
-    goto FindDownloadedNinja
-)
-FOR /F "tokens=* usebackq" %%F IN (`where.exe ninja.exe`) DO (
-    SET "DK_NINJA_EXE=%%F"
-)
-
 REM Check if present at <data>/ninja-VER/bin/ninja.exe
-:FindDownloadedNinja
 IF EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe (
     SET "DK_NINJA_EXE=%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe"
     GOTO ValidateNinja
