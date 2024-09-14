@@ -23,6 +23,7 @@ REM Coding guidelines
 REM 1. Microsoft way of getting around PowerShell permissions:
 REM    https://github.com/microsoft/vcpkg/blob/71422c627264daedcbcd46f01f1ed0dcd8460f1b/bootstrap-vcpkg.bat
 REM 2. Hygiene: Capitalize keywords, variables, commands, operators and options
+REM 3. Detect errors with `%ERRORLEVEL% EQU` (etc). https://ss64.com/nt/errorlevel.html
 
 REM Invoke-WebRequest guidelines
 REM 1. Use $ProgressPreference = 'SilentlyContinue' always. Terrible slowdown w/o it.
@@ -72,7 +73,7 @@ IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
 REM Download CMAKE.EXE
 REM     Why not CMAKE.MSI? Because we don't want to mess up the user's existing
 REM     installation. `./dk` is meant to be isolated.
-IF %DK_QUIET% == 0 (
+IF %DK_QUIET% EQU 0 (
     bitsadmin /transfer dkcoder-cmake /download /priority FOREGROUND ^
         "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
         "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip"
@@ -127,7 +128,7 @@ REM     Q: Why redirect stdout to NUL?
 REM     Ans: It reduces the verbosity and errors will still be printed.
 REM          Confer: https://sourceforge.net/p/sevenzip/feature-requests/1623/#0554
 :Download7zr
-IF %DK_QUIET% == 0 (
+IF %DK_QUIET% EQU 0 (
     bitsadmin /transfer dkcoder-7zr /download /priority FOREGROUND ^
         "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
         "%TEMP%\7zr-%DK_7Z_DOTVER%.exe"
@@ -168,7 +169,7 @@ EXIT /B 1
 
 REM Download 7z*-extra.7z to do unzipping.
 :Download7zextra
-IF %DK_QUIET% == 0 (
+IF %DK_QUIET% EQU 0 (
     bitsadmin /transfer dkcoder-7zextra /download /priority FOREGROUND ^
         "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
         "%TEMP%\7z%DK_7Z_VER%-extra.7z"
@@ -266,7 +267,7 @@ IF EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe (
 )
 
 REM Download NINJA.EXE
-IF %DK_QUIET% == 0 (
+IF %DK_QUIET% EQU 0 (
     bitsadmin /transfer dkcoder-ninja /download /priority FOREGROUND ^
         "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
         "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip"
