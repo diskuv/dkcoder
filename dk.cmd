@@ -17,14 +17,15 @@ REM Recommendation: Place this file in source control.
 REM The canonical way to run this script is: ./dk
 REM That works in Powershell on Windows, and in Unix. Copy-and-paste works!
 
-SETLOCAL
+SETLOCAL ENABLEDELAYEDEXPANSION
 
 REM Coding guidelines
 REM 1. Microsoft way of getting around PowerShell permissions:
 REM    https://github.com/microsoft/vcpkg/blob/71422c627264daedcbcd46f01f1ed0dcd8460f1b/bootstrap-vcpkg.bat
 REM 2. Hygiene: Capitalize keywords, variables, commands, operators and options
 REM 3. Detect errors with `%ERRORLEVEL% EQU` (etc). https://ss64.com/nt/errorlevel.html
-REM 4. Use functions:
+REM 3. In nested blocks like `IF EXIST xxx ( ... )` use delayed !ERRORLEVEL!. https://stackoverflow.com/a/4368104/21513816
+REM 4. Use functions ("subroutines"):
 REM    https://learn.openwaterfoundation.org/owf-learn-windows-shell/best-practices/best-practices/#use-functions-to-create-reusable-blocks-of-code
 
 REM Invoke-WebRequest guidelines
@@ -48,6 +49,8 @@ SET DK_CKSUM_CMAKE=d129425d569140b729210f3383c246dec19c4183f7d0afae1837044942da3
 SET DK_CKSUM_NINJA=524b344a1a9a55005eaf868d991e090ab8ce07fa109f1820d40e74642e289abc
 
 REM --------- Quiet Detection ---------
+REM Enabled? If suffix of the first argument is "Quiet".
+REM Example: DkRun_Project.RunQuiet
 
 SET DK_ARG1=%1
 SET DK_QUIET=0
@@ -56,88 +59,38 @@ SET DK_ARG1=
 
 REM -------------- CMAKE --------------
 
-REM Download CMAKE.EXE
+REM Download cmake-xxx.zip
 REM     Why not CMAKE.MSI? Because we don't want to mess up the user's existing
 REM     installation. `./dk` is meant to be isolated.
-IF NOT EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
+IF NOT EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
+    IF %DK_QUIET% EQU 0 ECHO.cmake prerequisite:
     CALL :downloadFile ^
         cmake ^
         "CMake %DK_CMAKE_VER%" ^
         "https://github.com/Kitware/CMake/releases/download/v%DK_CMAKE_VER%/cmake-%DK_CMAKE_VER%-windows-x86_64.zip" ^
         cmake-%DK_CMAKE_VER%-windows-x86_64.zip ^
         %DK_CKSUM_CMAKE%
-    REM On error the error message is already displayed.
-    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
+    REM On error the error message was already displayed.
+    IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 )
 
-REM Download 7zr.exe (and then 7z*-extra.7z) to do unzipping.
-REM     Q: Why don't we use PowerShell `Expand-Archive`?
-REM     Ans1: It is **insanely** slow. In Windows Sandbox it takes seven (7) MINUTES for
-REM           CMake 3.28.1 (45,161,877 bytes). However in Windows Sandbox it
-REM           takes seven (7) SECONDS to unzip using 7-Zip.
-REM     Ans2: May be corporate policy to not allow PowerShell.
-REM     Q: Can't we just download 7za.exe to do unzipping?
-REM     Ans: That needs a dll so we would need two downloads regardless.
-REM          7zr.exe can do un7z of 7z*-extra.7z which is 2 downloads as well.
-REM          I guess we could repackage cmake.zip as cmake.7z and publish to GitLab CI.
-REM          But it is easier to audit this using 7zr.exe and 7z*-extra.7z software
-REM          from public download sites.
-REM     Q: Why redirect stdout to NUL?
-REM     Ans: It reduces the verbosity and errors will still be printed.
-REM          Confer: https://sourceforge.net/p/sevenzip/feature-requests/1623/#0554
-IF NOT EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
-    CALL :downloadFile ^
-        7zr ^
-        "7zr %DK_7Z_DOTVER%" ^
-        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
-        7zr-%DK_7Z_DOTVER%.exe ^
-        %DK_CKSUM_7ZR%
-    REM On error the error message is already displayed.
-    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
-)
+REM Unzip cmake-xxx.zip
+IF NOT EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
+    REM Remove any former partially completed extraction
+    IF EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64" (
+        RMDIR /S /Q %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64
+    )
 
-REM Download 7z*-extra.7z to do unzipping.
-IF NOT EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe (
-    CALL :downloadFile ^
-        7zextra ^
-        "7z%DK_7Z_VER%-extra.7z" ^
-        "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
-        7z%DK_7Z_VER%-extra.7z ^
-        %DK_CKSUM_7ZEXTRA%
-    REM On error the error message is already displayed.
-    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
-)
-
-REM Extract 7z*-extra.7z
-:Extract7zextra
-IF EXIST "%DK_SHARE%\7z%DK_7Z_VER%-extra" (
-    RMDIR /S /Q "%DK_SHARE%\7z%DK_7Z_VER%-extra"
-)
-"%TEMP%\7zr-%DK_7Z_DOTVER%.exe" x -o"%DK_SHARE%\7z%DK_7Z_VER%-extra" "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not extract 7z%DK_7Z_VER%-extra.7z.
-    ECHO.
-    EXIT /B 1
-)
-GOTO UnzipCMakeZip
-
-REM Unzip CMAKE.EXE (use PowerShell; could download unzip.exe and sha256sum.exe as well in case corporate policy)
-:UnzipCMakeZip
-IF EXIST %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64 (
-    RMDIR /S /Q %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64
-)
-"%DK_SHARE%\7z%DK_7Z_VER%-extra\7za" x -o"%DK_SHARE%" "%TEMP%\cmake-%DK_CMAKE_VER%-windows-x86_64.zip" >NUL
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not unzip CMake %DK_CMAKE_VER%.
-    ECHO.
-    EXIT /B 1
+    CALL :unzipFile ^
+        "CMake %DK_CMAKE_VER%" ^
+        cmake-%DK_CMAKE_VER%-windows-x86_64.zip ^
+        "%DK_SHARE%"
+    REM On error the error message was already displayed.
+    IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 )
 SET "DK_CMAKE_EXE=%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe"
 
 REM Validate cmake.exe
-:ValidateCMake
 "%DK_CMAKE_EXE%" -version >NUL 2>NUL
 if %ERRORLEVEL% NEQ 0 (
 	ECHO.
@@ -150,34 +103,31 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM -------------- NINJA --------------
 
-REM Download NINJA.EXE
-IF NOT EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe (
+REM Download ninja-win.zip
+IF NOT EXIST "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
+    IF %DK_QUIET% EQU 0 ECHO.ninja prerequisite:
     CALL :downloadFile ^
         ninja ^
         "Ninja %DK_NINJA_VER%" ^
         "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip" ^
         ninja-%DK_NINJA_VER%-windows-x86_64.zip ^
         %DK_CKSUM_NINJA%
-    REM On error the error message is already displayed.
-    IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
+    REM On error the error message was already displayed.
+    IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 )
 
-REM Unzip NINJA.EXE (use PowerShell; could download unzip.exe and sha256sum.exe as well in case corporate policy)
-:UnzipNinjaZip
-IF EXIST %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64 (
-    RMDIR /S /Q %DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64
-)
-"%DK_SHARE%\7z%DK_7Z_VER%-extra\7za" x -o"%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin" "%TEMP%\ninja-%DK_NINJA_VER%-windows-x86_64.zip" >NUL
-IF %ERRORLEVEL% NEQ 0 (
-    ECHO.
-    ECHO.Could not unzip Ninja %DK_NINJA_VER%.
-    ECHO.
-    EXIT /B 1
+REM Unzip ninja-win.zip
+IF NOT EXIST "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
+    CALL :unzipFile ^
+        "Ninja %DK_NINJA_VER%" ^
+        ninja-%DK_NINJA_VER%-windows-x86_64.zip ^
+        "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin"
+    REM On error the error message was already displayed.
+    IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 )
 SET "DK_NINJA_EXE=%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe"
 
 REM Validate ninja.exe
-:ValidateNinja
 "%DK_NINJA_EXE%" --version >NUL 2>NUL
 if %ERRORLEVEL% NEQ 0 (
 	ECHO.
@@ -261,9 +211,9 @@ IF EXIST "%DK_WORKDIR%\%DK_NONCE%.cmd" CALL "%DK_WORKDIR%\%DK_NONCE%.cmd" %*
 @ECHO OFF
 SET CALLERROR=%ERRORLEVEL%
 IF EXIST "%DK_WORKDIR%\%DK_NONCE%.cmd" DEL /Q /F "%DK_WORKDIR%\%DK_NONCE%.cmd"
-IF %CALLERROR% NEQ 0 EXIT /B %CALLERROR%
+EXIT /B %CALLERROR%
 
-REM ------ FUNCTION [downloadFile]
+REM ------ SUBROUTINE [downloadFile]
 REM Usage: downloadFile ID "FILE DESCRIPTION" "URL" FILENAME SHA256
 REM
 REM Procedure:
@@ -277,10 +227,15 @@ REM   2 - SHA-256 verification failed.
 
 :downloadFile
 
+REM Replace "DESTINATION" double quotes with single quotes
+SET DK_DOWNLOAD_URL=%3
+SET DK_DOWNLOAD_URL=%DK_DOWNLOAD_URL:"='%
+
 REM 1. Download from <quoted> URL ARG3 (example: "https://github.com/ninja-build/ninja/releases/download/v%DK_NINJA_VER%/ninja-win.zip")
 REM    to the temp directory with filename ARG4 (example: something-x64.zip)
+IF %DK_QUIET% EQU 0 ECHO.  Downloading %3
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest %3 -OutFile '%TEMP%\%4'"
+    "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest %DK_DOWNLOAD_URL% -OutFile '%TEMP%\%4'" >NUL
 IF %ERRORLEVEL% NEQ 0 (
     REM Fallback to BITSADMIN because sometimes corporate policy does not allow executing PowerShell.
     REM BITSADMIN overwhelms the console so user-friendly to do PowerShell then BITSADMIN.
@@ -292,7 +247,7 @@ IF %ERRORLEVEL% NEQ 0 (
             %3 "%TEMP%\%4" >NUL
     )
     REM Short-circuit return with error code from function if can't download.
-    IF %ERRORLEVEL% NEQ 0 (
+    IF !ERRORLEVEL! NEQ 0 (
         ECHO.
         ECHO.Could not download %2.
         ECHO.
@@ -301,6 +256,7 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 
 REM 2. SHA-256 integrity check from ARG5 (example: 524b344a1a9a55005eaf868d991e090ab8ce07fa109f1820d40e74642e289abc)
+IF %DK_QUIET% EQU 0 ECHO.  Performing SHA-256 validation of %4
 FOR /F "tokens=* usebackq" %%F IN (`certutil -hashfile "%TEMP%\%4" sha256 ^| findstr /v hash`) DO (
     SET "DK_CKSUM_ACTUAL=%%F"
 )
@@ -316,4 +272,94 @@ IF /I NOT "%DK_CKSUM_ACTUAL%" == "%5" (
 )
 
 REM Return from [downloadFile]
+EXIT /B 0
+
+REM ------ SUBROUTINE [unzipFile]
+REM Usage: unzipFile "FILE DESCRIPTION" ZIPFILE "DESTINATION"
+REM
+REM Procedure:
+REM   1. Use PowerShell `Expand-Archive` to expand zipfile ARG2 (example: something-x64.zip)
+REM      in the temp directory to the destination directory <quoted> ARG3 (example: %DK_SHARE%\some-folder).
+REM   2. Fallback on failure to:
+REM   2a. Downloading 7zip
+REM   2b. Use 7za to unzip
+REM
+REM Error codes:
+REM   3 - Could not extract the 7z "extra" package.
+REM   4 - Could not unzip the file.
+
+:unzipFile
+
+REM Replace "DESTINATION" double quotes with single quotes
+SET DK_UNZIP_DEST=%3
+SET DK_UNZIP_DEST=%DK_UNZIP_DEST:"='%
+
+REM 1. Use PowerShell `Expand-Archive` to expand zipfile ARG2 (example: something-x64.zip)
+REM    in the temp directory to the destination directory ARG3 (example: %DK_SHARE%\some-folder).
+IF %DK_QUIET% EQU 0 ECHO.  Unzipping %2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$ProgressPreference = 'SilentlyContinue'; Expand-Archive -Path '%TEMP%\%2' -DestinationPath %DK_UNZIP_DEST% -Force" >NUL
+IF %ERRORLEVEL% NEQ 0 (
+    REM 2. Fallback on failure to:
+    IF %DK_QUIET% EQU 0 ECHO.  PowerShell failed to unzip. Will use 7za instead.
+
+    REM 2a. Downloading 7z
+    IF NOT EXIST "%DK_SHARE%\7z%DK_7Z_VER%-extra\7za.exe" (
+        REM Download 7zr.exe (and then 7z*-extra.7z) to do unzipping.
+        REM     Q: Can't we just download 7za.exe to do unzipping?
+        REM     Ans: That needs a dll so we would need two downloads regardless.
+        REM          7zr.exe can do un7z of 7z*-extra.7z which is 2 downloads as well.
+        REM          I guess we could repackage cmake.zip as cmake.7z and publish to GitLab CI.
+        REM          But it is easier to audit this using 7zr.exe and 7z*-extra.7z software
+        REM          from public download sites.
+        REM     Q: Why redirect stdout to NUL?
+        REM     Ans: It reduces the verbosity and errors will still be printed.
+        REM          Confer: https://sourceforge.net/p/sevenzip/feature-requests/1623/#0554
+        IF %DK_QUIET% EQU 0 ECHO.7za prerequisite:
+        CALL :downloadFile ^
+            7zr ^
+            "7zr %DK_7Z_DOTVER%" ^
+            "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7zr.exe" ^
+            7zr-%DK_7Z_DOTVER%.exe ^
+            %DK_CKSUM_7ZR%
+        REM On error the error message was already displayed.
+        IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
+
+        REM Download 7z*-extra.7z to do unzipping.
+        CALL :downloadFile ^
+            7zextra ^
+            "7z%DK_7Z_VER%-extra.7z" ^
+            "https://github.com/ip7z/7zip/releases/download/%DK_7Z_DOTVER%/7z%DK_7Z_VER%-extra.7z" ^
+            7z%DK_7Z_VER%-extra.7z ^
+            %DK_CKSUM_7ZEXTRA%
+        REM On error the error message was already displayed.
+        IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
+
+        REM Extract 7z*-extra.7z
+        IF EXIST "%DK_SHARE%\7z%DK_7Z_VER%-extra" (
+            RMDIR /S /Q "%DK_SHARE%\7z%DK_7Z_VER%-extra"
+        )
+        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" x -o"%DK_SHARE%\7z%DK_7Z_VER%-extra" "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
+        IF !ERRORLEVEL! NEQ 0 (
+            ECHO.
+            ECHO.Could not extract 7z%DK_7Z_VER%-extra.7z.
+            ECHO.
+            EXIT /B 3
+        )
+    )
+
+    REM 2b. Use 7za to unzip
+    IF %DK_QUIET% EQU 0 ECHO.  Redoing unzip of %2 with 7za.
+    "%DK_SHARE%\7z%DK_7Z_VER%-extra\7za" x -o%3 "%TEMP%\%2" >NUL
+
+    REM Short-circuit return with error code from function if can't download.
+    IF !ERRORLEVEL! NEQ 0 (
+        ECHO.
+        ECHO.Could not unzip %1.
+        ECHO.
+        EXIT /B 4
+    )
+)
+
+REM Return from [unzipFile]
 EXIT /B 0
