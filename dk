@@ -479,17 +479,22 @@ PROJ_DIR=$(dirname "$0")
 PROJ_DIR=$(cd "$PROJ_DIR" && pwd)
 cd "$PROJ_DIR"
 
-# --- Tool directory selection ---
+# --- DkCoder data home ---
 
 tools_dir=
 tools_name=dkcoder
-#   1. Check if CI since many CI providers can only cache content in a subdirectory
+#   1. Check DKCODER_DATA_HOME environment variable.
+if [ -z "$tools_dir" ] && [ -n "${DKCODER_DATA_HOME:-}" ]; then
+  install -d "$DKCODER_DATA_HOME"
+  tools_dir="$DKCODER_DATA_HOME"
+fi
+#   2. Check if CI since many CI providers can only cache content in a subdirectory
 #      of the project.
 if [ -z "$tools_dir" ] && [ "${CI:-}" = true ]; then
-  install -d "$PROJ_DIR/.tools"
-  tools_dir="$PROJ_DIR/.tools"
+  install -d "$PROJ_DIR/.dkcoder"
+  tools_dir="$PROJ_DIR/.dkcoder"
 fi
-#   2. Check in locations rooted under /opt/diskuv
+#   3. Check in locations rooted under /opt/diskuv
 #      We look under a /opt/diskuv early because
 #      - Especially important for WSL2 to use a pure Linux filesystem (ext4) for
 #        best performance.
@@ -507,7 +512,7 @@ if [ -z "$tools_dir" ] && [ -w "/opt/diskuv/usr/share" ]; then
   install -d "/opt/diskuv/usr/share/$tools_name"
   tools_dir="/opt/diskuv/usr/share/$tools_name"
 fi
-#   3. Check in the conventional locations rooted under /
+#   4. Check in the conventional locations rooted under /
 if [ -z "$tools_dir" ] && [ -n "${XDG_DATA_HOME:-}" ] && [ -w "$XDG_DATA_HOME" ]; then
   install -d "$XDG_DATA_HOME/$tools_name"
   tools_dir="$XDG_DATA_HOME/$tools_name"
@@ -516,9 +521,9 @@ if [ -z "$tools_dir" ] && [ -n "${HOME:-}" ] && [ -w "$HOME" ]; then
   install -d "$HOME/.local/share/$tools_name"
   tools_dir="$HOME/.local/share/$tools_name"
 fi
-#   4. Validate
+#   5. Validate
 if [ -z "$tools_dir" ]; then
-  echo "FATAL: Could not find a location to install the tools necessary for this project." >&2
+  echo "FATAL: Could not find a location to install DkCoder." >&2
   echo "  ...: Make sure you have a home directory and that it is write-able, or define" >&2
   echo "  ...: the environment variable XDG_DATA_HOME in a shell profile script after" >&2
   echo "  ...: creating the \$XDG_DATA_HOME directory." >&2
@@ -890,6 +895,7 @@ cd "$PROJ_DIR"
 "$cmake_bindir/cmake" \
   -D CMAKE_GENERATOR=Ninja -D CMAKE_MAKE_PROGRAM="$NINJA_EXE" \
   -D "DKCODER_PWD:FILEPATH=$dk_pwd" \
+  -D "DKCODER_DATA_HOME:FILEPATH=$tools_dir" \
   -D "DKCODER_WORKDIR:FILEPATH=$dk_work" \
   -D "DKCODER_NONCE:STRING=$dk_nonce" \
   -D "DKCODER_TTY:STRING=$dk_tty" \

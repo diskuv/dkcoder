@@ -39,7 +39,6 @@ SET DK_7Z_VER=%DK_7Z_MAJVER%%DK_7Z_MINVER%
 SET DK_CMAKE_VER=3.25.3
 SET DK_NINJA_VER=1.11.1
 SET DK_BUILD_TYPE=Release
-SET DK_SHARE=%LOCALAPPDATA%\Programs\DkCoder
 SET DK_PROJ_DIR=%~dp0
 SET DK_PWD=%CD%
 
@@ -57,12 +56,20 @@ SET DK_QUIET=0
 IF "%DK_ARG1:~-5%" == "Quiet" SET DK_QUIET=1
 SET DK_ARG1=
 
+REM --------- Data Home ---------
+
+IF "%DKCODER_DATA_HOME%" == "" (
+    SET DK_DATA_HOME=%LOCALAPPDATA%\Programs\DkCoder
+) ELSE (
+    SET DK_DATA_HOME=%DKCODER_DATA_HOME%
+)
+
 REM -------------- CMAKE --------------
 
 REM Download cmake-xxx.zip
 REM     Why not CMAKE.MSI? Because we don't want to mess up the user's existing
 REM     installation. `./dk` is meant to be isolated.
-IF NOT EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
+IF NOT EXIST "%DK_DATA_HOME%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
     IF %DK_QUIET% EQU 0 ECHO.cmake prerequisite:
     CALL :downloadFile ^
         cmake ^
@@ -75,20 +82,20 @@ IF NOT EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
 )
 
 REM Unzip cmake-xxx.zip
-IF NOT EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
+IF NOT EXIST "%DK_DATA_HOME%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe" (
     REM Remove any former partially completed extraction
-    IF EXIST "%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64" (
-        RMDIR /S /Q %DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64
+    IF EXIST "%DK_DATA_HOME%\cmake-%DK_CMAKE_VER%-windows-x86_64" (
+        RMDIR /S /Q %DK_DATA_HOME%\cmake-%DK_CMAKE_VER%-windows-x86_64
     )
 
     CALL :unzipFile ^
         "CMake %DK_CMAKE_VER%" ^
         cmake-%DK_CMAKE_VER%-windows-x86_64.zip ^
-        "%DK_SHARE%"
+        "%DK_DATA_HOME%"
     REM On error the error message was already displayed.
     IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 )
-SET "DK_CMAKE_EXE=%DK_SHARE%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe"
+SET "DK_CMAKE_EXE=%DK_DATA_HOME%\cmake-%DK_CMAKE_VER%-windows-x86_64\bin\cmake.exe"
 
 REM Validate cmake.exe
 "%DK_CMAKE_EXE%" -version >NUL 2>NUL
@@ -104,7 +111,7 @@ if %ERRORLEVEL% NEQ 0 (
 REM -------------- NINJA --------------
 
 REM Download ninja-win.zip
-IF NOT EXIST "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
+IF NOT EXIST "%DK_DATA_HOME%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
     IF %DK_QUIET% EQU 0 ECHO.ninja prerequisite:
     CALL :downloadFile ^
         ninja ^
@@ -117,15 +124,15 @@ IF NOT EXIST "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
 )
 
 REM Unzip ninja-win.zip
-IF NOT EXIST "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
+IF NOT EXIST "%DK_DATA_HOME%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe" (
     CALL :unzipFile ^
         "Ninja %DK_NINJA_VER%" ^
         ninja-%DK_NINJA_VER%-windows-x86_64.zip ^
-        "%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin"
+        "%DK_DATA_HOME%\ninja-%DK_NINJA_VER%-windows-x86_64\bin"
     REM On error the error message was already displayed.
     IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 )
-SET "DK_NINJA_EXE=%DK_SHARE%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe"
+SET "DK_NINJA_EXE=%DK_DATA_HOME%\ninja-%DK_NINJA_VER%-windows-x86_64\bin\ninja.exe"
 
 REM Validate ninja.exe
 "%DK_NINJA_EXE%" --version >NUL 2>NUL
@@ -194,10 +201,10 @@ REM Confer: https://stackoverflow.com/a/52139735
 
 REM -------------- Run finder --------------
 
-SET DK_WORKDIR=%DK_SHARE%\work
+SET DK_WORKDIR=%DK_DATA_HOME%\work
 
 CD /d %DK_PROJ_DIR%
-"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKCODER_PWD:FILEPATH=%DK_PWD%" -D "DKCODER_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKCODER_NONCE:STRING=%DK_NONCE%" -D "DKCODER_TTY:STRING=%DK_TTY%" -D "DKCODER_CMDLINE:STRING=%DK_CMDLINE%" -P __dk.cmake
+"%DK_CMAKE_EXE%" -D CMAKE_GENERATOR=Ninja -D "CMAKE_MAKE_PROGRAM=%DK_NINJA_EXE%" -D "DKCODER_PWD:FILEPATH=%DK_PWD%" -D "DKCODER_DATA_HOME:FILEPATH=%DK_DATA_HOME%" -D "DKCODER_WORKDIR:FILEPATH=%DK_WORKDIR%" -D "DKCODER_NONCE:STRING=%DK_NONCE%" -D "DKCODER_TTY:STRING=%DK_TTY%" -D "DKCODER_CMDLINE:STRING=%DK_CMDLINE%" -P __dk.cmake
 IF %ERRORLEVEL% NEQ 0 EXIT /B %ERRORLEVEL%
 
 REM --------------- Execute post-command outside of CMake --------------
@@ -279,7 +286,7 @@ REM Usage: unzipFile "FILE DESCRIPTION" ZIPFILE "DESTINATION"
 REM
 REM Procedure:
 REM   1. Use PowerShell `Expand-Archive` to expand zipfile ARG2 (example: something-x64.zip)
-REM      in the temp directory to the destination directory <quoted> ARG3 (example: %DK_SHARE%\some-folder).
+REM      in the temp directory to the destination directory <quoted> ARG3 (example: %DK_DATA_HOME%\some-folder).
 REM   2. Fallback on failure to:
 REM   2a. Downloading 7zip
 REM   2b. Use 7za to unzip
@@ -295,7 +302,7 @@ SET DK_UNZIP_DEST=%3
 SET DK_UNZIP_DEST=%DK_UNZIP_DEST:"='%
 
 REM 1. Use PowerShell `Expand-Archive` to expand zipfile ARG2 (example: something-x64.zip)
-REM    in the temp directory to the destination directory ARG3 (example: %DK_SHARE%\some-folder).
+REM    in the temp directory to the destination directory ARG3 (example: %DK_DATA_HOME%\some-folder).
 IF %DK_QUIET% EQU 0 ECHO.  Unzipping %2
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ProgressPreference = 'SilentlyContinue'; Expand-Archive -Path '%TEMP%\%2' -DestinationPath %DK_UNZIP_DEST% -Force" >NUL
@@ -304,7 +311,7 @@ IF %ERRORLEVEL% NEQ 0 (
     IF %DK_QUIET% EQU 0 ECHO.  PowerShell failed to unzip. Will use 7za instead.
 
     REM 2a. Downloading 7z
-    IF NOT EXIST "%DK_SHARE%\7z%DK_7Z_VER%-extra\7za.exe" (
+    IF NOT EXIST "%DK_DATA_HOME%\7z%DK_7Z_VER%-extra\7za.exe" (
         REM Download 7zr.exe (and then 7z*-extra.7z) to do unzipping.
         REM     Q: Can't we just download 7za.exe to do unzipping?
         REM     Ans: That needs a dll so we would need two downloads regardless.
@@ -336,10 +343,10 @@ IF %ERRORLEVEL% NEQ 0 (
         IF !ERRORLEVEL! NEQ 0 EXIT /B !ERRORLEVEL!
 
         REM Extract 7z*-extra.7z
-        IF EXIST "%DK_SHARE%\7z%DK_7Z_VER%-extra" (
-            RMDIR /S /Q "%DK_SHARE%\7z%DK_7Z_VER%-extra"
+        IF EXIST "%DK_DATA_HOME%\7z%DK_7Z_VER%-extra" (
+            RMDIR /S /Q "%DK_DATA_HOME%\7z%DK_7Z_VER%-extra"
         )
-        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" x -o"%DK_SHARE%\7z%DK_7Z_VER%-extra" "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
+        "%TEMP%\7zr-%DK_7Z_DOTVER%.exe" x -o"%DK_DATA_HOME%\7z%DK_7Z_VER%-extra" "%TEMP%\7z%DK_7Z_VER%-extra.7z" >NUL
         IF !ERRORLEVEL! NEQ 0 (
             ECHO.
             ECHO.Could not extract 7z%DK_7Z_VER%-extra.7z.
@@ -350,7 +357,7 @@ IF %ERRORLEVEL% NEQ 0 (
 
     REM 2b. Use 7za to unzip
     IF %DK_QUIET% EQU 0 ECHO.  Redoing unzip of %2 with 7za.
-    "%DK_SHARE%\7z%DK_7Z_VER%-extra\7za" x -o%3 "%TEMP%\%2" >NUL
+    "%DK_DATA_HOME%\7z%DK_7Z_VER%-extra\7za" x -o%3 "%TEMP%\%2" >NUL
 
     REM Short-circuit return with error code from function if can't download.
     IF !ERRORLEVEL! NEQ 0 (

@@ -8,6 +8,10 @@
 - Support `DkRun_Project` in addition to `DkRun_Env` and `DkRun_V<n>_<m>`. The *project version* is whatever long-term supported version is embedded in `__dk.cmake`. Among other things, this simplifies vscode settings.json.
 - *For DkSDK subscribers.* Automatic re-install if the checksum on a `DKRUN_ENV_URL_BASE` locally-built DkCoder tarball has changed.
 - Allow `DKML_HOST_ABI` environment variable to influence which ABI is downloaded in `./dk`.
+- On Windows the data home is `%LOCALAPPDATA%\Programs\DkCoder`. Was previously a mix of `%LOCALAPPDATA%\Programs\DkSDK` and `%LOCALAPPDATA%\Programs\DkCoder`. You can delete `%LOCALAPPDATA%\Programs\DkSDK`.
+- On Unix the data home is now `$XDG_DATA_HOME/dkcoder` or `$HOME/.local/share/dkcoder`. Was previously `$XDG_DATA_HOME/dksdk` or `$HOME/.local/share/dksdk`, both of which you can delete.
+- On Unix when `CI=true` use `.dkcoder` subdirectory not `.tools`.
+- On Windows and Unix allow DKCODER_DATA_HOME environment variable to override default locations.
 
 ## 0.4.0.2
 
