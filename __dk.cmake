@@ -70,7 +70,6 @@ set(__DkRun_V0_3_SHA256_windows_x86_64 d9154a8d63104caac5bc6a6fc527d57548723357e
 set(__DkRun_V0_3_SHA256_windows_x86    ddae39b6c1519c71f1bdad6ea5b5eba46ddf4ae86580676ef450d0c94dbb44e8)
 set(__DkRun_V0_3_EOL_YYYY_MM_DD "2024-12-30")
 set(__DkRun_V0_3_EOG_YYYY_MM_DD "2025-05-30")
-
 set(__DkRun_V0_4_COMPILE_VERSION 0.4.0-2)
 set(__DkRun_V0_4_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V0_4_COMPILE_VERSION})
 set(__DkRun_V0_4_SHA256_linux_x86_64   ec7964fc69963b18eefd9e47e154c69e19464ebac3f3e3df5a9e1e69e29acabe)
@@ -81,6 +80,16 @@ set(__DkRun_V0_4_SHA256_windows_x86_64 394f897d7cfc791f115e5bf427c7f56e054b510cb
 set(__DkRun_V0_4_SHA256_windows_x86    d0561ee1b49728b05e008df16146bd6e282199d40fd9e67c21f059eee3aa3469)
 set(__DkRun_V0_4_EOL_YYYY_MM_DD "2025-06-30")
 set(__DkRun_V0_4_EOG_YYYY_MM_DD "2025-12-30")
+set(__DkRun_V2_1_COMPILE_VERSION 2.1.3-2)
+set(__DkRun_V2_1_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V2_1_COMPILE_VERSION})
+set(__DkRun_V2_1_SHA256_linux_x86_64   36099d2d42a72bc55e6386b5eff077fcb07fc865f97c84b3ab1dbe9bb0fcdd43)
+set(__DkRun_V2_1_SHA256_linux_x86      todo_v2_2_release)
+set(__DkRun_V2_1_SHA256_darwin_x86_64  b6cf85606020987e89e00674dada44f4f9d20edcc396cec458c43f41c1c76289)
+set(__DkRun_V2_1_SHA256_darwin_arm64   7747de19a4e01438c3faced4762fd97316299c469e2af4203201562ab35d7837)
+set(__DkRun_V2_1_SHA256_windows_x86_64 f5673acde35ecaaa1c331989b87b1c36b6f834fb681fb5693d6ca05f3606efbd)
+set(__DkRun_V2_1_SHA256_windows_x86    06747d2dbffffc4a4875fe78cdd795dc4fc04410dd6bb5dacda2c5a80dd8b4be)
+set(__DkRun_V2_1_EOL_YYYY_MM_DD "2025-07-30")
+set(__DkRun_V2_1_EOG_YYYY_MM_DD "2026-01-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
 set(__DkRun_Env_URL_BASE)
 if(DEFINED ENV{DKRUN_ENV_URL_BASE})
@@ -93,7 +102,7 @@ endif()
 #   The last LTS version is what ./dk uses by default, so keep this chronologically sorted
 #   by oldest to newest.
 #   The last LTS version _is_ the project version.
-set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3 V0_4) # do not erase: this can be parsed externally to discover project version. must be on single line!
+set(__DkRun_LTS_VERSIONS V0_1 V0_2 V0_3 V0_4 V2_1) # do not erase this line: this can be parsed externally to discover project version. must be on single line!
 list(GET __DkRun_LTS_VERSIONS -1 __DkRun_LTS_VERSION) # ie. the latest Vx_y
 
 # ocamlc.exe, ocamlrun.exe, ocamldep.exe, dune.exe, dkcoder.exe all are compiled with

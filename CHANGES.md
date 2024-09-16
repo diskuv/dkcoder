@@ -1,7 +1,13 @@
 # Changes
 
-## Pending (2.1.3)
+## 2.1.3.2
 
+- Propagate NO_COLOR and Windows color detection to Dune
+- Replace Tr1Tar_LwtUnix/Unix/Std. It is no longer a thin layer on top of the `ocaml-tar` package since that package is very unstable. Instead it exposes only one extraction function, with more functions possible in the future.
+- bugfix: <https://github.com/diskuv/dkcoder/issues/1>. `Tr1Assets` and other implicit modules no longer depend on `open__.ml`.
+- bugfix: <https://gitlab.com/diskuv/samples/dkcoder/DkHelloScript/-/issues/1>. No more duplicate module errors with text "Module ___ is provided simultaneously".
+- New `DkDev_Std.Legal.Record --help` for programmatically accepting the license. Designed for continuous integration.
+- Enable Windows long path support for all executables inside their application manifests. Works only when registry is updated using admin privileges. Confer <https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation>
 - Standard error is used consistently for logging in `./dk`
 - Use quiet `-q` option for `yum install` in `./dk` for Linux, and `--quiet --no-progress` for `apk add`
 - bugfix: Consistently use `-qq install --no-install-suggests` for apt-get install
