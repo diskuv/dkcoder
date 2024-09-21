@@ -27,7 +27,7 @@ function(help)
     message(${ARG_MODE} [[usage: ./dk dksdk.project.new <ARGS>
 
                 ---------------------
-                WARNING: EXPERIMENTAL 
+                WARNING: EXPERIMENTAL
                 ---------------------
 
 This script has a high likelihood of disappearing or
@@ -222,6 +222,10 @@ function(run)
         PROJECT_NAME ${ARG_NAME}
         DESTINATION ${OUTPUT_DIR}
         FILENAME dune-project)
+    do_install_file(
+        PROJECT_NAME ${ARG_NAME}
+        DESTINATION ${OUTPUT_DIR}
+        FILENAME dkproject.jsonc)
     do_install_file(
         PROJECT_NAME ${ARG_NAME}
         DESTINATION ${OUTPUT_DIR}
