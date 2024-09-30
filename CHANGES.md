@@ -1,5 +1,10 @@
 # Changes
 
+## Pending
+
+- Upgrade to Ninja 1.12.1 from 1.11.1 specifically to fix <https://github.com/ninja-build/ninja/issues/829>
+- Use Ninja download on Linux rather than system-installed Ninja so the version is consistent, especially for old dockcross-based containers.
+
 ## 2.1.3.2
 
 - Propagate NO_COLOR and Windows color detection to Dune
