@@ -76,9 +76,17 @@
         {
             "language": "ocaml.interface",
             "mapTo": "ocaml"
-        },      
+        },
         {
             "language": "yaml",
+            "mapTo": "cmake"
+        },
+        {
+            "language": "github-actions-workflow",
+            "mapTo": "cmake"
+        },
+        {
+            "language": "dockerfile",
             "mapTo": "cmake"
         },
         {
