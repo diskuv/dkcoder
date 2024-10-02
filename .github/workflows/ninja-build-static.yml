@@ -18,6 +18,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
@@ -29,16 +31,58 @@ jobs:
       # We aren't use cross-compilation. Instead we have multiple platforms
       # with QEMU emulation providing a native environment. An alternative
       # is to use CMake to build Ninja with a cross-compiler.
-      - name: Build and export to Docker
+      - name: Build linux/amd64 and export to filesystem
         uses: docker/build-push-action@v6
-        id: image
         with:
-          #platforms: linux/amd64,linux/arm64,linux/386
+          platforms: linux/amd64
           file: ci/ninja-build-static/Dockerfile
-          outputs: out
+          outputs: type=local,dest=out-amd64
 
-      - name: Test outside container
-        run: out/usr/local/src/ninja-build/ninja --version
+      - name: Build linux/arm64 and export to filesystem
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm64
+          file: ci/ninja-build-static/Dockerfile
+          outputs: type=local,dest=out-arm64
 
-      - name: Test inside container
-        run: docker run --rm ${{ steps.image.outputs.imageid }} ./ninja --version
+      - name: Build linux/386 and export to filesystem
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/386
+          file: ci/ninja-build-static/Dockerfile
+          outputs: type=local,dest=out-386
+
+      - name: Test 386 binary outside container
+        run: out-386/usr/local/src/ninja-build/ninja --version
+
+      - name: Test amd64 binary outside container
+        run: out-amd64/usr/local/src/ninja-build/ninja --version
+
+      - name: Display arm64 binary format
+        # Can't run arm64 on Intel machines without an emulator
+        run: file out-arm64/usr/local/src/ninja-build/ninja
+
+      - name: Rename to ABI
+        run: |
+            mv out-amd64/usr/local/src/ninja-build/ninja ninja-linux_x86_64
+            mv out-386/usr/local/src/ninja-build/ninja ninja-linux_x86
+            mv out-arm64/usr/local/src/ninja-build/ninja ninja-linux_arm64
+
+      - name: Upload ninja binaries for troubleshooting
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 30
+          name: ninja-binary
+          path: |
+            ninja-linux_x86_64
+            ninja-linux_x86
+            ninja-linux_arm64
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ninja-linux_x86_64
+            ninja-linux_x86
+            ninja-linux_arm64
