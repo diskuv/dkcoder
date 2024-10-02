@@ -80,29 +80,24 @@ However, if `sudo` is required for elevation, then commands will be echoed to th
 
 Copyright 2023 Diskuv, Inc.
 
-Full source code and other platforms are available with a
-"DkSDK SOFTWARE DEVELOPMENT KIT LICENSE AGREEMENT" from
-<https://diskuv.com/pricing>, and is free for security engineers,
-educators and related-field researchers (ex. programming language theory,
-memory and thread modeling) on request.
-
-`DkSDKCoder_Std` documentation and the `./dk`, `./dk.cmd` and `__dk.cmake` build scripts are also
+The `./dk`, `./dk.cmd` and `__dk.cmake` build scripts ("dk") are
 available under the Open Software License version 3.0,
-<https://opensource.org/license/osl-3-0-php/>, **at your option**. A guide to the Open Software License version 3.0 is available at
+<https://opensource.org/license/osl-3-0-php/>.
+A guide to the Open Software License version 3.0 is available at
 <https://rosenlaw.com/OSL3.0-explained.htm>.
 
-The "DkSDK Coder Runtime Binaries" is the set of `.tar` and `.zip`
-archives distributed by Diskuv, Inc. and downloaded by the `./dk`, `./dk.cmd` and `__dk.cmake` build scripts.
-DkSDK Coder Runtime Binaries © 2023 by Diskuv, Inc. is
-licensed under Attribution-NoDerivatives 4.0 International. To view a copy
-of this license, visit <http://creativecommons.org/licenses/by-nd/4.0/>.
+`dk.cmd` downloads parts of the 7-Zip program. 7-Zip is licensed under the GNU LGPL license.
+The source code for 7-Zip can be found at <www.7-zip.org>. Attribute requirements are available at <https://www.7-zip.org/faq.html>.
 
-The `ocaml*` executables within the DkSDK Coder Runtime Binaries have their own [LPGL2.1 license with Static Linking Exceptions](./LICENSE-LGPL21-ocaml).
-The `codept-lib-dkcodersig` executable within the DkSDK Coder Runtime Binaries has a similar [LPGL2.1 license with Static Linking Exceptions](./LICENSE-LGPL21-octachron).
-You are free to replace both the `codept-lib-dkcodersig` executable and the `ocaml*` executables with your own compiled binaries.
+"dk" downloads OCaml, codept and other binaries at first run and on each version upgrade.
+OCaml has a [LPGL2.1 license with Static Linking Exceptions](./LICENSE-LGPL21-ocaml).
+codept has a [LPGL2.1 license with Static Linking Exceptions](./LICENSE-LGPL21-octachron).
+The other binaries are DkSDK Coder Runtime Binaries © 2023 by Diskuv, Inc.
+These DkSDK Coder Runtime Binaries are licensed under Attribution-NoDerivatives 4.0 International.
+To view a copy of this license, visit <http://creativecommons.org/licenses/by-nd/4.0/>.
 
-`DkSDKCoder_Gen` and all other `DkSDKCoder_*` and `DkCoder_*` libraries and executables are licensed under the [DkSDK SOFTWARE DEVELOPMENT KIT LICENSE AGREEMENT](./LICENSE-DKSDK).
+"dk" acts as a package manager; you run `./dk` and tell it what packages you want to download
+and run. These packages have independent licenses and you may be prompted to accept a license.
+Those licenses include but are not limited to:
 
-### 7-Zip
-
-`dk.cmd` downloads parts of the 7-Zip program. 7-Zip is licensed under the GNU LGPL license. The source code for 7-Zip can be found at <www.7-zip.org>. Attribute requirements are available at <https://www.7-zip.org/faq.html>.
+- The [DkSDK SOFTWARE DEVELOPMENT KIT LICENSE AGREEMENT](./LICENSE-DKSDK)
