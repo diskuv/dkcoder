@@ -545,9 +545,11 @@ cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59
 cmake_cksum256_darwin_universal="a988e2a69c1d105987f12782ee0fa80d6be941b3e1a68b4bd6a661f0fdb56d75"
 
 ninja_majminpat_ver=1.12.1
+ninja_dk_ver=2.1.4 # which Dk version generated Ninja $ninja_majminpat_ver?
 ninja_cksum256_darwin_universal="89a287444b5b3e98f88a945afa50ce937b8ffd1dcc59c555ad9b1baf855298c9"
-ninja_cksum256_linux_x86_64="6f98805688d19672bd699fbbfa2c2cf0fc054ac3df1f0e6a47664d963d530255"
-ninja_cksum256_linux_arm64="5c25c6570b0155e95fce5918cb95f1ad9870df5768653afe128db822301a05a1"
+ninja_cksum256_linux_x86_64="7223fda005b060cec765868576c0db5035fdb8fa1cce2d89ab9ca95045e55122"
+ninja_cksum256_linux_x86="abe169ccb576c9983537cf94fd144b36f9f3ce712f240ced45ad9488399c7e29"
+ninja_cksum256_linux_arm64="70d0c5f7dfc0d2aa6af85b1190e75cd01275d2cb9f010df227256829c92a8ee3"
 
 install_linux_prog() {
   install_linux_prog_NAME=$1
@@ -652,12 +654,6 @@ esac
 #   We need a valid CMAKE_GENERATOR to do FetchContent_Populate() in script mode
 
 NINJA_EXE=
-case "$BUILDHOST_ARCH" in
-  linux_x86)
-    # There are no 32-bit downloads for Ninja. But typically the build machine is 64-bit so this should not be a problem.
-    install_linux_prog ninja ninja-build ninja
-    NINJA_EXE=$DK_PROG_INSTALLED_LOCATION;;
-esac
 
 ninja_destdir=$tools_dir/ninja-$ninja_majminpat_ver
 install -d "$tools_dir/dl"
@@ -672,14 +668,20 @@ download_ninja() {
     linux_x86_64)
       printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for Linux x86_64"
       downloadfile \
-        "https://github.com/ninja-build/ninja/releases/download/v$ninja_majminpat_ver/ninja-linux.zip" \
-        "$tools_dir/dl/ninja.zip" \
+        "https://github.com/diskuv/dkcoder/releases/download/$ninja_dk_ver/ninja-linux_x86_64" \
+        "$tools_dir/dl/ninja" \
         $ninja_cksum256_linux_x86_64 ;;
+    linux_x86)
+      printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for Linux x86"
+      downloadfile \
+        "https://github.com/diskuv/dkcoder/releases/download/$ninja_dk_ver/ninja-linux_x86" \
+        "$tools_dir/dl/ninja" \
+        $ninja_cksum256_linux_x86 ;;
     linux_arm64)
       printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for Linux arm64"
       downloadfile \
-        "https://github.com/ninja-build/ninja/releases/download/v$ninja_majminpat_ver/ninja-linux-aarch64.zip" \
-        "$tools_dir/dl/ninja.zip" \
+        "https://github.com/diskuv/dkcoder/releases/download/$ninja_dk_ver/ninja-linux_arm64" \
+        "$tools_dir/dl/ninja" \
         $ninja_cksum256_linux_arm64 ;;
   esac
 }
@@ -688,7 +690,7 @@ export_ninja_vars() {
     case "$BUILDHOST_ARCH" in
       darwin_*)
         NINJA_EXE="$ninja_destdir/bin/ninja" ;;
-      linux_x86_64|linux_arm64)
+      linux_*)
         NINJA_EXE="$ninja_destdir/bin/ninja" ;;
     esac
   fi
@@ -704,8 +706,11 @@ fi
 if [ $have_correct_ninja -eq 0 ]; then
   download_ninja
 fi
-#   Handle zip
-if [ -e "$tools_dir/dl/ninja.zip" ]; then
+#   Handle executable or zip
+if [ -e "$tools_dir/dl/ninja" ]; then
+  install -d "$ninja_destdir/bin"
+  install "$tools_dir/dl/ninja" "$ninja_destdir/bin/"
+elif [ -e "$tools_dir/dl/ninja.zip" ]; then
   rm -rf "$tools_dir/ninja-$ninja_majminpat_ver"
   cd "$tools_dir/dl"
   rm -f ninja
