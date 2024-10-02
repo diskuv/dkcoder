@@ -18,9 +18,23 @@ on:
 
 jobs:
   build:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+            - platform: linux/amd64
+              dkml_target_abi: linux_x86_64
+              testable: true
+            - platform: linux/arm64
+              dkml_target_abi: linux_arm64
+              #     Can't run arm64 on Intel machines without an emulator
+              testable: false
+            - platform: linux/386
+              dkml_target_abi: linux_x86
+              testable: true
+
+    name: ${{ matrix.dkml_target_abi }}
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -31,53 +45,41 @@ jobs:
       # We aren't use cross-compilation. Instead we have multiple platforms
       # with QEMU emulation providing a native environment. An alternative
       # is to use CMake to build Ninja with a cross-compiler.
-      - name: Build linux/amd64 and export to filesystem
+      - name: Build ${{ matrix.platform }} and export to filesystem
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
           file: ci/ninja-build-static/Dockerfile
-          outputs: type=local,dest=out-amd64
+          outputs: type=local,dest=out
 
-      - name: Build linux/arm64 and export to filesystem
-        uses: docker/build-push-action@v6
-        with:
-          platforms: linux/arm64
-          file: ci/ninja-build-static/Dockerfile
-          outputs: type=local,dest=out-arm64
+      - name: Display binary format
+        run: file out/usr/local/src/ninja-build/ninja
 
-      - name: Build linux/386 and export to filesystem
-        uses: docker/build-push-action@v6
-        with:
-          platforms: linux/386
-          file: ci/ninja-build-static/Dockerfile
-          outputs: type=local,dest=out-386
+      - name: Test binary outside container
+        if: matrix.testable
+        run: out/usr/local/src/ninja-build/ninja --version
 
-      - name: Test 386 binary outside container
-        run: out-386/usr/local/src/ninja-build/ninja --version
+      - name: Rename ninja binary to ninja-${{ matrix.dkml_target_abi }}
+        run: mv out/usr/local/src/ninja-build/ninja ninja-${{ matrix.dkml_target_abi }}
 
-      - name: Test amd64 binary outside container
-        run: out-amd64/usr/local/src/ninja-build/ninja --version
-
-      - name: Display arm64 binary format
-        # Can't run arm64 on Intel machines without an emulator
-        run: file out-arm64/usr/local/src/ninja-build/ninja
-
-      - name: Rename to ABI
-        run: |
-            mv out-amd64/usr/local/src/ninja-build/ninja ninja-linux_x86_64
-            mv out-386/usr/local/src/ninja-build/ninja ninja-linux_x86
-            mv out-arm64/usr/local/src/ninja-build/ninja ninja-linux_arm64
-
-      - name: Upload ninja binaries for troubleshooting
+      - name: Upload ninja binary
         uses: actions/upload-artifact@v4
         with:
           retention-days: 30
-          name: ninja-binary
-          path: |
-            ninja-linux_x86_64
-            ninja-linux_x86
-            ninja-linux_arm64
+          name: ninja-${{ matrix.dkml_target_abi }}
+          path: ninja-${{ matrix.dkml_target_abi }}
 
+  publish:
+    permissions:
+        contents: write
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download ninja binaries
+        uses: actions/download-artifact@v4
+        with:
+            pattern: ninja-*
+            merge-multiple: true
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
