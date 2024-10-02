@@ -539,17 +539,16 @@ fi
 
 cmake_majmin_ver=3.25
 cmake_majminpat_ver=3.25.2
+cmake_cksum256_darwin_universal="a988e2a69c1d105987f12782ee0fa80d6be941b3e1a68b4bd6a661f0fdb56d75"
+cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
 cmake_cksum256_linux_x86_64="783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87f0cf233748d99"
 cmake_cksum256_linux_x86="715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c"
-cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
-cmake_cksum256_darwin_universal="a988e2a69c1d105987f12782ee0fa80d6be941b3e1a68b4bd6a661f0fdb56d75"
 
 ninja_majminpat_ver=1.12.1
-ninja_dk_ver=2.1.4 # which Dk version generated Ninja $ninja_majminpat_ver?
 ninja_cksum256_darwin_universal="89a287444b5b3e98f88a945afa50ce937b8ffd1dcc59c555ad9b1baf855298c9"
+ninja_cksum256_linux_arm64="70d0c5f7dfc0d2aa6af85b1190e75cd01275d2cb9f010df227256829c92a8ee3"
 ninja_cksum256_linux_x86_64="7223fda005b060cec765868576c0db5035fdb8fa1cce2d89ab9ca95045e55122"
 ninja_cksum256_linux_x86="abe169ccb576c9983537cf94fd144b36f9f3ce712f240ced45ad9488399c7e29"
-ninja_cksum256_linux_arm64="70d0c5f7dfc0d2aa6af85b1190e75cd01275d2cb9f010df227256829c92a8ee3"
 
 install_linux_prog() {
   install_linux_prog_NAME=$1
@@ -668,19 +667,19 @@ download_ninja() {
     linux_x86_64)
       printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for Linux x86_64"
       downloadfile \
-        "https://github.com/diskuv/dkcoder/releases/download/$ninja_dk_ver/ninja-linux_x86_64" \
+        "https://github.com/diskuv/dkcoder/releases/download/ninja-$ninja_majminpat_ver/ninja-linux_x86_64" \
         "$tools_dir/dl/ninja" \
         $ninja_cksum256_linux_x86_64 ;;
     linux_x86)
       printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for Linux x86"
       downloadfile \
-        "https://github.com/diskuv/dkcoder/releases/download/$ninja_dk_ver/ninja-linux_x86" \
+        "https://github.com/diskuv/dkcoder/releases/download/ninja-$ninja_majminpat_ver/ninja-linux_x86" \
         "$tools_dir/dl/ninja" \
         $ninja_cksum256_linux_x86 ;;
     linux_arm64)
       printf_maybe_quiet "%s\n\n" "-- Downloading ninja-v$ninja_majminpat_ver for Linux arm64"
       downloadfile \
-        "https://github.com/diskuv/dkcoder/releases/download/$ninja_dk_ver/ninja-linux_arm64" \
+        "https://github.com/diskuv/dkcoder/releases/download/ninja-$ninja_majminpat_ver/ninja-linux_arm64" \
         "$tools_dir/dl/ninja" \
         $ninja_cksum256_linux_arm64 ;;
   esac
