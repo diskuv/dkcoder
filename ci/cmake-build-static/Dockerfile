@@ -24,11 +24,15 @@ ADD https://github.com/Kitware/CMake.git#e2be23a2b39f4380f32fe65ba770addc154579c
 # Build CMake with CMake.
 #   No ccmake needed.
 #   No cmake-gui needed.
+#   Static openssl is partially a problem:
+#       - Used by file(DOWNLOAD), etc: https://discourse.cmake.org/t/feature-request-curl-executable/1619/3
+#       - TLS verification will expect same paths on end-user machine as on build machine (so Alpine paths)
+#         That won't work for most people. Confer
+#         https://forum.crystal-lang.org/t/alpine-static-compiled-binary-failed-with-routinescertificate-verify-failed-openssl-error-when-run-it-on-centos-8/4946
+#       - But TLS verification is disabled by default: https://cmake.org/cmake/help/latest/command/file.html#transfer
 WORKDIR /usr/local/src/cmake
-# RUN CFLAGS=-static CXXFLAGS=-static ./bootstrap --generator=Ninja && ninja && make install
-# RUN CFLAGS=-static CXXFLAGS=-static ./bootstrap --prefix=/usr/local/cmake && make && make install
-#   https://stackoverflow.com/a/24671474/21513816 for building static executables
-#   better: https://github.com/Kitware/CMake/blob/master/Utilities/Release/linux/x86_64/cache.txt
+#   static executables: https://github.com/Kitware/CMake/blob/master/Utilities/Release/linux/x86_64/cache.txt
+#   related: https://stackoverflow.com/a/24671474/21513816 for building static executables
 RUN cmake -S . -B build \
     -D CMAKE_MAKE_PROGRAM=make \
     -D CMAKE_BUILD_TYPE=Release \
