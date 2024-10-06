@@ -49,7 +49,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: ${{ matrix.platform }}
-          file: ci/ninja-build-static/Dockerfile
+          file: ci/cmake-build-static/Dockerfile
           outputs: type=local,dest=out
 
       - name: Display binary format
@@ -60,9 +60,9 @@ jobs:
         run: out/usr/local/cmake/bin/cmake --version
 
       - name: Bundle cmake-${{ matrix.dkml_target_abi }}.tar.gz
-        run: X=$(pwd) && cd out/usr/local/cmake && tar cfz $X/ninja-${{ matrix.dkml_target_abi }}.tar.gz *
+        run: X=$(pwd) && cd out/usr/local/cmake && tar cfz $X/cmake-${{ matrix.dkml_target_abi }}.tar.gz *
 
-      - name: Upload ninja binary
+      - name: Upload cmake tarball
         uses: actions/upload-artifact@v4
         with:
           retention-days: 30
