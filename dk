@@ -778,14 +778,9 @@ download_cmake() {
 export_cmake_vars() {
   case "$BUILDHOST_ARCH" in
     darwin_*)
-      cmake_bindir="$cmake_destdir/bin"
-      ;;
+      cmake_bindir="$cmake_destdir/bin" ;;
     linux_x86_64|linux_x86|linux_arm64)
-      if [ -x /sbin/apk ]; then
-        cmake_bindir=/usr/bin
-      else
-        cmake_bindir="$cmake_destdir/bin"
-      fi ;;
+      cmake_bindir="$cmake_destdir/bin" ;;
   esac
 }
 have_correct_cmake=0
