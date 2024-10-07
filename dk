@@ -540,9 +540,9 @@ fi
 cmake_majmin_ver=3.25
 cmake_majminpat_ver=3.25.2
 cmake_cksum256_darwin_universal="a988e2a69c1d105987f12782ee0fa80d6be941b3e1a68b4bd6a661f0fdb56d75"
-cmake_cksum256_linux_arm64="9216ecf0449ade700e66e0def11eeaebf9fa7d4428c02f49cb59f11418d3f8a5"
-cmake_cksum256_linux_x86_64="783da74f132fd1fea91b8236d267efa4df5b91c5eec1dea0a87f0cf233748d99"
-cmake_cksum256_linux_x86="715ef82e81b48db3e4c7744614c15ff361d53f6987fd70b1b66b0880595f2e2c"
+cmake_cksum256_linux_arm64="98cbec4d939adecc0a52b0bf2d537ebbcd629f9ac4d935b399619faa4d4f0d44"
+cmake_cksum256_linux_x86_64="6fc551dcd74ca93e155b54b5537f5659e072031e8dc07160b9d4e92f5ee375b8"
+cmake_cksum256_linux_x86="0e4b95fd912896e5f85480a2c0a09e863d4f6d44acf1e5070ef257fe041d1d0c"
 
 ninja_majminpat_ver=1.12.1
 ninja_cksum256_darwin_universal="89a287444b5b3e98f88a945afa50ce937b8ffd1dcc59c555ad9b1baf855298c9"
@@ -750,6 +750,11 @@ cmake_destdir=$tools_dir/cmake-$cmake_majminpat_ver
 install -d "$tools_dir/dl"
 download_cmake() {
   case "$BUILDHOST_ARCH" in
+    linux_x86_64) cmake_cksum256_linux=$cmake_cksum256_linux_x86_64 ;;
+    linux_x86) cmake_cksum256_linux=$cmake_cksum256_linux_x86 ;;
+    linux_arm64) cmake_cksum256_linux=$cmake_cksum256_linux_arm64
+  esac
+  case "$BUILDHOST_ARCH" in
     darwin_*)
       cmake_base="cmake-$cmake_majminpat_ver-macos10.10-universal"
       printf_maybe_quiet "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for macOS"
@@ -759,42 +764,15 @@ download_cmake() {
         $cmake_cksum256_darwin_universal
       cmake_bindir="$cmake_destdir/bin"
       ;;
-    linux_x86_64)
-      if [ -x /sbin/apk ]; then
-        install_linux_prog cmake cmake cmake
-      else
-        cmake_base="cmake-$cmake_majminpat_ver-linux-x86_64"
-        printf_maybe_quiet "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux x86_64"
-        downloadfile \
-          "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
-          "$tools_dir/dl/cmake.tar.gz" \
-          $cmake_cksum256_linux_x86_64
-        cmake_bindir="$cmake_destdir/bin"
-      fi ;;
-    linux_x86)
-      if [ -x /sbin/apk ]; then
-        install_linux_prog cmake cmake cmake
-      else
-        # CMake does not provide 32-bit binaries. But pypi does at https://pypi.org/project/cmake/
-        printf_maybe_quiet "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux x86"
-        downloadfile \
-          https://files.pythonhosted.org/packages/11/6e/aeeddf2f5b16542b6a30ceab4896421e8705d8e9a9296dba79395db11b00/cmake-3.25.2-py2.py3-none-manylinux_2_17_i686.manylinux2014_i686.whl \
-          "$tools_dir/dl/cmake.whl" \
-          $cmake_cksum256_linux_x86
-        cmake_bindir="$cmake_destdir/bin"
-      fi ;;
-    linux_arm64)
-      if [ -x /sbin/apk ]; then
-        install_linux_prog cmake cmake cmake
-      else
-        cmake_base="cmake-$cmake_majminpat_ver-linux-aarch64"
-        printf_maybe_quiet "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for Linux ARM64"
-        downloadfile \
-          "https://github.com/Kitware/CMake/releases/download/v$cmake_majminpat_ver/$cmake_base.tar.gz" \
-          "$tools_dir/dl/cmake.tar.gz" \
-          $cmake_cksum256_linux_arm64
-        cmake_bindir="$cmake_destdir/bin"
-      fi ;;
+    linux_x86_64|linux_x86|linux_arm64)
+      cmake_base=.
+      printf_maybe_quiet "%s\n\n" "-- Downloading cmake-$cmake_majminpat_ver for $BUILDHOST_ARCH"
+      downloadfile \
+        "https://github.com/diskuv/dkcoder/releases/download/cmake-$cmake_majminpat_ver/cmake-$BUILDHOST_ARCH.tar.gz" \
+        "$tools_dir/dl/cmake.tar.gz" \
+        "$cmake_cksum256_linux"
+      cmake_bindir="$cmake_destdir/bin"
+      ;;
   esac
 }
 export_cmake_vars() {
@@ -828,10 +806,12 @@ if [ -e "$tools_dir/dl/cmake.tar.gz" ] && [ -n "$cmake_base" ]; then
   tar xCfz "$cmake_destdir" "$tools_dir/dl/cmake.tar.gz"
   rm -f "$tools_dir/dl/cmake.tar.gz"
   set +f
-  if [ -e "$cmake_destdir/$cmake_base/CMake.app" ]; then
-      mv "$cmake_destdir/$cmake_base/CMake.app/Contents"/* "$cmake_destdir/"
-  else
-      mv "$cmake_destdir/$cmake_base"/* "$cmake_destdir/"
+  if [ ! "." = "$cmake_base" ]; then
+    if [ -e "$cmake_destdir/$cmake_base/CMake.app" ]; then
+        mv "$cmake_destdir/$cmake_base/CMake.app/Contents"/* "$cmake_destdir/"
+    else
+        mv "$cmake_destdir/$cmake_base"/* "$cmake_destdir/"
+    fi
   fi
   set -f
 fi
