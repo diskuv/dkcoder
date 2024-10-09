@@ -6,6 +6,7 @@
 - Provide and download ninja-build static binaries on Linux since system-installed Ninja versions are unpredictable and Ninja-provided binaries are linked to recent glibc versions.
 - Provide and download CMake static binaries for same reasons as ninja-build
 - Have `./dk` work with BusyBox's `tar`
+- *breaking change*: Remove `git` from being installed during `./dk` on Linux, which presumes that `sudo` or something similar is available to do the installation, and presumes authentication is set up. It was previously being done to let CMake work with its `FetchContent` command; however, it was never being done for Windows or macOS so it was broken. Instead, user scripts or DkCoder scripts should handle any Git install + setup themselves. Also, user scripts are long deprecated so this breaking change should affect only legacy `./dk dkml.xxx` and `./dk dksdk.xxx` commands distributed by Diskuv.
 
 ## 2.1.3.2
 

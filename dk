@@ -734,11 +734,6 @@ fi
 # -----
 
 case "$BUILDHOST_ARCH" in
-  linux_*)
-    #   This is for CMake to do FetchContent()
-    install_linux_prog git git git ;;
-esac
-case "$BUILDHOST_ARCH" in
   linux_x86)
     #   This is for Python wheel extraction
     install_linux_prog unzip unzip unzip ;;
