@@ -798,7 +798,9 @@ fi
 if [ -e "$tools_dir/dl/cmake.tar.gz" ] && [ -n "$cmake_base" ]; then
   rm -rf "$tools_dir/cmake-$cmake_majminpat_ver"
   install -d "$cmake_destdir"
-  tar xCfz "$cmake_destdir" "$tools_dir/dl/cmake.tar.gz"
+  #   nit: BusyBox has a strict command line argument parsing ...
+  #   tar c|x|t [-ZzJjahmvokO] [-f TARFILE] [-C DIR] [-T FILE] [-X FILE] [LONGOPT]... [FILE]...
+  tar x -z -f "$tools_dir/dl/cmake.tar.gz" -C "$cmake_destdir"
   rm -f "$tools_dir/dl/cmake.tar.gz"
   set +f
   if [ ! "." = "$cmake_base" ]; then

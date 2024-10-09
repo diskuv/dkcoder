@@ -5,6 +5,7 @@
 - Upgrade to Ninja 1.12.1 from 1.11.1 specifically to fix <https://github.com/ninja-build/ninja/issues/829>
 - Provide and download ninja-build static binaries on Linux since system-installed Ninja versions are unpredictable and Ninja-provided binaries are linked to recent glibc versions.
 - Provide and download CMake static binaries for same reasons as ninja-build
+- Have `./dk` work with BusyBox's `tar`
 
 ## 2.1.3.2
 
