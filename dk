@@ -709,15 +709,6 @@ fi
 if [ -e "$tools_dir/dl/ninja" ]; then
   install -d "$ninja_destdir/bin"
   install "$tools_dir/dl/ninja" "$ninja_destdir/bin/"
-elif [ -e "$tools_dir/dl/ninja.zip" ]; then
-  rm -rf "$tools_dir/ninja-$ninja_majminpat_ver"
-  cd "$tools_dir/dl"
-  rm -f ninja
-  unzip -q ninja.zip
-  rm -f ninja.zip
-  cd - > /dev/null
-  install -d "$ninja_destdir/bin"
-  mv "$tools_dir/dl/ninja" "$ninja_destdir/bin/"
 fi
 
 # Set NINJA_EXE
@@ -732,12 +723,6 @@ fi
 
 # CMAKE
 # -----
-
-case "$BUILDHOST_ARCH" in
-  linux_x86)
-    #   This is for Python wheel extraction
-    install_linux_prog unzip unzip unzip ;;
-esac
 
 cmake_base=
 cmake_bindir=
@@ -806,39 +791,6 @@ if [ -e "$tools_dir/dl/cmake.tar.gz" ] && [ -n "$cmake_base" ]; then
     fi
   fi
   set -f
-fi
-#   Handle Python wheel
-if [ -e "$tools_dir/dl/cmake.whl" ]; then
-  rm -rf "$tools_dir/cmake-$cmake_majminpat_ver"
-  cd "$tools_dir/dl"
-  rm -rf cmake/data
-  #     Don't want cmake/data/{aclocal,bash-completion,emacs,vim}
-  unzip -q cmake.whl 'cmake/data/bin/**'
-  unzip -q cmake.whl 'cmake/data/doc/**'
-  #     Don't want cmake/data/share/cmake-$cmake_majmin_ver/Help
-  unzip -q cmake.whl "cmake/data/share/cmake-$cmake_majmin_ver/"'include/**'
-  unzip -q cmake.whl "cmake/data/share/cmake-$cmake_majmin_ver/"'Modules/**'
-  unzip -q cmake.whl "cmake/data/share/cmake-$cmake_majmin_ver/"'Templates/**'
-  rm -f cmake.whl
-  cd - > /dev/null
-  set +f
-  install -d "$cmake_destdir/share" "$cmake_destdir/doc" "$cmake_destdir/bin"
-  mv "$tools_dir/dl/cmake/data/bin"/* "$cmake_destdir/bin/"
-  rm -rf "$cmake_destdir/share/cmake-$cmake_majmin_ver" "$cmake_destdir/doc/cmake-$cmake_majmin_ver" "$cmake_destdir/doc/cmake"
-  mv "$tools_dir/dl/cmake/data/share/cmake-$cmake_majmin_ver" "$cmake_destdir/share/"
-  if [ -e "$tools_dir/dl/cmake/data/doc/cmake" ]; then # Windows wheel
-    mv "$tools_dir/dl/cmake/data/doc/cmake" "$cmake_destdir/doc/"
-  fi
-  if [ -e "$tools_dir/dl/cmake/data/doc/cmake-$cmake_majmin_ver" ]; then # Linux wheel
-    mv "$tools_dir/dl/cmake/data/doc/cmake-$cmake_majmin_ver" "$cmake_destdir/doc/"
-  fi
-  set -f
-  #   other dirs: aclocal bash-completion emacs vim
-  rm -rf "$tools_dir/dl/cmake/data/share"
-  #   be pedantic. if we don't know about a directory, it may be important. so error
-  #   if some directory is non-empty
-  rmdir "$tools_dir/dl/cmake/data/bin" "$tools_dir/dl/cmake/data/doc"
-  rmdir "$tools_dir/dl/cmake/data"
 fi
 
 # Put cmake in PATH

@@ -4,7 +4,8 @@
 
 - Upgrade to Ninja 1.12.1 from 1.11.1 specifically to fix <https://github.com/ninja-build/ninja/issues/829>
 - Provide and download ninja-build static binaries on Linux since system-installed Ninja versions are unpredictable and Ninja-provided binaries are linked to recent glibc versions.
-- Provide and download CMake static binaries for same reasons as ninja-build
+- Provide and download CMake static binaries for same reasons as ninja-build.
+- Remove now-unused code for `unzip` install on Linux in `./dk`. `unzip` was used for unpacking a Python wheel archive that contained CMake, and for unzipping a Ninja installation zipfile, but that is no longer needed.
 - Have `./dk` work with BusyBox's `tar`
 - *breaking change*: Remove `git` from being installed during `./dk` on Linux, which presumes that `sudo` or something similar is available to do the installation, and presumes authentication is set up. It was previously being done to let CMake work with its `FetchContent` command; however, it was never being done for Windows or macOS so it was broken. Instead, user scripts or DkCoder scripts should handle any Git install + setup themselves. Also, user scripts are long deprecated so this breaking change should affect only legacy `./dk dkml.xxx` and `./dk dksdk.xxx` commands distributed by Diskuv.
 
