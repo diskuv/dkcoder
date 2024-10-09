@@ -1067,16 +1067,25 @@ endfunction()
                 QUIET
                 SOURCE_DIR "${dkcoder_src_dir}"
                 SUBBUILD_DIR "${dkcoder_subbuild_dir}"
-                GIT_REPOSITORY https://github.com/diskuv/dkcoder.git
-                GIT_TAG 1.0
-                # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
-                # has still not been fixed. That means empty strings get removed.
-                # ExternalProject_Add(GIT_SUBMODULES) in dkcoder-subbuild/CMakeLists.txt
-                # means fetch all submodules.
-                # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
-                # has a workaround.
-                GIT_SUBMODULES cmake # Non-git-submodule dir that already exists
-                GIT_SUBMODULES_RECURSE OFF)
+
+                # METHOD 1: GIT
+                # But Git is not always available, especially inside Docker containers.
+                #
+                # GIT_REPOSITORY https://github.com/diskuv/dkcoder.git
+                # GIT_TAG 1.0
+                # # As of 3.25.3 the bug https://gitlab.kitware.com/cmake/cmake/-/issues/24578
+                # # has still not been fixed. That means empty strings get removed.
+                # # ExternalProject_Add(GIT_SUBMODULES) in dkcoder-subbuild/CMakeLists.txt
+                # # means fetch all submodules.
+                # # https://gitlab.kitware.com/cmake/cmake/-/issues/20579#note_734045
+                # # has a workaround.
+                # GIT_SUBMODULES cmake # Non-git-submodule dir that already exists
+                # GIT_SUBMODULES_RECURSE OFF
+
+                # METHOD 2: Download source archive
+                # Why [.zip] rather than [.tar.gz]? Because [.tar.gz] might be some bleeding
+                # edge GNU tarball that isn't supported by CMake. [.zip] is a reliable, simple format.
+                URL https://github.com/diskuv/dkcoder/archive/refs/heads/1.0.zip)
         endif()
         file(GLOB_RECURSE system_command_files
             LIST_DIRECTORIES FALSE

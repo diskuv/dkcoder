@@ -7,7 +7,8 @@
 - Provide and download CMake static binaries for same reasons as ninja-build.
 - Remove now-unused code for `unzip` install on Linux in `./dk`. `unzip` was used for unpacking a Python wheel archive that contained CMake, and for unzipping a Ninja installation zipfile, but that is no longer needed.
 - Have `./dk` work with BusyBox's `tar`
-- *breaking change*: Remove `git` from being installed during `./dk` on Linux, which presumes that `sudo` or something similar is available to do the installation, and presumes authentication is set up. It was previously being done to let CMake work with its `FetchContent` command; however, it was never being done for Windows or macOS so it was broken. Instead, user scripts or DkCoder scripts should handle any Git install + setup themselves. Also, user scripts are long deprecated so this breaking change should affect only legacy `./dk dkml.xxx` and `./dk dksdk.xxx` commands distributed by Diskuv.
+- Use `FetchContent(URL)` in `__dk.cmake` rather than Git to download the latest system scripts (`./dk dkml.xxx` and `./dk dksdk.xxx` scripts).
+- *breaking change*: Remove `git` from being installed during `./dk` on Linux, which presumes that `sudo` or something similar is available to do the installation, and presumes authentication is set up. It was previously being done to let CMake do `FetchContent(GIT_xxx)` in `__dk.cmake`; however, it was never being done for Windows or macOS so it was broken. Instead, user scripts (and system scripts) should handle any Git install + setup themselves. Also, user scripts are long deprecated so this breaking change should affect only system commands.
 
 ## 2.1.3.2
 
