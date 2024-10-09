@@ -709,6 +709,16 @@ fi
 if [ -e "$tools_dir/dl/ninja" ]; then
   install -d "$ninja_destdir/bin"
   install "$tools_dir/dl/ninja" "$ninja_destdir/bin/"
+elif [ -e "$tools_dir/dl/ninja.zip" ]; then
+  # Only macOS at this point. And macOS distributes 'unzip'.
+  rm -rf "$tools_dir/ninja-$ninja_majminpat_ver"
+  cd "$tools_dir/dl"
+  rm -f ninja
+  unzip -q ninja.zip
+  rm -f ninja.zip
+  cd - > /dev/null
+  install -d "$ninja_destdir/bin"
+  mv "$tools_dir/dl/ninja" "$ninja_destdir/bin/"
 fi
 
 # Set NINJA_EXE
