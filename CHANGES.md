@@ -14,6 +14,7 @@
 - The archive format for downloads of DkCoder has switched exclusively to zip archives due to varying incompatible tar support.
 - bugfix: Initial `./dk` would fail but subsequent ones would work.
 - bugfix: Search for uname in /usr/bin but also /bin
+- Setting `DKML_HOST_ABI` environment variable to `linux_x86` (etc.) will override which binary is downloaded during `./dk` on Unix hosts.
 
 ## 2.1.3.2
 
