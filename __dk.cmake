@@ -80,14 +80,14 @@ set(__DkRun_V0_4_SHA256_windows_x86_64 394f897d7cfc791f115e5bf427c7f56e054b510cb
 set(__DkRun_V0_4_SHA256_windows_x86    d0561ee1b49728b05e008df16146bd6e282199d40fd9e67c21f059eee3aa3469)
 set(__DkRun_V0_4_EOL_YYYY_MM_DD "2025-06-30")
 set(__DkRun_V0_4_EOG_YYYY_MM_DD "2025-12-30")
-set(__DkRun_V2_1_COMPILE_VERSION 2.1.3-2)
+set(__DkRun_V2_1_COMPILE_VERSION 2.1.4-r3)
 set(__DkRun_V2_1_URL_BASE https://gitlab.com/api/v4/projects/52918795/packages/generic/stdexport/${__DkRun_V2_1_COMPILE_VERSION})
-set(__DkRun_V2_1_SHA256_linux_x86_64   36099d2d42a72bc55e6386b5eff077fcb07fc865f97c84b3ab1dbe9bb0fcdd43)
-set(__DkRun_V2_1_SHA256_linux_x86      todo_v2_2_release)
-set(__DkRun_V2_1_SHA256_darwin_x86_64  b6cf85606020987e89e00674dada44f4f9d20edcc396cec458c43f41c1c76289)
-set(__DkRun_V2_1_SHA256_darwin_arm64   7747de19a4e01438c3faced4762fd97316299c469e2af4203201562ab35d7837)
-set(__DkRun_V2_1_SHA256_windows_x86_64 f5673acde35ecaaa1c331989b87b1c36b6f834fb681fb5693d6ca05f3606efbd)
-set(__DkRun_V2_1_SHA256_windows_x86    06747d2dbffffc4a4875fe78cdd795dc4fc04410dd6bb5dacda2c5a80dd8b4be)
+set(__DkRun_V2_1_SHA256_linux_x86_64   1a9e6577dd36bd897acf5c21467d1ac8007bb63f68a5cf4a06983fd067ba2083)
+set(__DkRun_V2_1_SHA256_linux_x86      550be51de6b625eed8aae3629c07512793f4788eb8883645b2a2203a3757a9fb)
+set(__DkRun_V2_1_SHA256_darwin_x86_64  5f1a162af7015558ef13046bb048bcfd39c9ce496dad7e240f7a04ecab136755)
+set(__DkRun_V2_1_SHA256_darwin_arm64   42a51400f3e2ffe4bca51c04113d85ab8b0d62a57f22dc2cd1f3b99d7f05c288)
+set(__DkRun_V2_1_SHA256_windows_x86_64 4be483f43eff248333e3ec8ff91f30fe58a0693063f94231f3ed2a4aa81c38ce)
+set(__DkRun_V2_1_SHA256_windows_x86    687cfa7f73b5a2d1c2a7f7ae1381b09ac4f4f1f5e8dcf5a99dc8d9894d142a74)
 set(__DkRun_V2_1_EOL_YYYY_MM_DD "2025-07-30")
 set(__DkRun_V2_1_EOG_YYYY_MM_DD "2026-01-30")
 #   `Env` is a valid DkCoder version if $DKRUN_ENV_URL_BASE exists. Typically it is a file:// URL.
@@ -417,6 +417,10 @@ function(__dkcoder_install)
         __dkcoder_error_wrong_version("You were using DkCoder version ${V_id}. ")
     endif()
 
+    # Convert version to dotted form
+    string(REPLACE "-" "." compile_version "${compile_version}") # 0.2.0-1 -> 0.2.0.1
+    string(REGEX REPLACE "[A-Za-z]" "" compile_version "${compile_version}") # 2.1.4.r3 -> 2.1.4.3
+
     # Make a work directory
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_dkcoder__${compile_version}")
 
@@ -429,7 +433,7 @@ function(__dkcoder_install)
     endif()
 
     # URL to download DkCoder if not installed
-    if(compile_version VERSION_GREATER_EQUAL 2.1.4 OR compile_version STREQUAL "Env")
+    if(compile_version VERSION_GREATER_EQUAL 2.1.4.3 OR compile_version STREQUAL "Env")
         set(out_exp .zip) # Always zip because is portable, unlike GNU/BSD tar version+format incompatibilities
     else()
         if(dkml_host_abi MATCHES "^windows_.*" OR dkml_host_abi MATCHES "^darwin_.*")
@@ -595,8 +599,7 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
     set(DKCODER_SHARE "${dkcoder_share}" PARENT_SCOPE)
 
     # Export version
-    string(REPLACE "-" "." compile_version_dotted "${compile_version}") # 0.2.0-1 -> 0.2.0.1
-    set(DKCODER_VERSION "${compile_version_dotted}" PARENT_SCOPE)
+    set(DKCODER_VERSION "${compile_version}" PARENT_SCOPE)
 
     # Export run vid (Env or V0_1)
     set(DKCODER_RUN_VERSION "${V_id}" PARENT_SCOPE)
