@@ -424,15 +424,19 @@ function(__dkcoder_install)
     set(dkml_host_abi "${ARG_ABI}")
 
     # Location where ocamlfind.conf should be
-    if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+    if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
         set(ocamlfind_conf "${DKCODER_HOME}/findlib.conf")
     endif()
 
     # URL to download DkCoder if not installed
-    if(dkml_host_abi MATCHES "^windows_.*" OR dkml_host_abi MATCHES "^darwin_.*")
-        set(out_exp .zip)
+    if(compile_version VERSION_GREATER_EQUAL 2.1.4 OR compile_version STREQUAL "Env")
+        set(out_exp .zip) # Always zip because is portable, unlike GNU/BSD tar version+format incompatibilities
     else()
-        set(out_exp .tar.gz)
+        if(dkml_host_abi MATCHES "^windows_.*" OR dkml_host_abi MATCHES "^darwin_.*")
+            set(out_exp .zip)
+        else()
+            set(out_exp .tar.gz)
+        endif()
     endif()
     set(download_URL "${url_base}/stdexport-${dkml_host_abi}${out_exp}")
 
@@ -442,7 +446,7 @@ function(__dkcoder_install)
         set(download_DEST "${CMAKE_MATCH_1}")
         set(download_REMOVE OFF)
         set(download_LOCAL ON)
-        message(${ARG_LOGLEVEL} "Checksumming local DkCoder tarball")
+        message(${ARG_LOGLEVEL} "Checksumming local DkCoder archive")
         file(SHA256 "${download_DEST}" download_SHA256)
     else()
         set(download_DEST "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}")
@@ -507,7 +511,7 @@ function(__dkcoder_install)
         endif()
 
         # Post-install: Configure findlib.conf to point to macOS bundle or Unix/Win32 extraction
-        if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+        if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
             if(CMAKE_HOST_WIN32)
                 # Windows needs entries like: destdir="C:\\TARBALL\\lib"
                 cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
@@ -559,7 +563,7 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${DKCODER_HOME} and try again.")
 
     # Export ocamlfind.conf
-    if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+    if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
         set(DKCODER_OCAMLFIND_CONF "${ocamlfind_conf}" PARENT_SCOPE)
     endif()
 
