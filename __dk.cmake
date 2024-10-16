@@ -248,7 +248,8 @@ function(__dkcoder_abi)
             if(NOT ARG_QUIET AND DEFINED ENV{DKML_HOST_ABI})
                 message(${ARG_LOGLEVEL} "WARNING: On Linux machines and devices the environment variable DKML_HOST_ABI must be `linux_x86`, `linux_x86_64` or `linux_arm64`. It was ignored because it was: `$ENV{DKML_HOST_ABI}`")
             endif()
-            execute_process(COMMAND /usr/bin/uname -m
+            find_program(UNAME NAMES uname PATHS /usr/bin /bin NO_DEFAULT_PATH REQUIRED)
+            execute_process(COMMAND "${UNAME}" -m
                     OUTPUT_VARIABLE host_machine_type
                     OUTPUT_STRIP_TRAILING_WHITESPACE
                     COMMAND_ERROR_IS_FATAL ANY)
