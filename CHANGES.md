@@ -12,6 +12,7 @@
 - Use `FetchContent(URL)` in `__dk.cmake` rather than Git to download the latest system scripts (`./dk dkml.xxx` and `./dk dksdk.xxx` scripts).
 - *breaking change*: Remove `git` from being installed during `./dk` on Linux, which presumes that `sudo` or something similar is available to do the installation, and presumes authentication is set up. It was previously being done to let CMake do `FetchContent(GIT_xxx)` in `__dk.cmake`; however, it was never being done for Windows or macOS so it was broken. Instead, user scripts (and system scripts) should handle any Git install + setup themselves. Also, user scripts are long deprecated so this breaking change should affect only system commands.
 - The archive format for downloads of DkCoder has switched exclusively to zip archives due to varying incompatible tar support.
+- bugfix: Initial `./dk` would fail but subsequent ones would work.
 
 ## 2.1.3.2
 

@@ -540,11 +540,12 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
             # Cleanup
             message(${ARG_LOGLEVEL} "Cleaning DkCoder intermediate files")
             file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
+        endif() # if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
 
-            find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints} ${find_program_ARGS})
-            message(${ARG_LOGLEVEL} "DkCoder installed.")
-        endif()
-    endif()
+        # Get and verify DKCODER is present
+        find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints} ${find_program_ARGS})
+        message(${ARG_LOGLEVEL} "DkCoder installed.")
+    endif() # if(NOT DKCODER OR reinstall)
 
     cmake_path(GET DKCODER PARENT_PATH dkcoder_helpers)
 
