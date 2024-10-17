@@ -204,6 +204,7 @@ function(install_java_jdk)
     if(NOT JAVAC)
         # Download into .ci/local/share/jdk/bin (which is one of the HINTS)
         set(downloaded)
+        set(host_machine_type)
         # WARNING: Azul support for Zulu Community 8 ends in 2026. Perhaps back up the tar balls to GitLab.
         if(CMAKE_HOST_WIN32)
             if(ARG_DKML_TARGET_ABI STREQUAL "windows_x86")
@@ -234,10 +235,12 @@ function(install_java_jdk)
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
             set(downloaded ON)
         elseif(CMAKE_HOST_APPLE)
-            execute_process(COMMAND uname -m
-                    OUTPUT_VARIABLE host_machine_type
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    COMMAND_ERROR_IS_FATAL ANY)
+            if(NOT ARG_DKML_TARGET_ABI)
+                execute_process(COMMAND uname -m
+                        OUTPUT_VARIABLE host_machine_type
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        COMMAND_ERROR_IS_FATAL ANY)
+            endif()
             if(ARG_DKML_TARGET_ABI STREQUAL "darwin_x86_64" OR host_machine_type STREQUAL x86_64)
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-macosx_x64.tar.gz)
@@ -258,6 +261,8 @@ function(install_java_jdk)
                     set(out_base jdk-17.0.8.1+1)
                     set(expected_sha256 8acda4fa59946902180a9283ee191b3db19b8c1146fb8dfa209d316ec78f9a5f)
                 endif()
+            elseif(ARG_DKML_TARGET_ABI)
+                message(FATAL_ERROR "Your APPLE DKML_TARGET_ABI ${ARG_DKML_TARGET_ABI} platform is currently not supported by this download script")
             else()
                 message(FATAL_ERROR "Your APPLE ${host_machine_type} platform is currently not supported by this download script")
             endif()
@@ -267,10 +272,12 @@ function(install_java_jdk)
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
             set(downloaded ON)
         elseif(CMAKE_HOST_UNIX)
-            execute_process(COMMAND uname -m
-                    OUTPUT_VARIABLE host_machine_type
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    COMMAND_ERROR_IS_FATAL ANY)
+            if(NOT ARG_DKML_TARGET_ABI)
+                execute_process(COMMAND uname -m
+                        OUTPUT_VARIABLE host_machine_type
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        COMMAND_ERROR_IS_FATAL ANY)
+            endif()
             if(ARG_DKML_TARGET_ABI STREQUAL "linux_x86_64" OR host_machine_type STREQUAL x86_64)
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-linux_x64.tar.gz)
@@ -295,6 +302,8 @@ function(install_java_jdk)
                 endif()
                 message(${loglevel} "Downloading JDK from ${url}")
                 file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
+            elseif(ARG_DKML_TARGET_ABI)
+                message(FATAL_ERROR "Your UNIX DKML_TARGET_ABI ${ARG_DKML_TARGET_ABI} platform is currently not supported by this download script")
             else()
                 message(FATAL_ERROR "Your UNIX ${host_machine_type} platform is currently not supported by this download script")
             endif()
