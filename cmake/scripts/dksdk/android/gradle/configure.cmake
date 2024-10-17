@@ -94,7 +94,7 @@ function(run)
     endif()
     
     # Get helper functions from other commands
-    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../ndk/download.cmake)
+    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../pkg/download.cmake)
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../cmake/copy.cmake)
 
     set(content)
