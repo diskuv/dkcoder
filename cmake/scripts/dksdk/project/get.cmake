@@ -108,9 +108,9 @@ function(dksdk_project_get)
     endif()
 
     if(ARG_SANDBOX)
-        set(sandbox 0)
-    else()
         set(sandbox 1)
+    else()
+        set(sandbox 0)
     endif()
     
     set(source_dir_OPTS)
