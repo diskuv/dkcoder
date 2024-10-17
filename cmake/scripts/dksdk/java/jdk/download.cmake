@@ -291,6 +291,8 @@ function(install_java_jdk)
                 message(${loglevel} "Downloading JDK from ${url}")
                 file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
             elseif(ARG_DKML_TARGET_ABI STREQUAL "linux_x86" OR host_machine_type STREQUAL i686)
+                # TODO: Zulu has missing "client" and "server" errors for JDK 8 and 17 linux_x86.
+                # TODO: Perhaps just do a message(FATAL_ERROR ...) here?
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-linux_i686.tar.gz)
                     set(out_base zulu8.78.0.19-ca-jdk8.0.412-linux_i686)
