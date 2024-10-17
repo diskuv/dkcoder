@@ -43,6 +43,12 @@ Places the JDK in .ci/local/share/jdk:
     ├── lib
     └── release
 
+Environment
+===========
+
+DKML_TARGET_ABI
+  Optional. Downloads the JDK for the specified target ABI.
+
 Arguments
 =========
 
@@ -51,6 +57,10 @@ HELP
 
 QUIET
   Do not print CMake STATUS messages.
+
+DKML_TARGET_ABI
+  Optional. Downloads the JDK for the specified target ABI.
+  Overrides the environment variable of the same name.
 
 JDK 17
   Install JDK 17 (the default).
@@ -174,7 +184,7 @@ endfunction()
 # - JAVA
 function(install_java_jdk)
     set(noValues NO_SYSTEM_PATH)
-    set(singleValues JDK_VERSION)
+    set(singleValues JDK_VERSION DKML_TARGET_ABI)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -196,14 +206,27 @@ function(install_java_jdk)
         set(downloaded)
         # WARNING: Azul support for Zulu Community 8 ends in 2026. Perhaps back up the tar balls to GitLab.
         if(CMAKE_HOST_WIN32)
-            if(JDK_VERSION EQUAL 8)
-                set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-win_x64.zip)
-                set(out_base zulu8.78.0.19-ca-jdk8.0.412-win_x64)
-                set(expected_sha256 ca5499c301d5b42604d8535b8c40a7f928a796247b8c66a600333dd799798ff7)
+            if(ARG_DKML_TARGET_ABI STREQUAL "windows_x86")
+                if(JDK_VERSION EQUAL 8)
+                    set(url https://cdn.azul.com/zulu/bin/zulu8.82.0.21-ca-jdk8.0.432-win_i686.zip)
+                    set(out_base zulu8.82.0.21-ca-jdk8.0.432-win_i686)
+                    set(expected_sha256 2fd1d0529e5a15ff1e747ddefa83bfa146448d659d93c3a7131da819851513d7)
+                else()
+                    set(url https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x86-32_windows_hotspot_17.0.8.1_1.zip)
+                    set(out_base jdk-17.0.8.1+1)
+                    set(expected_sha256 603df3cb8241b2fd8cd56e7a7ac9954be8dd17bda0863df60208ae292d550f68)
+                endif()
             else()
-                set(url https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x64_windows_hotspot_17.0.8.1_1.zip)
-                set(out_base jdk-17.0.8.1+1)
-                set(expected_sha256 651a795155dc918c06cc9fd4b37253b9cbbca5ec8e76d4a8fa7cdaeb1f52761c)
+                # windows_x86_64
+                if(JDK_VERSION EQUAL 8)
+                    set(url https://cdn.azul.com/zulu/bin/zulu8.82.0.21-ca-jdk8.0.432-win_x64.zip)
+                    set(out_base zulu8.82.0.21-ca-jdk8.0.432-win_x64)
+                    set(expected_sha256 d29f4b69d52405b808ffebdfa15dc4d511fbdd1f37d284846ce40820277b974c)
+                else()
+                    set(url https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x64_windows_hotspot_17.0.8.1_1.zip)
+                    set(out_base jdk-17.0.8.1+1)
+                    set(expected_sha256 651a795155dc918c06cc9fd4b37253b9cbbca5ec8e76d4a8fa7cdaeb1f52761c)
+                endif()
             endif()
             message(${loglevel} "Downloading JDK from ${url}")
             file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.zip EXPECTED_HASH SHA256=${expected_sha256})
@@ -215,7 +238,7 @@ function(install_java_jdk)
                     OUTPUT_VARIABLE host_machine_type
                     OUTPUT_STRIP_TRAILING_WHITESPACE
                     COMMAND_ERROR_IS_FATAL ANY)
-            if(host_machine_type STREQUAL x86_64)
+            if(ARG_DKML_TARGET_ABI STREQUAL "darwin_x86_64" OR host_machine_type STREQUAL x86_64)
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-macosx_x64.tar.gz)
                     set(out_base zulu8.78.0.19-ca-jdk8.0.412-macosx_x64)
@@ -225,7 +248,7 @@ function(install_java_jdk)
                     set(out_base jdk-17.0.8.1+1)
                     set(expected_sha256 e67ed748b9ef6d4557da24beefe9d9ec193e9d9f843be5ff6559a275e0d230b6)
                 endif()
-            elseif(host_machine_type STREQUAL arm64)
+            elseif(ARG_DKML_TARGET_ABI STREQUAL "darwin_arm64" OR host_machine_type STREQUAL arm64)
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-macosx_aarch64.tar.gz)
                     set(out_base zulu8.78.0.19-ca-jdk8.0.412-macosx_aarch64)
@@ -248,7 +271,7 @@ function(install_java_jdk)
                     OUTPUT_VARIABLE host_machine_type
                     OUTPUT_STRIP_TRAILING_WHITESPACE
                     COMMAND_ERROR_IS_FATAL ANY)
-            if(host_machine_type STREQUAL x86_64)
+            if(ARG_DKML_TARGET_ABI STREQUAL "linux_x86_64" OR host_machine_type STREQUAL x86_64)
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-linux_x64.tar.gz)
                     set(out_base zulu8.78.0.19-ca-jdk8.0.412-linux_x64)
@@ -260,7 +283,7 @@ function(install_java_jdk)
                 endif()
                 message(${loglevel} "Downloading JDK from ${url}")
                 file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
-            elseif(host_machine_type STREQUAL i686)
+            elseif(ARG_DKML_TARGET_ABI STREQUAL "linux_x86" OR host_machine_type STREQUAL i686)
                 if(JDK_VERSION EQUAL 8)
                     set(url https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jdk8.0.412-linux_i686.tar.gz)
                     set(out_base zulu8.78.0.19-ca-jdk8.0.412-linux_i686)
@@ -314,7 +337,7 @@ function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH" "JDK" "")
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH" "JDK;DKML_TARGET_ABI" "")
 
     if(ARG_HELP)
         help(MODE NOTICE)
@@ -334,12 +357,20 @@ function(run)
         set(args_JDK JDK_VERSION 8)
     endif()
 
+    # DKML_TARGET_ABI
+    set(args_DKML_TARGET_ABI)
+    if(ARG_DKML_TARGET_ABI)
+        set(args_DKML_TARGET_ABI DKML_TARGET_ABI "${ARG_DKML_TARGET_ABI}")
+    elseif(DEFINED ENV{DKML_TARGET_ABI})
+        set(args_DKML_TARGET_ABI DKML_TARGET_ABI "$ENV{DKML_TARGET_ABI}")
+    endif()
+
     # NO_SYSTEM_PATH
     set(expand_NO_SYSTEM_PATH)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND expand_NO_SYSTEM_PATH NO_SYSTEM_PATH)
     endif()
 
-    install_java_jdk(${expand_NO_SYSTEM_PATH} ${args_JDK})
+    install_java_jdk(${expand_NO_SYSTEM_PATH} ${args_JDK} ${args_DKML_TARGET_ABI})
     message(STATUS "javac compiler is at: ${JAVAC}")
 endfunction()

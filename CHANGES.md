@@ -2,6 +2,10 @@
 
 ## Pending
 
+## 2.1.4.4
+
+- `DKML_TARGET_ABI` environment variable, if set, is honored in `./dk dksdk.java.jdk.download`. `./dk dksdk.java.jdk.download DKML_TARGET_ABI <abi>` is also supported.
+
 ## 2.1.4.3
 
 - Upgrade to Ninja 1.12.1 from 1.11.1 specifically to fix <https://github.com/ninja-build/ninja/issues/829>
