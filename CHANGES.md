@@ -15,6 +15,7 @@
 - bugfix: Initial `./dk` would fail but subsequent ones would work.
 - bugfix: Search for uname in /usr/bin but also /bin
 - Setting `DKML_HOST_ABI` environment variable to `linux_x86` (etc.) will override which binary is downloaded during `./dk` on Unix hosts.
+- Using `./dk dksdk.project.get SANDBOX` will skip fetching from any URL that has `${sourceParentDir}` or `${projectParentDir}` variables (ie. they go outside the project). Should be used in CI jobs.
 
 ## 2.1.3.2
 

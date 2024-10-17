@@ -83,6 +83,9 @@ SOURCE_DIR <dir>
   The local development environment will be copied in this version, although
   future versions may use symlinks when the I/O speed to read <dir> is fast.
 
+SANDBOX
+  Skip any URLs that use \${sourceParentDir} or \${projectParentDir}.
+
 NONINTERACTIVE
   Best effort attempt to stop `git` and any other source fetching tools from
   asking interactive questions like username/password prompts. Use when
@@ -91,7 +94,7 @@ NONINTERACTIVE
 endfunction()
 
 function(dksdk_project_get)
-    set(noValues NONINTERACTIVE)
+    set(noValues NONINTERACTIVE SANDBOX)
     set(singleValues LOG_LEVEL FETCH_DIR CONFIG_FILE SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
@@ -104,6 +107,12 @@ function(dksdk_project_get)
         set(interactive 1)
     endif()
 
+    if(ARG_SANDBOX)
+        set(sandbox 0)
+    else()
+        set(sandbox 1)
+    endif()
+    
     set(source_dir_OPTS)
     if(ARG_SOURCE_DIR)
         set(source_dir_OPTS -D "SOURCE_DIR=${ARG_SOURCE_DIR}")
@@ -151,7 +160,8 @@ function(dksdk_project_get)
     execute_process(
             COMMAND
             "${CMAKE_COMMAND}"
-            -D INTERACTIVE=${interactive}
+            -D "INTERACTIVE=${interactive}"
+            -D "SANDBOX=${sandbox}"
             -D "CONFIG_FILE=${ARG_CONFIG_FILE}"
             ${source_dir_OPTS}            
             -D "COMMAND_GET=${ARG_FETCH_DIR}"
