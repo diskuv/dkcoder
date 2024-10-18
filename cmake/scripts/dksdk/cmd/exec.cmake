@@ -11,7 +11,7 @@
 #                                                                        #
 ##########################################################################
 
-# `${CMAKE_COMMAND} -E env --modify` only in 3.25+
+# `"${CMAKE_COMMAND}" -E env --modify` only in 3.25+
 cmake_minimum_required(VERSION 3.25)
 
 function(help)
@@ -178,7 +178,7 @@ function(run)
             set(duneBinDir "${duneHome}")
         endif()
         if(duneBinDir)
-            list(APPEND cmdPrefix ${CMAKE_COMMAND} -E env --modify "PATH=path_list_prepend:${duneBinDir}")
+            list(APPEND cmdPrefix "${CMAKE_COMMAND}" -E env --modify "PATH=path_list_prepend:${duneBinDir}")
         endif()
 
         # It needs to know where ocamlformat is ...
@@ -187,7 +187,7 @@ function(run)
         # |  Code: -32600
         find_program(OCAMLFORMAT_EXE NAMES ocamlformat HINTS ${hints})
         cmake_path(GET OCAMLFORMAT_EXE PARENT_PATH ocamlformatBinDir)
-        list(APPEND cmdPrefix ${CMAKE_COMMAND} -E env --modify "PATH=path_list_prepend:${ocamlformatBinDir}")
+        list(APPEND cmdPrefix "${CMAKE_COMMAND}" -E env --modify "PATH=path_list_prepend:${ocamlformatBinDir}")
     endif()
 
     if(EXISTS "${PROG_EXE}.cmd")

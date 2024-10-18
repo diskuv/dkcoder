@@ -107,7 +107,7 @@ function(install_java_gradle)
         message(FATAL_ERROR "The only supported versions of Gradle are 7.6 and 8.3, not ${version}")
     endif()
 
-    set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/gradle/bin)
+    set(hints "${CMAKE_SOURCE_DIR}/.ci/local/share/gradle/bin")
     set(find_program_INITIAL)
     if(ARG_NO_SYSTEM_PATH)
         list(APPEND find_program_INITIAL NO_DEFAULT_PATH)
@@ -123,17 +123,17 @@ function(install_java_gradle)
         # Download into .ci/local/share/gradle/bin (which is one of the HINTS)
         if(CMAKE_HOST_UNIX OR CMAKE_HOST_WIN32)
             message(${loglevel} "Downloading Gradle from ${url}")
-            file(DOWNLOAD ${url}
-                ${CMAKE_CURRENT_BINARY_DIR}/gradle.zip
+            file(DOWNLOAD "${url}"
+                "${CMAKE_CURRENT_BINARY_DIR}/gradle.zip"
                 EXPECTED_HASH ${urlhash})
             message(${loglevel} "Extracting Gradle")
-            file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/gradle.zip
-                DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+            file(ARCHIVE_EXTRACT INPUT "${CMAKE_CURRENT_BINARY_DIR}/gradle.zip"
+                DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
-            file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/gradle)
-            file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/gradle-${version} ${CMAKE_CURRENT_BINARY_DIR}/gradle)
-            file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/.ci/local/share/gradle)
-            file(COPY ${CMAKE_CURRENT_BINARY_DIR}/gradle DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share FOLLOW_SYMLINK_CHAIN)
+            file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/gradle")
+            file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/gradle-${version}" "${CMAKE_CURRENT_BINARY_DIR}/gradle")
+            file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/.ci/local/share/gradle")
+            file(COPY "${CMAKE_CURRENT_BINARY_DIR}/gradle" DESTINATION "${CMAKE_SOURCE_DIR}/.ci/local/share" FOLLOW_SYMLINK_CHAIN)
         else()
             message(FATAL_ERROR "Your platform is currently not supported by this download script")
         endif()
@@ -144,7 +144,7 @@ endfunction()
 
 function(run)
     # Get helper functions from this file
-    include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
+    include("${CMAKE_CURRENT_FUNCTION_LIST_FILE}")
 
     cmake_parse_arguments(PARSE_ARGV 0 ARG "HELP;QUIET;NO_SYSTEM_PATH;ALL" "VERSION" "")
 
@@ -179,7 +179,7 @@ function(run)
     endif()
 
     # Get helper functions from other commands
-    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../java/jdk/download.cmake)
+    include("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../java/jdk/download.cmake")
 
     # Do prereqs
     install_java_jdk(${expand_NO_SYSTEM_PATH})

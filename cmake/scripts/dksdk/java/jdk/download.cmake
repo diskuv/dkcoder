@@ -145,7 +145,7 @@ function(get_jdk_home)
     #       ...
     #       java.home = C:\Program Files\Java\jdk-17.0.3.1
     execute_process(
-        COMMAND ${JAVA} -XshowSettings:properties -version
+        COMMAND "${JAVA}" -XshowSettings:properties -version
         ERROR_VARIABLE javaProperties
         RESULT_VARIABLE javaFailed
     )
@@ -230,7 +230,7 @@ function(install_java_jdk)
                 endif()
             endif()
             message(${loglevel} "Downloading JDK from ${url}")
-            file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.zip EXPECTED_HASH SHA256=${expected_sha256})
+            file(DOWNLOAD "${url}" ${CMAKE_CURRENT_BINARY_DIR}/java.zip EXPECTED_HASH SHA256=${expected_sha256})
             message(${loglevel} "Extracting JDK")
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
             set(downloaded ON)
@@ -267,7 +267,7 @@ function(install_java_jdk)
                 message(FATAL_ERROR "Your APPLE ${host_machine_type} platform is currently not supported by this download script")
             endif()
             message(${loglevel} "Downloading JDK from ${url}")                
-            file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
+            file(DOWNLOAD "${url}" ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
             message(${loglevel} "Extracting JDK")
             file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
             set(downloaded ON)
@@ -289,7 +289,7 @@ function(install_java_jdk)
                     set(expected_sha256 a0b1b9dd809d51a438f5fa08918f9aca7b2135721097f0858cf29f77a35d4289)
                 endif()
                 message(${loglevel} "Downloading JDK from ${url}")
-                file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
+                file(DOWNLOAD "${url}" ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
             elseif(ARG_DKML_TARGET_ABI STREQUAL "linux_x86" OR host_machine_type STREQUAL i686)
                 # TODO: Zulu has missing "client" and "server" errors for JDK 8 and 17 linux_x86.
                 # TODO: Perhaps just do a message(FATAL_ERROR ...) here?
@@ -303,7 +303,7 @@ function(install_java_jdk)
                     set(expected_sha256 53a66b711d828deae801870143b00be2cf4563ce283d393b08b7b96a846dabd8)
                 endif()
                 message(${loglevel} "Downloading JDK from ${url}")
-                file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
+                file(DOWNLOAD "${url}" ${CMAKE_CURRENT_BINARY_DIR}/java.tar.gz EXPECTED_HASH SHA256=${expected_sha256})
             elseif(ARG_DKML_TARGET_ABI)
                 message(FATAL_ERROR "Your UNIX DKML_TARGET_ABI ${ARG_DKML_TARGET_ABI} platform is currently not supported by this download script")
             else()

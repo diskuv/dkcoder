@@ -496,9 +496,9 @@ function(dkcoder_install_vc_redist)
     set(url "https://aka.ms/vs/17/release/vc_redist.${vcarch}.exe")
 
     message(${ARG_LOGLEVEL} "Downloading Visual C++ Redistributable from ${url}")
-    file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe)
+    file(DOWNLOAD "${url}" "${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe")
     execute_process(
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe /install /passive
+        COMMAND "${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe" /install /passive
         RESULT_VARIABLE vc_redist_errcode
     )
     # Allow exit code 1638 which is the code that a newer vcredist is already
@@ -596,7 +596,7 @@ function(dkcoder_install)
         endif()
         set(url "${url_base}/stdexport-${dkml_host_abi}${out_exp}")
         message(${ARG_LOGLEVEL} "Downloading DkSDK Coder from ${url}")
-        file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp} ${expand_EXPECTED_HASH})
+        file(DOWNLOAD "${url}" ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp} ${expand_EXPECTED_HASH})
         message(${ARG_LOGLEVEL} "Extracting DkSDK Coder")
         file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/_e)
 
@@ -623,7 +623,7 @@ function(dkcoder_install)
 
         # Cleanup
         message(${ARG_LOGLEVEL} "Cleaning DkSDK Coder intermediate files")
-        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
+        file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}")
         file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/_e")
 
         find_program(DKCODER NAMES dkcoder REQUIRED HINTS ${hints})

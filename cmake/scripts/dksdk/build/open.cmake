@@ -115,7 +115,7 @@ function(run)
         message(${loglevel} "Opening the project using an IDE selected by CMake")
         execute_process(
                 COMMAND
-                ${CMAKE_COMMAND} --open ${binaryDir}
+                "${CMAKE_COMMAND}" --open "${binaryDir}"
                 COMMAND_ERROR_IS_FATAL ANY
         )
     endif ()

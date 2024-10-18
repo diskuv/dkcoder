@@ -120,8 +120,8 @@ function(run)
     message(${loglevel} "Using JAVA_HOME: ${JAVA_HOME}")
     execute_process(
         COMMAND
-        ${CMAKE_COMMAND} -E env
-            JAVA_HOME=${JAVA_HOME}
+        "${CMAKE_COMMAND}" -E env
+            "JAVA_HOME=${JAVA_HOME}"
             # Gradle jvmToolchain detection has problems if the Java
             # is not in the PATH.
             # https://github.com/ankidroid/Anki-Android/issues/13340#issuecomment-1445218572
@@ -130,5 +130,6 @@ function(run)
         ENCODING UTF-8
         ${execute_process_args}
         COMMAND_ERROR_IS_FATAL ANY
+        COMMAND_ECHO STDERR
     )
 endfunction()

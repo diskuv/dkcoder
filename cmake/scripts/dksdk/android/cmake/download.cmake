@@ -91,22 +91,22 @@ function(install_android_cmake)
     if(CMAKE_HOST_WIN32)
         set(exe_EXT .exe)
     endif()
-    set(ANDROID_CMAKE ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmake/${CMAKE_LATEST}/bin/cmake${exe_EXT})
+    set(ANDROID_CMAKE "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmake/${CMAKE_LATEST}/bin/cmake${exe_EXT}")
 
     if(NOT EXISTS ${ANDROID_CMAKE})
         # Install toolchain and the rest of the NDK into .ci/local/share/android-sdk ...
 
         # FIRST licenses have to be accepted
-        are_licenses_accepted(${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/licenses)
+        are_licenses_accepted("${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/licenses")
 
-        set(run_sdkmanager ${CMAKE_COMMAND} -E env JAVA_HOME=${JAVA_HOME} ${SDKMANAGER})
+        set(run_sdkmanager "${CMAKE_COMMAND}" -E env "JAVA_HOME=${JAVA_HOME}" ${SDKMANAGER})
 
         if(NOT accepted)
             string(REPEAT "Y\n" 20 many_yes)
             file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses" "${many_yes}")
             execute_process(
                 COMMAND ${run_sdkmanager} --licenses ${SDKMANAGER_COMMON_ARGS}
-                INPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/yes-licenses
+                INPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses"
                 COMMAND_ERROR_IS_FATAL ANY)
         endif()
 

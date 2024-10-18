@@ -128,22 +128,22 @@ function(find_sdkmanager)
         list(APPEND find_ARGS REQUIRED)
     endif()
 
-    set(hints ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest/bin)
+    set(hints "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest/bin")
     find_program(SDKMANAGER NAMES ${sdkmanager_NAMES} HINTS ${hints} ${find_ARGS})
 
     # Any HTTP proxy? We follow the curl standards at https://everything.curl.dev/usingcurl/proxies/env
     # which do not allow HTTP_PROXY.
     set(proxy_ARGS)
     if(DEFINED ENV{http_proxy})
-        set(url $ENV{http_proxy})
+        set(url "$ENV{http_proxy}")
         if(url MATCHES [[^http://([^:]+):([0-9]+).*]])
             list(APPEND proxy_ARGS --no_https --proxy=http "--proxy_host=${CMAKE_MATCH_1}" --proxy_port=${CMAKE_MATCH_2})
         endif()
     elseif(DEFINED ENV{https_proxy} OR DEFINED ENV{HTTPS_PROXY})
         if(DEFINED ENV{https_proxy})
-            set(url $ENV{https_proxy})
+            set(url "$ENV{https_proxy}")
         else()
-            set(url $ENV{HTTPS_PROXY})
+            set(url "$ENV{HTTPS_PROXY}")
         endif()
         if(url MATCHES [[^https://([^:]+):([0-9]+).*]])
             list(APPEND proxy_ARGS --proxy=http "--proxy_host=${CMAKE_MATCH_1}" --proxy_port=${CMAKE_MATCH_2})
@@ -172,32 +172,32 @@ function(install_sdkmanager)
         if(CMAKE_HOST_WIN32)
             set(url https://dl.google.com/android/repository/commandlinetools-win-9477386_latest.zip)
             message(${loglevel} "Downloading Android Command Line Tools from ${url}")
-            file(DOWNLOAD ${url}
-                ${CMAKE_CURRENT_BINARY_DIR}/commandlinetools.zip
+            file(DOWNLOAD "${url}"
+                "${CMAKE_CURRENT_BINARY_DIR}/commandlinetools.zip"
                 EXPECTED_HASH SHA256=696431978daadd33a28841320659835ba8db8080a535b8f35e9e60701ab8b491)
         elseif(CMAKE_HOST_UNIX)
             set(url https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip)
             message(${loglevel} "Downloading Android Command Line Tools from ${url}")
-            file(DOWNLOAD ${url}
-                ${CMAKE_CURRENT_BINARY_DIR}/commandlinetools.zip
+            file(DOWNLOAD "${url}"
+                "${CMAKE_CURRENT_BINARY_DIR}/commandlinetools.zip"
                 EXPECTED_HASH SHA256=bd1aa17c7ef10066949c88dc6c9c8d536be27f992a1f3b5a584f9bd2ba5646a0)
         else()
             message(FATAL_ERROR "Your platform is currently not supported by this download script")
         endif()
 
         message(${loglevel} "Extracting Android Command Line Tools")
-        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/commandlinetools.zip
-            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-        file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools)
-        file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools)
+        file(ARCHIVE_EXTRACT INPUT "${CMAKE_CURRENT_BINARY_DIR}/commandlinetools.zip"
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+        file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools")
+        file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools")
         # Do file(RENAME) but work across mount volumes (ex. inside containers)
         file(GLOB entries
             LIST_DIRECTORIES true
-            RELATIVE ${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools
-            ${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools/*)
+            RELATIVE "${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools"
+            "${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools/*")
         foreach(entry IN LISTS entries)
-            file(COPY ${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools/${entry}
-                DESTINATION ${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest
+            file(COPY "${CMAKE_CURRENT_BINARY_DIR}/cmdline-tools/${entry}"
+                DESTINATION "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk/cmdline-tools/latest"
                 FOLLOW_SYMLINK_CHAIN
                 USE_SOURCE_PERMISSIONS)
         endforeach()
@@ -222,7 +222,7 @@ function(are_google_licenses_accepted LICENSEDIR)
 endfunction()
 
 macro(set_run_sdkmanager)
-    set(run_sdkmanager ${CMAKE_COMMAND} -E env JAVA_HOME=${JAVA_HOME} ${SDKMANAGER})
+    set(run_sdkmanager "${CMAKE_COMMAND}" -E env "JAVA_HOME=${JAVA_HOME}" ${SDKMANAGER})
 endmacro()
 
 function(accept_google_licenses)
@@ -234,7 +234,7 @@ function(accept_google_licenses)
         file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses" "${many_yes}")
         execute_process(
             COMMAND ${run_sdkmanager} --licenses ${SDKMANAGER_COMMON_ARGS}
-            INPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/yes-licenses
+            INPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/yes-licenses"
             COMMAND_ERROR_IS_FATAL ANY)
     endif()
 endfunction()
@@ -296,7 +296,7 @@ function(run)
     endif()
 
     # Get helper functions from JDK downlader
-    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../java/jdk/download.cmake)
+    include("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../java/jdk/download.cmake")
 
     # gitignore
     file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/.ci/local/share/android-sdk")

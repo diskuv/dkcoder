@@ -101,7 +101,7 @@ macro(_install_android_studio_helper ARCHIVE_NAME TYPE)
     set(archive_name ${ARCHIVE_NAME})
     set(url ${android_studio_url_${TYPE}})
     message(${loglevel} "Downloading Android Studio from ${url}")
-    file(DOWNLOAD ${url} ${CMAKE_CURRENT_BINARY_DIR}/${ARCHIVE_NAME}
+    file(DOWNLOAD "${url}" ${CMAKE_CURRENT_BINARY_DIR}/${ARCHIVE_NAME}
         EXPECTED_HASH SHA256=${android_studio_256_${TYPE}})
 endmacro()
 

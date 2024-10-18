@@ -149,10 +149,10 @@ function(__dkcoder_install_vc_redist)
 
     set(redist_URL "https://aka.ms/vs/17/release/vc_redist.${vcarch}.exe")
     message(${ARG_LOGLEVEL} "Downloading Visual C++ Redistributable from ${redist_URL}")
-    file(DOWNLOAD ${redist_URL} ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe)
+    file(DOWNLOAD "${redist_URL}" "${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe")
     execute_process(
         # https://github.com/aaronparker/vcredist/blob/main/VcRedist/VisualCRedistributables.json
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe /install /passive /norestart
+        COMMAND "${CMAKE_CURRENT_BINARY_DIR}/vc_redist.exe" /install /passive /norestart
         RESULT_VARIABLE vc_redist_errcode
     )
     if(vc_redist_errcode EQUAL 0)
@@ -339,7 +339,7 @@ ARE YOU THE SCRIPT AUTHOR? If so run wrapper.upgrade twice, test
         set(prompted "${CMAKE_CURRENT_BINARY_DIR}/eol/${now_YYYY_MM_DD}")
         if(NOT EXISTS "${prompted}")
             file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/eol")
-            execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 60)
+            execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 60)
             file(TOUCH "${prompted}")
         endif()
     endif()
@@ -540,7 +540,7 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
 
             # Cleanup
             message(${ARG_LOGLEVEL} "Cleaning DkCoder intermediate files")
-            file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp})
+            file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/stdexport${out_exp}")
         endif() # if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
 
         # Get and verify DKCODER is present
@@ -982,7 +982,7 @@ Environment variables:
     set(dot_function_names)
     file(GLOB_RECURSE command_files
             LIST_DIRECTORIES FALSE
-            RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/scripts
+            RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/scripts"
             cmake/scripts/*.cmake)
     foreach(command_file IN LISTS command_files)
         # Exclude files and directories that start with: __dk-
@@ -1098,9 +1098,9 @@ endfunction()
         endif()
         file(GLOB_RECURSE system_command_files
             LIST_DIRECTORIES FALSE
-            RELATIVE ${dkcoder_src_dir}/cmake/scripts
-            ${dkcoder_src_dir}/cmake/scripts/dkml/*.cmake
-            ${dkcoder_src_dir}/cmake/scripts/dksdk/*.cmake)
+            RELATIVE "${dkcoder_src_dir}/cmake/scripts"
+            "${dkcoder_src_dir}/cmake/scripts/dkml/*.cmake"
+            "${dkcoder_src_dir}/cmake/scripts/dksdk/*.cmake")
         foreach(command_file IN LISTS system_command_files)
             # Normalize and lowercase
             cmake_path(NORMAL_PATH command_file)
