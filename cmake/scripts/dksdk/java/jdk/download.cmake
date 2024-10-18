@@ -114,7 +114,13 @@ function(get_jdk_home)
 
     # Apple has a standard to locate JDKs. But we'll prefer the local JDK if present.
     if(CMAKE_HOST_APPLE)
+        # Microsoft JDK uses Contents/Home (a bundle) while Zulu does not. Search both.
         set(JAVA_HOME "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk/Contents/Home")
+        if(EXISTS "${JAVA_HOME}/bin/javac")
+            set(JAVA_HOME "${JAVA_HOME}" PARENT_SCOPE)
+            return()
+        endif()
+        set(JAVA_HOME "${CMAKE_SOURCE_DIR}/.ci/local/share/jdk")
         if(EXISTS "${JAVA_HOME}/bin/javac")
             set(JAVA_HOME "${JAVA_HOME}" PARENT_SCOPE)
             return()
