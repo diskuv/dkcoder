@@ -157,7 +157,7 @@ function(run)
         ONLY_IF_DIFFERENT)
 
     install_java_jdk(${expand_NO_SYSTEM_PATH})
-    get_jdk_home() # Set JAVA_HOME if available
+    get_jdk_home(JDK_VERSION 17) # Set JAVA_HOME if available. Android Gradle requires 17, so check for that first.
     install_sdkmanager(${expand_NO_SYSTEM_PATH})
     install_android_cmake()
     message(${loglevel} "Android CMake is at: ${ANDROID_CMAKE}")
