@@ -175,7 +175,7 @@ function(run)
     # Get helper functions from this file
     include(${CMAKE_CURRENT_FUNCTION_LIST_FILE})
 
-    set(noValues HELP QUIET NONINTERACTIVE)
+    set(noValues HELP QUIET NONINTERACTIVE SANDBOX)
     set(singleValues FETCH_DIR SOURCE_DIR)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
@@ -214,6 +214,12 @@ function(run)
         set(expand_NONINTERACTIVE NONINTERACTIVE)
     endif()
 
+    # SANDBOX
+    set(expand_SANDBOX)
+    if(ARG_SANDBOX)
+        set(expand_SANDBOX SANDBOX)
+    endif()
+
     # configFile
     set(configFile dkproject.jsonc)
     cmake_path(ABSOLUTE_PATH configFile BASE_DIRECTORY "${CMAKE_SOURCE_DIR}" NORMALIZE
@@ -223,6 +229,7 @@ function(run)
             FETCH_DIR "${fetchDirAbs}"
             CONFIG_FILE "${configFileAbs}"
             ${expand_NONINTERACTIVE}
-            ${expand_SOURCE_DIR})
+            ${expand_SOURCE_DIR}
+            ${expand_SANDBOX})
     message(STATUS "Project dependencies have been updated.")
 endfunction()
