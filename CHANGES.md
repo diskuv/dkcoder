@@ -5,6 +5,7 @@
 ## 2.1.4.4
 
 - `DKML_TARGET_ABI` environment variable, if set, is honored in `./dk dksdk.java.jdk.download`. `./dk dksdk.java.jdk.download DKML_TARGET_ABI <abi>` is also supported.
+- Support for `DKCODER_TTL_MINUTES` had regressed, and is now fixed so that it re-fetches DkCoder after the specified minutes from the last time.
 
 ## 2.1.4.3
 

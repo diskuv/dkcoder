@@ -1072,6 +1072,7 @@ endfunction()
         endif()
         if(NOT tstamp_EPOCHSECS OR tstamp_EPOCHSECS LESS_EQUAL min_valid_EPOCHSECS)
             # Cache miss. Time to update dkcoder.
+            file(REMOVE_RECURSE "${dkcoder_subbuild_dir}")
             FetchContent_Populate(dkcoder
                 QUIET
                 SOURCE_DIR "${dkcoder_src_dir}"
