@@ -419,8 +419,10 @@ function(__dkcoder_install)
     endif()
 
     # Convert version to dotted form
-    string(REPLACE "-" "." compile_version "${compile_version}") # 0.2.0-1 -> 0.2.0.1
-    string(REGEX REPLACE "[A-Za-z]" "" compile_version "${compile_version}") # 2.1.4.r3 -> 2.1.4.3
+    if(NOT compile_version STREQUAL "Env")
+        string(REPLACE "-" "." compile_version "${compile_version}") # 0.2.0-1 -> 0.2.0.1
+        string(REGEX REPLACE "[A-Za-z]" "" compile_version "${compile_version}") # 2.1.4.r3 -> 2.1.4.3
+    endif()
 
     # Make a work directory
     set(CMAKE_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_dkcoder__${compile_version}")
@@ -429,7 +431,7 @@ function(__dkcoder_install)
     set(dkml_host_abi "${ARG_ABI}")
 
     # Location where ocamlfind.conf should be
-    if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
+    if(compile_version VERSION_LESS_EQUAL 0.4.0.1 AND NOT compile_version STREQUAL "Env")
         set(ocamlfind_conf "${DKCODER_HOME}/findlib.conf")
     endif()
 
@@ -516,7 +518,7 @@ function(__dkcoder_install)
         endif()
 
         # Post-install: Configure findlib.conf to point to macOS bundle or Unix/Win32 extraction
-        if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
+        if(compile_version VERSION_LESS_EQUAL 0.4.0.1 AND NOT compile_version STREQUAL "Env")
             if(CMAKE_HOST_WIN32)
                 # Windows needs entries like: destdir="C:\\TARBALL\\lib"
                 cmake_path(NATIVE_PATH DKCODER_HOME DKCODER_HOME_NATIVE)
@@ -569,7 +571,7 @@ stdlib="@DKCODER_HOME@/DkCoder.bundle/Contents/Resources/lib/ocaml"]] @ONLY NEWL
     set(problem_solution "Problem: The DkCoder installation is corrupted. Solution: Remove the directory ${DKCODER_HOME} and try again.")
 
     # Export ocamlfind.conf
-    if(compile_version VERSION_LESS_EQUAL 0.4.0.1)
+    if(compile_version VERSION_LESS_EQUAL 0.4.0.1 AND NOT compile_version STREQUAL "Env")
         set(DKCODER_OCAMLFIND_CONF "${ocamlfind_conf}" PARENT_SCOPE)
     endif()
 
@@ -646,7 +648,9 @@ endfunction()
 # Confer: https://stackoverflow.com/questions/75071180/pass-ctrlc-to-cmake-custom-command-under-vscode
 function(__dkcoder_delegate)
     set(noValues)
-    set(singleValues PACKAGE_NAMESPACE PACKAGE_QUALIFIER FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE)
+    set(singleValues PACKAGE_NAMESPACE PACKAGE_QUALIFIER
+        FULLY_QUALIFIED_MODULE ARGUMENT_LIST_VARIABLE
+        VERSION)
     set(multiValues)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "${noValues}" "${singleValues}" "${multiValues}")
 
@@ -657,7 +661,7 @@ function(__dkcoder_delegate)
     #   both ocamlc + ocamlrun.
     __dkcoder_prep_environment()
     __dkcoder_add_environment_set("OCAMLLIB=${DKCODER_SITELIB}/ocaml")
-    if(DKCODER_VERSION VERSION_LESS_EQUAL 0.4.0.1)
+    if(ARG_VERSION VERSION_LESS_EQUAL 0.4.0.1)
         #   Assumptions.ocamlfind_configuration_available_to_ocaml_compiler_in_coder_run
         __dkcoder_add_environment_set("OCAMLFIND_CONF=${DKCODER_OCAMLFIND_CONF}")
     endif()
@@ -678,7 +682,7 @@ function(__dkcoder_delegate)
     #
     #   PATH=path_list_prepend? Assumptions.coder_compatible_dune_is_at_front_of_coder_run_path
     __dkcoder_add_environment_mod("PATH=path_list_prepend:${DKCODER_HELPERS}")
-    if(DKCODER_VERSION VERSION_GREATER 0.2.0.1 OR DKCODER_VERSION STREQUAL Env)
+    if(ARG_VERSION VERSION_GREATER 0.2.0.1 OR ARG_VERSION STREQUAL Env)
         __dkcoder_add_environment_set("DKCODER_CMAKE_EXE=${CMAKE_COMMAND}")
         __dkcoder_add_environment_set("DKCODER_NINJA_EXE=${CMAKE_MAKE_PROGRAM}")
     endif()
@@ -692,7 +696,7 @@ function(__dkcoder_delegate)
     cmake_path(NATIVE_PATH DKCODER_SITELIB NORMALIZE DKCODER_SITELIB_NATIVE)
     __dkcoder_add_environment_set("DKCODER_HELPERS=${DKCODER_HELPERS_NATIVE}")
     __dkcoder_add_environment_set("DKCODER_SHARE=${DKCODER_SHARE_NATIVE}")
-    if(DKCODER_VERSION VERSION_GREATER 0.4.0.1 OR DKCODER_VERSION STREQUAL Env)
+    if(ARG_VERSION VERSION_GREATER 0.4.0.1 OR ARG_VERSION STREQUAL Env)
         __dkcoder_add_environment_set("DKCODER_SITELIB=${DKCODER_SITELIB_NATIVE}")
     endif()
     __dkcoder_add_environment_set("DKCODER_RUN_VERSION=${DKCODER_RUN_VERSION}")
@@ -974,6 +978,7 @@ Environment variables:
             PACKAGE_NAMESPACE "${package_namespace}"
             PACKAGE_QUALIFIER "${package_qualifier}"
             FULLY_QUALIFIED_MODULE "${module}"
+            VERSION "${__dkrun_compile_version}"
             ARGUMENT_LIST_VARIABLE argument_list)
         return()
     endif()
