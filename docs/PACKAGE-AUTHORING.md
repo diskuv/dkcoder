@@ -68,7 +68,8 @@ two spaces and the `..` continue the [Lua workspace command].
 [Lua workspace command]: SPECIFICATION.md#lua-workspace-globals
 
 The `import { type="github-l2" }`, for example, imports a distribution from
-a GitHub release and verifies it with GitHub's SLSA Level 2 attestation.
+a GitHub release and verifies it with GitHub's Supply-chain Levels for
+Software Artifacts (SLSA) Level 2 attestation.
 
 ### `## Overview`
 
