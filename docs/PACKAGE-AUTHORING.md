@@ -261,6 +261,9 @@ Creating signing keys, producing the release, and how consumers verify and
 - [ ] Downloaded assets declared in `*.values.jsonc` with multiple `mirrors`.
 - [ ] `dk1 test` passes on every distribution script.
 - [ ] `dk1 query manifest` shows the package the way users will see it.
+- [ ] The `dk0` you publish from stamps the `min_dk_version` floor on the
+      release. Tell your users that `dk0` version, because an older one is
+      refused the release (see [SPECIFICATION], Distribution versioning).
 - [ ] Ready to share? Publish a release (see [Publishing](#publishing)).
 
 [dk0 Reference Implementation]: DK0-REFERENCE.md

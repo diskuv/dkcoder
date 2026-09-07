@@ -404,6 +404,15 @@ key the import presents, whichever key that is; a pin accepts one named key.
 `import local` records each accepted release in `etc/dk/t` so later imports can
 anchor on it.
 
+The same commands enforce the release's engine version floor, the
+`min_dk_version` field described under Distribution versioning in the
+[Specification]. A release whose floor is above the running `dk0` is refused,
+as is a release carrying no floor at all, because its producer predates the
+field. The error names the `dk0` version to upgrade to, and asks for a
+re-release of the dependency from a `dk0` at least that new.
+`restore github-l2` reads such a release as an unusable build cache: it prints
+the floor it found and builds cold.
+
 ```text
 inspect github-l2 -R,--repo [HOST/]OWNER/REPO [--tag TAG] [--outdir DIR]
 inspect local --path VALUES.JSON [--outdir DIR]

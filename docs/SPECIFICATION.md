@@ -2535,6 +2535,27 @@ distribution package version.
   no chain to it. Every consumer is prompted to accept its key as if the
   producer were new.
 
+##### Stating the engine version floor
+
+A release records `min_dk_version`, the oldest dk engine that can consume its
+wire format. The producing engine stamps the field from a constant of its own
+build, so the floor states the format the release's stores are written in.
+
++ The value is a version string in either the `MAJOR.MINOR.PATCH.BUILD` form or
+  the `MAJOR.MINOR.PATCH+rev-N` form, compared component by component with
+  missing trailing components read as `0`. A consumer version that is an exact
+  prefix of the floor is the development tip of that line and is accepted.
++ `import` and `inspect` refuse a release whose floor is above the running
+  engine. `restore` treats such a release as an unusable build cache, reports
+  it, and builds cold.
++ A release carrying no `min_dk_version` field is refused on those same terms.
+  Its producer predates the field, so the running engine has no statement that
+  the release is readable.
++ `min_dk_version` is excluded from the canonical form, so it never affects a
+  value id.
++ A partial release stamps a higher floor than a full release from the same
+  engine, and `combine` stamps the highest floor among the parts it joins.
+
 ### GitHub SLSA Level 2
 
 When accepting a GitHub repository (SLSA Level 2), the:
