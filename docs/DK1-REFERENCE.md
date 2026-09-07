@@ -7,15 +7,17 @@ job count.
 
 `dk1` shares the exact command-line dispatch, commands, options, build engine,
 and consumer trust model of the single-threaded reference implementation `dk0`,
-so a producer key it denies names the same remedies `dk0` names. **This document
-only describes what is different in `dk1`.** For everything else - the
-invocation form, every command, and every option other than `-j` - see the
-[dk0 Reference]. For the implementation-agnostic build model (projects, assets,
-bundles, forms, objects, values, subshells, distributions and scripts) see the
-[Specification].
+so a producer key it denies names the same remedies `dk0` names, and it refuses
+a release whose [engine version floor] is above the running engine exactly as
+`dk0` does. **This document only describes what is different in `dk1`.** For
+everything else - the invocation form, every command, and every option other
+than `-j` - see the [dk0 Reference]. For the implementation-agnostic build
+model (projects, assets, bundles, forms, objects, values, subshells,
+distributions and scripts) see the [Specification].
 
 [dk0 Reference]: DK0-REFERENCE.md
 [Specification]: SPECIFICATION.md
+[engine version floor]: SPECIFICATION.md#stating-the-engine-version-floor
 
 ## Invocation
 

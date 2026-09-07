@@ -9,15 +9,18 @@ native binary.
 `dkjs` shares the exact command-line dispatch, commands, options, build engine,
 and consumer trust model of the reference implementation `dk0` and the
 multi-threaded `dk1`, so a producer key it denies names the same remedies `dk0`
-names. **This document only describes what is different in `dkjs`.** For the
-invocation form, every command, and every option, see the [dk0 Reference]. For
-the `-j` / `--jobs` option it shares with `dk1`, see the [dk1 Reference]. For
-the implementation-agnostic build model (projects, assets, bundles, forms,
-objects, values, subshells, distributions and scripts) see the [Specification].
+names, and it refuses a release whose [engine version floor] is above the
+running engine exactly as `dk0` does. **This document only describes what is
+different in `dkjs`.** For the invocation form, every command, and every
+option, see the [dk0 Reference]. For the `-j` / `--jobs` option it shares with
+`dk1`, see the [dk1 Reference]. For the implementation-agnostic build model
+(projects, assets, bundles, forms, objects, values, subshells, distributions
+and scripts) see the [Specification].
 
 [dk0 Reference]: DK0-REFERENCE.md
 [dk1 Reference]: DK1-REFERENCE.md
 [Specification]: SPECIFICATION.md
+[engine version floor]: SPECIFICATION.md#stating-the-engine-version-floor
 
 ## Scope
 
