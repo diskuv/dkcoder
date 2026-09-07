@@ -262,6 +262,7 @@
       - [FRM - Form](#frm---form)
       - [ACI - Asset Canonical Id](#aci---asset-canonical-id)
       - [BCI - Bundle Canonical Id](#bci---bundle-canonical-id)
+    - [Index Resolution](#index-resolution)
   - [Evaluation](#evaluation)
 
 ## Introduction
@@ -6209,6 +6210,36 @@ BCI      = SHA256_HEX( CANON_JSON( BCI_JSON ) )
 
 The origins/mirrors listing is deliberately excluded so that re-mirroring a
 bundle does not change its identity.
+
+### Index Resolution
+
+An [index file](#i---index-file) is resolved from the values file that declares
+the asset it indexes. Three things identify that resolution: the
+[SHA-256 of the values file](#v256---sha256-of-values-file), whether that values
+file is the `j` JSON form or the `l` Lua form, and the
+[key](#keys-values-and-tasks) of the index asset. The three of them fix the
+content of the answer, so the same three always name the same index.
+
+The specification does not mandate how many times one command resolves one
+index. A build system implementation may resolve each distinct triple once and
+serve that resolution for the rest of the command, or it may resolve the index
+at every place it is asked for. A served resolution is confined to the command
+that established it and to a resolution that completed. A resolution that cannot
+complete yet, because the values file it reads is still being built, is reported
+as pending and is asked for again when the requesting task runs again.
+
+An implementation that serves a resolution keeps the
+[Trace Store](#trace-store) record whole. Every resolution is asked for from
+inside a [task](#task-model), and the dependencies a task fetched are part of
+what that task records. A task that is served a resolution therefore fetches the
+same dependencies the completed resolution fetched, in the same order, before it
+is given the index. Two tasks that resolve the same index record the same
+dependencies for it, so a recorded dependency set is the same whether the task
+performed the resolution or was served one. A dependency set that is missing an
+entry is not read as an unknown one: a trace with no recorded dependency
+verifies with nothing to compare, so both the up-to-date check and the lazy
+value pointer check would move toward serving a value whose inputs were never
+checked.
 
 ## Evaluation
 

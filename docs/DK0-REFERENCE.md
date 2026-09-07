@@ -1016,6 +1016,18 @@ scans all the globs at startup, with optimizations to skip directories it can
 prove will never match a glob. Invalidation can be forced with the `--invalidate
 TARGET` [global option](#global-options).
 
+### Index resolution
+
+The [Specification] does not mandate how many times one command resolves one
+index file. `dk0` resolves each distinct values file, values file form and index
+asset key once per command and serves that resolution for the rest of the
+command. The resolution is held in memory for the life of the command only.
+
+A served resolution fetches the dependencies the completed resolution fetched
+before it returns the index, so the trace `dk0` records for a task is the same
+whether that task performed the resolution or was served one. A resolution that
+reports pending is not served; it is asked for again when the task runs again.
+
 ### Assets and the library cell
 
 When a `unified.asset` declaration runs, the origin is named after the library id
