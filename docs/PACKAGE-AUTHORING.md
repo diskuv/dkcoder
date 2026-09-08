@@ -86,8 +86,8 @@ your projects depend on.
 
 ### `## License`
 
-The `## License` section is a [SPDX license expression] for the
-package.
+The `## License` section is a Software Package Data Exchange (SPDX)
+[license expression] for the package.
 
 Standard licenses are named directly:
 
@@ -97,6 +97,7 @@ Standard licenses are named directly:
 GPL-3.0-or-later
 ```
 
+[license expression]: https://spdx.org/licenses/
 [SPDX license expression]: https://spdx.org/licenses/
 
 Often complex licenses are required. Here is a [SPDX license expression]

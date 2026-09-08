@@ -119,7 +119,8 @@ the host needs a working C toolchain before you adopt.
 - A C toolchain must be on `PATH`. On Ubuntu or Debian install `curl` and
   `build-essential`.
 - The system toolchain is enough. The DkML toolchain objects invoke
-  `PATH`-resolved tool names (`gcc`, `as`) and ship a PIC runtime, so native
+  `PATH`-resolved tool names (`gcc`, `as`) and ship a position independent
+  code (PIC) runtime, so native
   compilation and linking succeed on stock PIE-default hosts such as
   Ubuntu 24.04 and Debian 12 and later. This needs `CommonsLang_OCaml`
   release `0.1.20260820083108` or later.

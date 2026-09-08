@@ -1023,7 +1023,8 @@ request in that command that same index.
 
 `dk0` keys that index on `(values_file_sha256, form, index-asset-key)`:
 
-- `values_file_sha256` is the [V256] of the values file that declares the asset.
+- `values_file_sha256` is the SHA256 of the values file (V256) that declares
+  the asset, as [the specification defines it].
 - `form` is the [value type] letter of that values file, `j` for a values.json
   file and `l` for a values.lua file.
 - `index-asset-key` is the [key] of the index asset.
@@ -1040,7 +1041,7 @@ gives a task an index it loaded earlier in the command, it fetches for that task
 the same dependencies the first load fetched, in the same order.
 
 [index file]: SPECIFICATION.md#i---index-file
-[V256]: SPECIFICATION.md#v256---sha256-of-values-file
+[the specification defines it]: SPECIFICATION.md#v256---sha256-of-values-file
 [value type]: SPECIFICATION.md#value-store
 [key]: SPECIFICATION.md#keys-values-and-tasks
 
