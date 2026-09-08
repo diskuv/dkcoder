@@ -9,8 +9,8 @@ job count.
 and consumer trust model of the single-threaded reference implementation `dk0`,
 so a producer key it denies names the same remedies `dk0` names, it refuses a
 release whose [engine version floor] is above the running engine exactly as
-`dk0` does, and it serves one [index resolution] for the rest of a command as
-`dk0` does. **This document only describes what is different in `dk1`.** For
+`dk0` does, and it reads each [asset index] once per command and reuses it the
+way `dk0` does. **This document only describes what is different in `dk1`.** For
 everything else - the invocation form, every command, and every option other
 than `-j` - see the [dk0 Reference]. For the implementation-agnostic build
 model (projects, assets, bundles, forms, objects, values, subshells,
@@ -19,7 +19,7 @@ distributions and scripts) see the [Specification].
 [dk0 Reference]: DK0-REFERENCE.md
 [Specification]: SPECIFICATION.md
 [engine version floor]: SPECIFICATION.md#stating-the-engine-version-floor
-[index resolution]: DK0-REFERENCE.md#index-resolution
+[asset index]: DK0-REFERENCE.md#reading-an-asset-index
 
 ## Invocation
 

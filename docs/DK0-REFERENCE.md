@@ -1016,17 +1016,18 @@ scans all the globs at startup, with optimizations to skip directories it can
 prove will never match a glob. Invalidation can be forced with the `--invalidate
 TARGET` [global option](#global-options).
 
-### Index resolution
+### Reading an asset index
 
-The [Specification] does not mandate how many times one command resolves one
-index file. `dk0` resolves each distinct values file, values file form and index
-asset key once per command and serves that resolution for the rest of the
-command. The resolution is held in memory for the life of the command only.
+The [Specification] does not mandate how many times one command reads one index
+file. `dk0` reads the index for each distinct values file, values file form and
+index asset key once per command, and reuses that index for the rest of the
+command. `dk0` holds the index in memory for the life of the command.
 
-A served resolution fetches the dependencies the completed resolution fetched
-before it returns the index, so the trace `dk0` records for a task is the same
-whether that task performed the resolution or was served one. A resolution that
-reports pending is not served; it is asked for again when the task runs again.
+Before `dk0` hands a task an index it read earlier in the command, it fetches
+for that task the same dependencies the first read fetched, so every task
+records the same dependencies for the same index. `dk0` keeps only an index it
+finished reading, so a read that reports pending leaves the task to ask for the
+index again when it runs again.
 
 ### Assets and the library cell
 

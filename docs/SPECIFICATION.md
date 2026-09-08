@@ -262,7 +262,7 @@
       - [FRM - Form](#frm---form)
       - [ACI - Asset Canonical Id](#aci---asset-canonical-id)
       - [BCI - Bundle Canonical Id](#bci---bundle-canonical-id)
-    - [Index Resolution](#index-resolution)
+    - [Reading an Asset Index](#reading-an-asset-index)
   - [Evaluation](#evaluation)
 
 ## Introduction
@@ -6211,35 +6211,37 @@ BCI      = SHA256_HEX( CANON_JSON( BCI_JSON ) )
 The origins/mirrors listing is deliberately excluded so that re-mirroring a
 bundle does not change its identity.
 
-### Index Resolution
+### Reading an Asset Index
 
-An [index file](#i---index-file) is resolved from the values file that declares
-the asset it indexes. Three things identify that resolution: the
+The build system reads an [index file](#i---index-file) out of the values file
+that declares the asset the index covers. Three things tell the build system
+which index to read: the
 [SHA-256 of the values file](#v256---sha256-of-values-file), whether that values
 file is the `j` JSON form or the `l` Lua form, and the
-[key](#keys-values-and-tasks) of the index asset. The three of them fix the
-content of the answer, so the same three always name the same index.
+[key](#keys-values-and-tasks) of the index asset. Those three fix the bytes the
+build system reads back, so the same three always name the same index.
 
-The specification does not mandate how many times one command resolves one
-index. A build system implementation may resolve each distinct triple once and
-serve that resolution for the rest of the command, or it may resolve the index
-at every place it is asked for. A served resolution is confined to the command
-that established it and to a resolution that completed. A resolution that cannot
-complete yet, because the values file it reads is still being built, is reported
-as pending and is asked for again when the requesting task runs again.
+The specification does not mandate how many times one command reads one index.
+An implementation may read each distinct index once and reuse it for the rest of
+the command, or it may read the index at each place a task asks for it. An
+implementation reuses only an index it finished reading, and only inside the
+command that read it. When the build system cannot finish reading an index yet,
+because it is still building the values file the index comes from, it reports
+the read as pending, and the task that asked for the index asks again when it
+runs again.
 
-An implementation that serves a resolution keeps the
-[Trace Store](#trace-store) record whole. Every resolution is asked for from
-inside a [task](#task-model), and the dependencies a task fetched are part of
-what that task records. A task that is served a resolution therefore fetches the
-same dependencies the completed resolution fetched, in the same order, before it
-is given the index. Two tasks that resolve the same index record the same
-dependencies for it, so a recorded dependency set is the same whether the task
-performed the resolution or was served one. A dependency set that is missing an
-entry is not read as an unknown one: a trace with no recorded dependency
-verifies with nothing to compare, so both the up-to-date check and the lazy
-value pointer check would move toward serving a value whose inputs were never
-checked.
+An implementation that reuses an index keeps the [Trace Store](#trace-store)
+record whole. A [task](#task-model) asks for each index it needs, and the
+dependencies a task fetched are part of what that task records. Before the build
+system hands a task an index it read earlier in the command, it fetches for that
+task the same dependencies the first read fetched, in the same order, so two
+tasks that ask for the same index record the same dependencies for it.
+
+The build system reads a recorded dependency set as complete: a trace that
+records no dependency verifies with nothing to compare, and both the up-to-date
+check and the lazy value pointer check treat that trace as verified. Those two
+checks compare the inputs a task used because the task's record carries every
+dependency the task fetched.
 
 ## Evaluation
 
