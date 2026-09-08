@@ -1019,18 +1019,30 @@ TARGET` [global option](#global-options).
 ### Reading an asset index
 
 `dk0` loads the [index file] for an asset once per command and gives every later
-request in that command the index already in memory. It tells one index from
-another by three things: the values file that declares the asset, whether that
-values file is the `j` JSON form or the `l` Lua form, and the key of the index
-asset. `dk0` frees the index when the command ends.
+request in that command the index already in memory. `dk0` frees the index when
+the command ends.
+
+`dk0` keys that memory on `(values_file_sha256, form, index-asset-key)`:
+
+- `values_file_sha256` is the [V256] of the values file that declares the asset.
+- `form` is the [value type] letter of that values file, `j` for a values.json
+  file and `l` for a values.lua file.
+- `index-asset-key` is the [key] of the index asset.
+
+Under that key `dk0` holds the `i` value id, that value's SHA-256, the
+[index file] the value id names, and the dependency fetches the first load made.
+
+`dk0` still re-runs the cheap dependency fetch, so the calling task's recorded
+trace is identical to what it would have been without the memo. Before `dk0`
+gives a task an index it loaded earlier in the command, it fetches for that task
+the same dependencies the first load fetched, in the same order. `dk0` keeps an
+index once its load finishes; a load that reports pending leaves the requesting
+task to ask again when it runs again.
 
 [index file]: SPECIFICATION.md#i---index-file
-
-Before `dk0` gives a task an index it loaded earlier in the command, it fetches
-for that task the same dependencies the first load fetched, so every task
-records the same dependencies for the same index. `dk0` keeps an index once its
-load finishes; a load that reports pending leaves the requesting task to ask
-again when it runs again.
+[V256]: SPECIFICATION.md#v256---sha256-of-values-file
+[value type]: SPECIFICATION.md#value-store
+[key]: SPECIFICATION.md#keys-values-and-tasks
 
 ### Assets and the library cell
 
