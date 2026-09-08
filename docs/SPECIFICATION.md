@@ -262,7 +262,6 @@
       - [FRM - Form](#frm---form)
       - [ACI - Asset Canonical Id](#aci---asset-canonical-id)
       - [BCI - Bundle Canonical Id](#bci---bundle-canonical-id)
-    - [Reading an Asset Index](#reading-an-asset-index)
   - [Evaluation](#evaluation)
 
 ## Introduction
@@ -3791,7 +3790,7 @@ locations, or their configured locations). This ensures a rule can never route
 
 The same project file may belong to different assets.
 
-The specification does not mandate how change detection is implemented. An implementation may scan all the globs at startup, or cache the globbed files and only update them when an invalidation is given to the build system.
+An implementation chooses how it detects changes to the globbed files. It may scan all the globs at startup, or keep the files from an earlier scan and refresh them when the build system is given an invalidation.
 
 The project directory structure will be maintained in the asset. For example, given the project:
 
@@ -5829,6 +5828,12 @@ Each time a task is executed, the following items are captured into a single **t
 - the keys of the task's immediate dependencies
 - a SHA256 digest of the values of the task's immediate dependencies
 
+A trace records every dependency the task fetched while it ran, so the recorded
+keys are the complete set of that task's immediate dependencies. The build
+system decides whether a trace is up to date by comparing each recorded
+dependency against its current value, and it reaches that decision from the
+recorded set alone.
+
 The *key* is one of two types:
 
 - A *module key* is what you -- the user -- specify in a shell command as the MODULE_ID and SLOT or PATH in the [Value Shell Language](#value-shell-language-vsl). The module key can be large for `run-function` since its parameters includes a JSON request.
@@ -6210,38 +6215,6 @@ BCI      = SHA256_HEX( CANON_JSON( BCI_JSON ) )
 
 The origins/mirrors listing is deliberately excluded so that re-mirroring a
 bundle does not change its identity.
-
-### Reading an Asset Index
-
-The build system reads an [index file](#i---index-file) out of the values file
-that declares the asset the index covers. Three things tell the build system
-which index to read: the
-[SHA-256 of the values file](#v256---sha256-of-values-file), whether that values
-file is the `j` JSON form or the `l` Lua form, and the
-[key](#keys-values-and-tasks) of the index asset. Those three fix the bytes the
-build system reads back, so the same three always name the same index.
-
-The specification does not mandate how many times one command reads one index.
-An implementation may read each distinct index once and reuse it for the rest of
-the command, or it may read the index at each place a task asks for it. An
-implementation reuses only an index it finished reading, and only inside the
-command that read it. When the build system cannot finish reading an index yet,
-because it is still building the values file the index comes from, it reports
-the read as pending, and the task that asked for the index asks again when it
-runs again.
-
-An implementation that reuses an index keeps the [Trace Store](#trace-store)
-record whole. A [task](#task-model) asks for each index it needs, and the
-dependencies a task fetched are part of what that task records. Before the build
-system hands a task an index it read earlier in the command, it fetches for that
-task the same dependencies the first read fetched, in the same order, so two
-tasks that ask for the same index record the same dependencies for it.
-
-The build system reads a recorded dependency set as complete: a trace that
-records no dependency verifies with nothing to compare, and both the up-to-date
-check and the lazy value pointer check treat that trace as verified. Those two
-checks compare the inputs a task used because the task's record carries every
-dependency the task fetched.
 
 ## Evaluation
 

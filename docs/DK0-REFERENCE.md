@@ -1011,23 +1011,26 @@ an OCaml analog of the [Lua C registry](https://www.lua.org/manual/5.4/manual.ht
 
 ### Change detection
 
-The [Specification] does not mandate how change detection is implemented. `dk0`
+An implementation chooses how it detects changes to the globbed files. `dk0`
 scans all the globs at startup, with optimizations to skip directories it can
 prove will never match a glob. Invalidation can be forced with the `--invalidate
 TARGET` [global option](#global-options).
 
 ### Reading an asset index
 
-The [Specification] does not mandate how many times one command reads one index
-file. `dk0` reads the index for each distinct values file, values file form and
-index asset key once per command, and reuses that index for the rest of the
-command. `dk0` holds the index in memory for the life of the command.
+`dk0` loads the [index file] for an asset once per command and gives every later
+request in that command the index already in memory. It tells one index from
+another by three things: the values file that declares the asset, whether that
+values file is the `j` JSON form or the `l` Lua form, and the key of the index
+asset. `dk0` frees the index when the command ends.
 
-Before `dk0` hands a task an index it read earlier in the command, it fetches
-for that task the same dependencies the first read fetched, so every task
-records the same dependencies for the same index. `dk0` keeps only an index it
-finished reading, so a read that reports pending leaves the task to ask for the
-index again when it runs again.
+[index file]: SPECIFICATION.md#i---index-file
+
+Before `dk0` gives a task an index it loaded earlier in the command, it fetches
+for that task the same dependencies the first load fetched, so every task
+records the same dependencies for the same index. `dk0` keeps an index once its
+load finishes; a load that reports pending leaves the requesting task to ask
+again when it runs again.
 
 ### Assets and the library cell
 
