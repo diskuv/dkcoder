@@ -2400,7 +2400,7 @@ object a run computes, so a slot's terms decide the question only for a value a 
 reuses from a store that lacks the record.
 
 The exclusion is about publishing only. The value is still computed and its value id is
-unchanged, because the object id already folds in the target ABI.
+unchanged, because the object id already includes the target ABI.
 
 The following values will be ignored if present:
 
@@ -5945,7 +5945,11 @@ The formulas, per value type:
 -- o : object (the output of one form, for one slot)
 FRM  = SHA256_HEX( VCI || "|form|" || MODVER )
 XT   = ""                             when EXEC_ABI = TARGET_ABI  (native build)
-     = "::target_abi=" || TARGET_ABI  when EXEC_ABI <> TARGET_ABI (cross build)
+     = ""                             when the FINAL term of SLOT equals
+                                      TARGET_ABI, compared case-insensitively
+                                      (the slot already names the target)
+     = "::" || TARGET_ABI             otherwise: a cross build whose slot does
+                                      not name the target
        where EXEC_ABI and TARGET_ABI are the resolved v3 ABI names of the
        build; a native build contributes nothing and keeps its id
 o_id = "o" || BASE32L( SHA256_HEX( FRM || "::" || SLOT || XT ) )
@@ -5997,14 +6001,16 @@ Two structural properties follow directly from the formulas:
    never share an `a` id, and `BCI_JSON` inherits that property for `b` ids.
 2. **Object ids do not hash the produced output.** `o_id` is derived only from
    the *recipe address*: the values file (via `VCI`), the form's module version,
-   the slot, and, on a cross build, the resolved target ABI. The bytes that the
+   the slot, and the resolved target ABI on a cross build whose slot does not
+   already name that target. The bytes that the
    form's function writes into the output directory appear nowhere in the
    formula. The consequences are described in the next section.
 
 #### Object Ids Hide Build Non-Determinism
 
 An object id is a *recipe address* (the values file (via `VCI`), the form's
-module version, the slot, and the resolved target ABI on a cross build).
+module version, the slot, and the resolved target ABI on a cross build whose
+slot does not already name that target).
 Whichever build of the recipe
 completes first has its output bytes persisted into the value store
 under that id; every later build of the same recipe reuses (or republishes)
