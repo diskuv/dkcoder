@@ -8,8 +8,8 @@ native binary.
 
 `dkjs` shares the exact command-line dispatch, commands, options, build engine,
 and consumer trust model of the reference implementation `dk0` and the
-multi-threaded `dk1`, so a producer key it denies names the same remedies `dk0`
-names, it refuses a release whose [engine version floor] is above the running
+multi-threaded `dk1`, so a producer key refused by `dk0` is refused as well,
+it refuses a release whose [engine version floor] is above the running
 engine exactly as `dk0` does, and it loads each [asset index] once per command
 and reuses it the way `dk0` does. **This document only describes what is
 different in `dkjs`.** For the invocation form, every command, and every option,

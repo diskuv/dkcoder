@@ -2551,8 +2551,8 @@ build, so the floor states the format the release's stores are written in.
 + A release carrying no `min_dk_version` field is refused on those same terms.
   Its producer predates the field, so the running engine has no statement that
   the release is readable.
-+ `min_dk_version` is excluded from the canonical form, so it never affects a
-  value id.
++ `min_dk_version` is excluded from the canonical form; it can be changed
+  without changing the value id.
 + A partial release stamps a higher floor than a full release from the same
   engine, and `combine` stamps the highest floor among the parts it joins.
 
