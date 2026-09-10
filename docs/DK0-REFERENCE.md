@@ -349,9 +349,8 @@ the host's slots, and the run that targets that ABI publishes them. Objects whos
 rule named a literal `execution_slot` are published whatever their terms spell.
 See "Object Slots" in the [Specification].
 
-When the build key is the distribution producer key (for example the
-distribution key that the dk-distribute CI action passes with `--keys-env`),
-`distribute` also signs the distribution's canonical build payload and records
+When the build key is the distribution producer key, `distribute` also signs
+the distribution's canonical build payload and records
 the signature as `build.attestation.openbsd_signify`. A local build's
 auto-generated workspace key is not the producer key, so the attestation anchor
 stays empty there.
@@ -1122,7 +1121,7 @@ keys" sections; the value-store protections are in `SECURITY.md`.
 | Control | Entry point | Enforced on consumption |
 | --- | --- | --- |
 | GitHub SLSA Level 2 attestation | `import github-l2`, `inspect github-l2`, `restore github-l2` | Yes. The release `values.json` is verified with `gh attestation verify` against the Sigstore trusted root, scoped to `-R OWNER/REPO`; a failed verification is fatal. |
-| OpenBSD signify signing of a distribution | `prepare-version` (key generation); `distribute` and `combine` (signing); every import (verification) | Yes. `distribute` signs the canonical build payload (`ThunkDist.canonical_build_payload_id`) when the build key is the distribution producer key (the dk-distribute CI action passes it with `--keys-env`), and `combine` re-signs the combined distribution the same way. On `import github-l2`, `import local`, `restore github-l2` and `remote-result import`, the signed continuations must verify against the `producer.openbsd_signify` public key, and the `build.attestation.openbsd_signify` signature (when present) must verify over the canonical build payload. A present-but-invalid signature is fatal (`SecConsumerTrust`). |
+| OpenBSD signify signing of a distribution | `prepare-version` (key generation); `distribute` and `combine` (signing); every import (verification) | Yes. `distribute` signs the canonical build payload (`ThunkDist.canonical_build_payload_id`) when the build key is the distribution producer key, and `combine` re-signs the combined distribution the same way. On `import github-l2`, `import local`, `restore github-l2` and `remote-result import`, the signed continuations must verify against the `producer.openbsd_signify` public key, and the `build.attestation.openbsd_signify` signature (when present) must verify over the canonical build payload. A present-but-invalid signature is fatal (`SecConsumerTrust`). |
 | Key rotation via signed continuations, monotonic per `MAJOR.MINOR` | `prepare-version`, `distribute` (author); every import (consumer) | Yes. `SecPackageRegistry.characterize` runs on both sides. A producer key is imported once and never overwritten (no key may reclaim an established `MAJOR.MINOR`); a new `MAJOR.MINOR` must carry the continuation key a trusted prior release signed; a release below the latest imported release is rejected (`restore` falls back to a cold build). |
 | Vendor-key trust root and deny-by-default acceptance | every import | Yes. Trust anchors, in order: the built-in dk signify key for `CommonsBase_Std`, locally prepared keys in `etc/dk/d`, previously imported releases (the import directory `etc/dk/i` plus the local trust records in `etc/dk/t`), a durable `dk0 trust accept` record (optionally pinned to a key; a pin mismatch is fatal), and the documented `--trust-local-package` escape hatch. Any other producer key gets an interactive accept/deny prompt that defaults to deny and denies at end of input, so CI fails closed. Transitive distributions recovered from a directly imported release are verified (signatures and rotation consistency) before their content-pinned acceptance, and never anchor a directly imported release's rotation. |
 | Value-store integrity of Marshal-ed ASTs | build / `get-object` path | Yes. A SHA-256 prefix guards each Marshal-ed AST and is signify-signed with a per-workspace build key (`SECURITY.md`). |
@@ -1388,69 +1387,62 @@ The tables above list files that vary by operating system. The dynamic linker
 is the exception: it varies by **ABI**. A dynamically linked executable names
 its loader by absolute path in its ELF `PT_INTERP` header, so that exact path
 must exist to run objects of that ABI. Statically linked objects carry no
-`PT_INTERP` and need no loader; the `Linux_x86_64_musl` `dk0`/`dk1` launchers
-are static for this reason. The loader is normally supplied by the host's own
-libc, and must be provided explicitly only when objects of one ABI run on a
-host of another - for example `Linux_x86_64_musl` objects on a glibc host.
+`PT_INTERP` and need no loader. The loader is normally supplied by the host's
+own libc, and must be provided explicitly only when objects of one ABI run on
+a host of another.
 
 | ABI                 | File                          | What                                                |
 | ------------------- | ----------------------------- | --------------------------------------------------- |
 | `Linux_arm64`       | `/lib/ld-linux-aarch64.so.1`  | glibc dynamic linker for dynamically linked objects |
 | `Linux_x86`         | `/lib/ld-linux.so.2`          | glibc dynamic linker for dynamically linked objects |
 | `Linux_x86_64`      | `/lib64/ld-linux-x86-64.so.2` | glibc dynamic linker for dynamically linked objects |
-| `Linux_x86_64_musl` | `/lib/ld-musl-x86_64.so.1`    | musl dynamic linker for dynamically linked objects  |
 
 ### Minimum glibc (per ABI)
 
 The published Linux binaries are built on `manylinux_2_28` container images,
-so the glibc ABIs run on any distribution carrying glibc 2.28 or newer. The
-`Linux_x86_64_musl` binaries are statically linked and carry no libc floor.
+so they run on any distribution carrying glibc 2.28 or newer.
 
 | ABI                 | Minimum libc               |
 | ------------------- | -------------------------- |
 | `Linux_arm64`       | glibc 2.28                 |
 | `Linux_x86`         | glibc 2.28                 |
 | `Linux_x86_64`      | glibc 2.28                 |
-| `Linux_x86_64_musl` | none (statically linked)   |
+
++ No check reads the glibc versions a published binary requires or runs the
+  binary on a glibc 2.28 distribution.
 
 ### System toolchains (per-ABI contract)
 
 Slot artifacts that contain native code are built with one system toolchain
 per ABI family. This section is the contract for where that toolchain comes
-from and what compatibility floor the built artifacts inherit.
+from and what compatibility floor the built artifacts inherit. The
+repositories whose builds enforce these requirements document their own
+checks.
 
 | ABI family        | System toolchain                      | How it is located                                    |
 | ----------------- | ------------------------------------- | ---------------------------------------------------- |
 | `Linux_*` (glibc) | `gcc`, `as`, binutils                 | resolved from `PATH` at build time                   |
-| `Linux_*_musl`    | `x86_64-linux-musl-*` cross toolchain | bundled inside the slot                              |
 | `Windows_*`       | MSVC                                  | at consume time: `vswhere`, then `vcvarsall` capture |
 | `Darwin_*`        | `/usr/bin/clang`                      | fixed path (Xcode Command Line Tools)                |
 
-+ `Linux_*` (glibc): distribution builds must run in a glibc 2.28 build
-  environment, canonically the `quay.io/pypa/manylinux_2_28_*` containers,
-  so slot artifacts run on any distribution carrying glibc 2.28 or newer.
++ `Linux_*` (glibc): distribution builds must run in a build environment
+  whose glibc is 2.28 or older, canonically the
+  `quay.io/pypa/manylinux_2_28_*` containers, so slot artifacts run on any
+  distribution carrying glibc 2.28 or newer.
 + `Linux_*` (glibc): glibc links are backward-compatible only, so a build
-  on a newer-glibc host inherits that host's glibc floor. Such builds work
-  for local use (the DkML compiler is relocatable as of CommonsLang_OCaml
-  release `0.1.20260820083108`), and a newer-glibc host can never
-  produce distribution-grade artifacts natively.
+  on a newer-glibc host inherits that host's glibc floor.
 + `Linux_*` (glibc): runtime objects are compiled as position-independent
   code, so native links succeed under PIE-default toolchains.
-+ `Linux_*_musl`: the slot bundles its cross toolchain (bare
-  `x86_64-linux-musl-*` tool names plus dispatch shims) and its output is
-  statically linked.
-+ `Windows_*`: MSVC is the sole official Windows slot toolchain. `vswhere`
-  finds the Visual Studio installation, a `vcvarsall` environment capture
-  supplies `INCLUDE`, `LIB`, `LIBPATH` and `PATH`, and the slot to
-  `vcvarsall` architecture mapping is the CommonsLang_OCaml table
-  `assets/table/msvc-arch/Release.<slot>`.
++ `Windows_*`: MSVC is the sole official Windows slot toolchain, and
   `CommonsBase_LLVM.Toolchain.MinGW` is a cross toolchain for building C
-  userland packages.
+  userland packages. No check enforces either statement.
++ `Windows_*`: `vswhere` finds the Visual Studio installation, a version in
+  the range `[16.0,19.0)` carrying the
+  `Microsoft.VisualStudio.Component.VC.Tools.x86.x64` component.
++ `Windows_*`: a `vcvarsall` environment capture supplies `INCLUDE`, `LIB`,
+  `LIBPATH` and `PATH`, and the slot determines the `vcvarsall`
+  architecture. No check confirms the captured variables.
 + `Darwin_*`: `/usr/bin/clang` is the `xcode-select` trampoline installed
-  with the Xcode Command Line Tools.
-+ Per-ABI build-environment conformance checks run once, in the shared
-  `diskuv/dk-distribute` action that every dk package's distribute
-  workflow invokes, before the distscript executes. A published
-  attestation therefore implies the build environment conformed; the
-  combine job's `file`-based architecture check on the produced binaries
-  is the post-build complement.
+  with the Xcode Command Line Tools. The build environment has the Command
+  Line Tools selected, so `xcode-select -p` succeeds and `/usr/bin/clang`
+  runs.
