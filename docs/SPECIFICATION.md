@@ -4796,7 +4796,7 @@ use must be a direct `import` in its `## workspace` section, and the
 `distribute` and `import check` commands refuse a workspace that uses a
 package it does not import directly. The check reads the code of each
 `*.values.lua` and `*.values.jsonc` file under `etc/dk/v` and skips their
-comments, so a package named only in a comment is not a use.
+comments.
 
 An implementation may also place:
 
