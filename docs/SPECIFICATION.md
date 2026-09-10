@@ -6116,7 +6116,7 @@ The dot (`.`) separated build metadata from the semver version.
 
 For example, `OurZip_Demo.S7z2.Windows7zExe@25.1.0+bn-20250101000000+diff` has build metadata `bn-20250101000000.diff`.
 
-Build metadata is deliberately **not** part of any value id. The `a`, `b` and `o` value ids are content-addressed (from the asset/bundle/form canonical id and, for objects, the slot), so identical content gets the same value id regardless of the build number (the `bn-*` build metadata). This keeps distributions reproducible: changing the build number (for example via dk0's `-n` option or a git tag) does not change the object, bundle or asset ids.
+Build metadata is deliberately **not** part of any value id. The `a`, `b` and `o` value ids are content-addressed (from the asset/bundle/form canonical id and, for objects, the slot and, on a cross build whose slot does not already name the target, the target ABI), so identical content gets the same value id regardless of the build number (the `bn-*` build metadata). This keeps distributions reproducible: changing the build number (for example via dk0's `-n` option or a git tag) does not change the object, bundle or asset ids.
 
 Build metadata still participates in keys and versions (see [ID with Build Metadata](#object-id-with-build-metadata)); it is only excluded from value ids.
 

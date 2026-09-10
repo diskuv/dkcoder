@@ -702,8 +702,9 @@ Emit a CycloneDX 1.6 software bill of materials (SBOM) as JSON (minified unless
 `--pretty`; stdout unless `--outfile FILE`).
 
 dk value ids are declaration-addressed: an object id hashes the module's
-declaration text and slot, deliberately excluding the content of its build
-inputs. Two releases can therefore
+declaration text and slot and, on a cross build whose slot does not already
+name the target, the target ABI, deliberately excluding the content of its
+build inputs. Two releases can therefore
 carry *different bytes under the same value id* (for example when a
 non-bit-reproducible compiler is rebuilt), and a contaminated store can serve
 one slot's bytes under another slot's id. Every component this command emits
