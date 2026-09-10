@@ -6000,18 +6000,18 @@ Two structural properties follow directly from the formulas:
    checksum and byte size of the file, so two assets with different bytes can
    never share an `a` id, and `BCI_JSON` inherits that property for `b` ids.
 2. **Object ids do not hash the produced output.** `o_id` is derived only from
-   the *recipe address*: the values file (via `VCI`), the form's module version,
-   the slot, and the resolved target ABI on a cross build whose slot does not
-   already name that target. The bytes that the
+   the values file (via `VCI`), the form's module version, the slot, and the
+   resolved target ABI on a cross build whose slot does not already name that
+   target. The bytes that the
    form's function writes into the output directory appear nowhere in the
    formula. The consequences are described in the next section.
 
 #### Object Ids Hide Build Non-Determinism
 
-An object id is a *recipe address* (the values file (via `VCI`), the form's
-module version, the slot, and the resolved target ABI on a cross build whose
-slot does not already name that target).
-Whichever build of the recipe
+An object id hashes the values file (via `VCI`), the form's module version,
+the slot, and the resolved target ABI on a cross build whose slot does not
+already name that target, and nothing else.
+Whichever build of that declaration
 completes first has its output bytes persisted into the value store
 under that id; every later build of the same recipe reuses (or republishes)
 bytes under the same id, even if a fresh build would have produced different
@@ -6116,7 +6116,7 @@ The dot (`.`) separated build metadata from the semver version.
 
 For example, `OurZip_Demo.S7z2.Windows7zExe@25.1.0+bn-20250101000000+diff` has build metadata `bn-20250101000000.diff`.
 
-Build metadata is deliberately **not** part of any value id. An `o` value id is a recipe address, not a content address: it hashes the form's declaration (the values file's canonical id and the form's module version), the slot and, on a cross build whose slot does not already name the target, the target ABI, and never the bytes the form produced (see [Value Id Formulas](#value-id-formulas) and [Object Ids Hide Build Non-Determinism](#object-ids-hide-build-non-determinism)). An `a` value id hashes the declared checksum, size and path of one file, and a `b` value id hashes those records for every file of the bundle together with the module version; neither hashes the bytes of the zip. The build number (the `bn-*` build metadata) is in none of these inputs, so changing it (for example via dk0's `-n` option or a git tag) does not change the object, bundle or asset ids, which keeps distributions reproducible.
+Build metadata is deliberately **not** part of any value id. An `o` value id hashes the values file's canonical id, the form's module version, the slot and, on a cross build whose slot does not already name the target, the target ABI; it never hashes the bytes the form produced, so it is not content-addressed (see [Value Id Formulas](#value-id-formulas) and [Object Ids Hide Build Non-Determinism](#object-ids-hide-build-non-determinism)). An `a` value id hashes the declared checksum, size and path of one file, and a `b` value id hashes those records for every file of the bundle together with the module version; neither hashes the bytes of the zip. The build number (the `bn-*` build metadata) is in none of these inputs, so changing it (for example via dk0's `-n` option or a git tag) does not change the object, bundle or asset ids, which keeps distributions reproducible.
 
 Build metadata still participates in keys and versions (see [ID with Build Metadata](#object-id-with-build-metadata)); it is only excluded from value ids.
 

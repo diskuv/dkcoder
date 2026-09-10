@@ -701,7 +701,7 @@ sbom local --path VALUES.JSON [--slot SLOT] [--verify-content]
 Emit a CycloneDX 1.6 software bill of materials (SBOM) as JSON (minified unless
 `--pretty`; stdout unless `--outfile FILE`).
 
-dk value ids are declaration-addressed: an object id hashes the module's
+dk object ids are not content-addressed: an object id hashes the module's
 declaration text and slot and, on a cross build whose slot does not already
 name the target, the target ABI, deliberately excluding the content of its
 build inputs. Two releases can therefore
