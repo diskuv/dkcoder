@@ -4791,6 +4791,13 @@ then the import command is skipped.
 
 > 📢 The import's `LIBRARY@VERSION` outputs in the workspace section, along with the distribution metadata in the source tree, behave like lock files in package managers like `npm` and `cargo`.
 
+Every package that a workspace's own values files and distribution scripts
+use must be a direct `import` in its `## workspace` section, and the
+`distribute` and `import check` commands refuse a workspace that uses a
+package it does not import directly. The check reads the code of each
+`*.values.lua` and `*.values.jsonc` file under `etc/dk/v` and skips their
+comments, so a package named only in a comment is not a use.
+
 An implementation may also place:
 
 1. *lazy* value files in the value store by default to avoid the time and space to download
