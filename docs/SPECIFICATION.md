@@ -6010,7 +6010,7 @@ Two structural properties follow directly from the formulas:
 
 An object id hashes the values file (via `VCI`), the form's module version,
 the slot, and the resolved target ABI on a cross build whose slot does not
-already name that target, and nothing else.
+already name that target.
 Whichever build of that declaration
 completes first has its output bytes persisted into the value store
 under that id; every later build of the same recipe reuses (or republishes)
