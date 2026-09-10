@@ -2405,8 +2405,9 @@ A run whose target ABI differs from its execution ABI publishes every object who
 a literal `execution_slot`, including one whose terms spell the execution ABI. That run is the
 only producer of such a value, so the key it binds stays bound to one value.
 
-An object that carries no record of how its slot was written is excluded when its slot names the
-execution ABI and does not name the target ABI. A value store carries that record for every
+An object that carries no record of how its slot was written is excluded when the final term of
+its slot equals the execution ABI exactly, which is the test the `o` value id applies to the
+target ABI in [Value Id Formulas](#value-id-formulas). A value store carries that record for every
 object a run computes, so a slot's terms decide the question only for a value a distribution
 reuses from a store that lacks the record.
 
@@ -5964,7 +5965,7 @@ The formulas, per value type:
 FRM  = SHA256_HEX( VCI || "|form|" || MODVER )
 XT   = ""                             when EXEC_ABI = TARGET_ABI  (native build)
      = ""                             when the FINAL term of SLOT equals
-                                      TARGET_ABI, compared case-insensitively
+                                      TARGET_ABI exactly, byte for byte
                                       (the slot already names the target)
      = "::" || TARGET_ABI             otherwise: a cross build whose slot does
                                       not name the target
