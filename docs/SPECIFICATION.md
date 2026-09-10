@@ -711,6 +711,17 @@ line from its own declaration even though the imported distribution seals only
 the lower line, whereas a consumer of that imported distribution still may not
 reference the unsealed line.
 
+A restored previous release carries each script module it sealed at the
+version its `values.lua` declared. A `values.lua` file in the producer's
+workspace takes precedence over a restored script module with the same module
+id and version. When the workspace declares a script module at one version and
+the restored release carries that module at another version whose content no
+workspace values file has, the build system drops the restored version together
+with its rules and traces. The new distribution then seals and exports the
+script module versions the workspace declares, the same set a build that
+restores nothing produces. A producer that still needs the other version keeps
+its `values.lua` in the workspace, and both versions build.
+
 Minor numbers require a new [signify key](#openbsd-signify-keys) when the new minor number has
 not already been [sealed by the previous distribution](#distributions-are-sealed).
 In other words, a small number of minor number increases will eventually
