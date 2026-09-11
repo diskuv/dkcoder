@@ -2412,7 +2412,9 @@ object a run computes, so a slot's terms decide the question only for a value a 
 reuses from a store that lacks the record.
 
 The exclusion is about publishing only. The value is still computed and its value id is
-unchanged, because the object id already includes the target ABI.
+unchanged. The run is a cross build and the object's slot does not already name the target,
+so the object id already hashes the target ABI (the `XT` term in
+[Value Id Formulas](#value-id-formulas)).
 
 The following values will be ignored if present:
 
@@ -5907,12 +5909,15 @@ The value will be of a type that depends on the build key:
 | [bundle](#bundles)                    | `b`        | [BCI](#bci---bundle-canonical-id)     | contents of zip archive file                                             |
 | [object](#objects)                    | `o`        | [FRM](#frm---form)                    | output of form function                                                  |
 |                                       |            | `::<SLOT>`                            |                                                                          |
+|                                       |            | `XT`                                  |                                                                          |
 |                                       | `i`        | digest of the `o` id (prefix swap)    | [index file](#i---index-file)                                            |
 | [V256](#v256---sha256-of-values-file) | `j`        | [V256](#v256---sha256-of-values-file) | dos2unix json `{schema_version:,forms:,bundles:}`                        |
 | [V256](#v256---sha256-of-values-file) | `l`        | [V256](#v256---sha256-of-values-file) | dos2unix lua script                                                      |
 | [VCI](#vci---values-canonical-id)     | `v`        | [VCK](#vck---values-checksum)         | [parsed `{schema_version:,forms:,bundles:}`](#v---parsed-valuesjson-ast) |
 
-The exact construction of each value id is given in [Value Id Formulas](#value-id-formulas).
+In the object row, `XT` is `::<TARGET_ABI>` on a cross build whose slot does not already name
+the target, and is empty otherwise. The exact construction of each value id is given in
+[Value Id Formulas](#value-id-formulas).
 
 To allow byte range optimized reading of zip files, special rules are in place when fetching assets and objects:
 

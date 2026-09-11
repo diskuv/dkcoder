@@ -789,7 +789,7 @@ Component properties (all in the `diskuv:dk:` namespace, all string valued):
 | `diskuv:dk:import:transitive` | `true` on a distribution known only through the closure manifest. |
 | `diskuv:dk:import:source` | For a transitive distribution, the direct pin file that carries it. |
 | `diskuv:dk:origin:repo` / `diskuv:dk:origin:tag` / `diskuv:dk:origin:url` / `diskuv:dk:origin:path` | Where the release resolved from. |
-| `diskuv:dk:value:id` | The declaration value id (`o...`, `b...`, `a...`, `i...`). |
+| `diskuv:dk:value:id` | The value id (`o...`, `b...`, `a...`, `i...`). An `o` id hashes the module's declaration text and slot and, on a cross build whose slot does not already name the target, the target ABI. |
 | `diskuv:dk:value:kind` | `object`, `bundle`, `asset`, `assetindex` or `release-asset`. |
 | `diskuv:dk:value:slot` | The object slot (objects only), e.g. `Release.Linux_x86_64`. |
 | `diskuv:dk:value:asset-path` | The asset path (assets only). |
