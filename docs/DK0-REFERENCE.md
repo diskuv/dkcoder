@@ -1045,6 +1045,30 @@ the same dependencies the first load fetched, in the same order.
 [value type]: SPECIFICATION.md#value-store
 [key]: SPECIFICATION.md#keys-values-and-tasks
 
+### Reading the value stores of a lazy import
+
+`dk0 --import lazy` reads the value stores a command needs by the rule in
+[Reading the value stores a lazy import needs]. A part name ends in an ABI
+name when its last dash-separated term is one of `Android_arm32v7a`,
+`Android_arm64v8a`, `Android_x86`, `Android_x86_64`, `Darwin_arm64`,
+`Darwin_x86_64`, `DragonFly_x86_64`, `FreeBSD_x86_64`, `Linux_arm32v6`,
+`Linux_arm32v7`, `Linux_arm64`, `Linux_x86`, `Linux_x86_64`,
+`Linux_x86_64_musl`, `NetBSD_x86_64`, `OpenBSD_x86_64`, `Windows_arm32`,
+`Windows_arm64`, `Windows_x86`, `Windows_x86_64`, `Js_nodejs` or `Js_web`.
+
++ Under `-d perf`, `dk0` prints `import narrowed distribution=PACKAGE kept=K
+  dropped=D` when the request slot leaves `D` of the distribution's value
+  stores unread.
++ Under `-d perf`, `dk0` prints `import widened distribution=PACKAGE (missing
+  pointer)` when a key with no lazy value file makes it read every value store
+  of the distribution.
++ Under `-d perf`, `dk0` prints `import widened distribution=PACKAGE (script
+  module values file)` when a script module's values file is in none of the
+  value stores it read, and it then reads every value store of the
+  distribution.
+
+[Reading the value stores a lazy import needs]: SPECIFICATION.md#reading-the-value-stores-a-lazy-import-needs
+
 ### Assets and the library cell
 
 When a `unified.asset` declaration runs, the origin is named after the library id

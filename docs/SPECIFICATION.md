@@ -96,6 +96,7 @@
     - [Distributions are sealed](#distributions-are-sealed)
       - [Adding to the sealed set](#adding-to-the-sealed-set)
     - [Distributed Value Stores](#distributed-value-stores)
+      - [Reading the value stores a lazy import needs](#reading-the-value-stores-a-lazy-import-needs)
     - [OpenBSD signify keys](#openbsd-signify-keys)
       - [Distribution versioning](#distribution-versioning)
     - [GitHub SLSA Level 2](#github-slsa-level-2)
@@ -2433,6 +2434,32 @@ candidate the value index walk offers, so the result does not depend on how the 
 scheduled. Reporting is required because the importer cannot tell the producing runs apart:
 nothing a distribution carries names the run that published a value, so an importer can detect
 the conflict and cannot resolve it.
+
+#### Reading the value stores a lazy import needs
+
+A release built on several ABIs carries value stores for each of them, and a
+command that serves one slot needs the values of only some of them. An
+implementation that places lazy value files reads the
+[index files](#i---index-file) of the value stores the command's
+[request slot](#slotrequest) can be served from, and reads the others when a
+key needs a value from one of them.
+
++ A distributed value store is named `PART.ROLE.valuestore.zip`. It is named
+  for an ABI when the last dash-separated term of `PART` is an execution ABI
+  name the implementation recognises, as `Linux_x86_64` is in
+  `SomeLibrary_Std-Linux_x86_64.package.valuestore.zip`.
++ When the final term of the request slot is an ABI name, as in
+  `Release.Linux_x86_64`, the import reads the index files of the value stores
+  named for that ABI, for the execution ABI, and for no ABI.
++ When the command has no request slot, when it computes its request slot from
+  a `${...}` expression, or when the final term of its request slot is some
+  other term, as in `Release.Agnostic`, the import reads the index file of
+  every value store.
++ A key of the distribution that has no lazy value file makes the
+  implementation read the index file of every value store of that distribution
+  and look for the key's lazy value file again before it resolves the key any
+  other way. A later command does the same, so every value the distribution
+  carries stays reachable whichever request slot imported it.
 
 ### OpenBSD signify keys
 
@@ -4824,6 +4851,11 @@ dependent instead of serving the imported value. The recorded dependencies are
 kept as [lazy-dependency evidence traces](#trace-store) in the trace store, so
 the re-verification works in a later build process than the one that imported
 the distribution.
+
+An implementation that places lazy value files chooses which of a
+distribution's value stores it reads from the command's request slot, as
+[Reading the value stores a lazy import needs](#reading-the-value-stores-a-lazy-import-needs)
+describes.
 
 ##### import type=github-l2
 
