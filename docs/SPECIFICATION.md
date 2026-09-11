@@ -5970,7 +5970,7 @@ The formulas, per value type:
 FRM  = SHA256_HEX( VCI || "|form|" || MODVER )
 XT   = ""                             when EXEC_ABI = TARGET_ABI  (native build)
      = ""                             when the FINAL term of SLOT equals
-                                      TARGET_ABI exactly, byte for byte
+                                      TARGET_ABI exactly
                                       (the slot already names the target)
      = "::" || TARGET_ABI             otherwise: a cross build whose slot does
                                       not name the target
