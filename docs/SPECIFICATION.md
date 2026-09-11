@@ -1303,7 +1303,7 @@ Remove the environment variable with name `NAME`.
 #### <NAME=VALUE
 
 Prepends `VALUE` and a path separator to the environment variable with name `NAME`.
-However, the path seperator (`;` or `:` on Windows or Unix, respectively) is not added if the environment variable is empty.
+However, the path separator (`;` or `:` on Windows or Unix, respectively) is not added if the environment variable is unset or empty.
 
 The `VALUE` may contain [variables](#form-variables).
 
