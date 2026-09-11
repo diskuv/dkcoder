@@ -10,8 +10,9 @@ and consumer trust model of the single-threaded reference implementation `dk0`,
 so a producer key refused by `dk0` is refused as well, it refuses a
 release whose [engine version floor] is above the running engine exactly as
 `dk0` does, it loads each [asset index] once per command and reuses it the
-way `dk0` does, and it reads the value stores a [lazy import] needs the way
-`dk0` does. **This document only describes what is different in `dk1`.** For
+way `dk0` does, and it reads the value stores a [lazy import] needs and
+[the entries inside them] the way `dk0` does. **This document only describes
+what is different in `dk1`.** For
 everything else - the invocation form, every command, and every option other
 than `-j` - see the [dk0 Reference]. For the implementation-agnostic build
 model (projects, assets, bundles, forms, objects, values, subshells,
@@ -22,6 +23,7 @@ distributions and scripts) see the [Specification].
 [engine version floor]: SPECIFICATION.md#stating-the-engine-version-floor
 [asset index]: DK0-REFERENCE.md#reading-an-asset-index
 [lazy import]: DK0-REFERENCE.md#reading-the-value-stores-of-a-lazy-import
+[the entries inside them]: DK0-REFERENCE.md#reading-an-entry-through-an-asset-index
 
 ## Invocation
 

@@ -1069,6 +1069,22 @@ name when its last dash-separated term is one of `Android_arm32v7a`,
 
 [Reading the value stores a lazy import needs]: SPECIFICATION.md#reading-the-value-stores-a-lazy-import-needs
 
+### Reading an entry through an asset index
+
+A value that a lazy import leaves in a value store zip is one entry of that
+zip, and `dk0` reads it with byte range requests to the asset when a command
+first needs it. The [index file] of the asset tells `dk0` where the entry
+starts and how large it is.
+
++ `dk0` sends one byte range request for each entry. The range starts at the
+  entry's local file header and covers its file name, its extra field and its
+  compressed data.
++ `dk0` sizes that range from the entry's record in the central directory of
+  the index, adds up to 128 bytes of padding, and ends the range no later than
+  the end of the asset.
++ When the entry's local file header is longer than that size allows, `dk0`
+  reads the compressed data with a second byte range request.
+
 ### Assets and the library cell
 
 When a `unified.asset` declaration runs, the origin is named after the library id
