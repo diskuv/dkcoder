@@ -1419,11 +1419,11 @@ from and what compatibility floor the built artifacts inherit. The
 repositories whose builds enforce these requirements document their own
 checks.
 
-| ABI family        | System toolchain                      | How it is located                                    |
-| ----------------- | ------------------------------------- | ---------------------------------------------------- |
-| `Linux_*` (glibc) | `gcc`, `as`, binutils                 | resolved from `PATH` at build time                   |
-| `Windows_*`       | MSVC                                  | at consume time: `vswhere`, then `vcvarsall` capture |
-| `Darwin_*`        | `/usr/bin/clang`                      | fixed path (Xcode Command Line Tools)                |
+| ABI family        | System toolchain                      | How it is located                                                           |
+| ----------------- | ------------------------------------- | --------------------------------------------------------------------------- |
+| `Linux_*` (glibc) | `gcc`, `as`, binutils                 | resolved from `PATH` at build time                                          |
+| `Windows_*`       | MSVC                                  | at consume time: `vswhere`, then `vcvarsall` capture                        |
+| `Darwin_*`        | `/usr/bin/clang`                      | fixed path (selected developer directory: Command Line Tools or full Xcode) |
 
 + `Linux_*` (glibc): distribution builds must run in a build environment
   whose glibc is 2.28 or older, canonically the
@@ -1442,7 +1442,8 @@ checks.
 + `Windows_*`: a `vcvarsall` environment capture supplies `INCLUDE`, `LIB`,
   `LIBPATH` and `PATH`, and the slot determines the `vcvarsall`
   architecture. No check confirms the captured variables.
-+ `Darwin_*`: `/usr/bin/clang` is the `xcode-select` trampoline installed
-  with the Xcode Command Line Tools. The build environment has the Command
-  Line Tools selected, so `xcode-select -p` succeeds and `/usr/bin/clang`
-  runs.
++ `Darwin_*`: `/usr/bin/clang` is the `xcrun` trampoline, which runs the
+  `clang` of the developer directory `xcode-select` has selected. The build
+  environment has a developer directory selected, either the Xcode Command
+  Line Tools or a full Xcode installation, so `xcode-select -p` succeeds and
+  `/usr/bin/clang` runs.
