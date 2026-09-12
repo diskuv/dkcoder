@@ -30,10 +30,9 @@ see the [Specification].
 
 ## Downloading
 
-`dkjs` downloads with Node's own http and https modules rather than with `curl`,
-so that a JavaScript platform needs no external program and a browser target has
-no child process at all. A byte range and a redirect are followed the same way,
-and the bytes a download produces are identical.
+`dkjs` downloads with Node's own http and https modules. A byte range and a
+redirect are followed the same way, and the bytes a download produces are
+identical.
 
 One behaviour of `dk0` therefore does not apply here: `dkjs` does not [reuse a
 resolved redirect] for the later ranges of one asset. That optimisation belongs
