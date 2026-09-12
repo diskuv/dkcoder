@@ -34,13 +34,6 @@ see the [Specification].
 redirect are followed the same way, and the bytes a download produces are
 identical.
 
-One behaviour of `dk0` therefore does not apply here: `dkjs` does not [reuse a
-resolved redirect] for the later ranges of one asset. That optimisation belongs
-to the `curl` transport, where each range is its own process and each process
-repeats the redirect chain.
-
-[reuse a resolved redirect]: DK0-REFERENCE.md#reusing-a-resolved-redirect
-
 ## Scope
 
 `dkjs` builds projects whose execution ABI is `js_nodejs` (a build running on
