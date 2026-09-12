@@ -1045,6 +1045,23 @@ the same dependencies the first load fetched, in the same order.
 [value type]: SPECIFICATION.md#value-store
 [key]: SPECIFICATION.md#keys-values-and-tasks
 
+### Reusing a resolved redirect
+
+A remote asset is often served through redirects: the origin answers one, a
+content delivery network answers another, and only the last response carries
+bytes. `dk0` reads one byte range per request, so a command reading several
+ranges of one asset repeats that chain on every range.
+
+`dk0` remembers the target the redirects resolved to, keyed by the origin URL it
+asked for, and sends the next range of that asset straight to that target. It
+remembers a target only when the response carrying bytes followed a redirect, so
+a URL that never redirects is requested exactly as it was before.
+
+A resolved target is short lived, because a store usually signs it with an
+expiry. `dk0` keeps one for at most 60 seconds. On any response other than
+success it forgets the target and repeats the request against the origin URL,
+which is what a first request would have done.
+
 ### Reading the value stores of a lazy import
 
 `dk0 --import lazy` reads the value stores a command needs by the rule in
