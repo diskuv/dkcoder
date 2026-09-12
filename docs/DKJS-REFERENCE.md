@@ -30,9 +30,7 @@ see the [Specification].
 
 ## Downloading
 
-`dkjs` downloads with Node's own http and https modules. A byte range and a
-redirect are followed the same way, and the bytes a download produces are
-identical.
+`dkjs` downloads with Node's own http and https modules.
 
 ## Scope
 
