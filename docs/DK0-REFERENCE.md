@@ -1072,7 +1072,7 @@ name when its last dash-separated term is one of `Android_arm32v7a`,
 ### Reading an entry through an asset index
 
 A value store zip is published by the distribution, and each value in it is one
-entry of that zip. A lazy import writes no entry and modifies no zip: it records
+entry of that zip. A lazy import records
 a pointer to an entry that is already there, and `dk0` reads that entry with byte
 range requests to the asset when a command first needs the value. The [index
 file] of the asset tells `dk0` where the entry starts and how large it is.
